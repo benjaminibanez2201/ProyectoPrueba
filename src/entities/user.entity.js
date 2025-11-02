@@ -9,6 +9,11 @@ export const User = new EntitySchema({
       type: "int",
       generated: "increment",
     },
+    name: {
+      type: "varchar",
+      length: 100,
+      nullable: false,
+    },
     email: {
       type: "varchar",
       length: 255,
@@ -19,6 +24,11 @@ export const User = new EntitySchema({
       type: "varchar",
       length: 255,
       nullable: false,
+    },
+    role: {
+      type: "varchar",
+      length: 50,
+      default: "alumno", // valores posibles: 'alumno', 'empresa', 'coordinador'
     },
     created_at: {
       type: "timestamp",

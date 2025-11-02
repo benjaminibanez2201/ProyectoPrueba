@@ -21,8 +21,9 @@ export async function register(req, res) {
   try {
     const data = req.body;
     
-    if (!data.email || !data.password) {
-      return handleErrorClient(res, 400, "Email y contraseña son requeridos");
+    // VALIDAR CAMPOS REQUERIDOS
+    if (!data.name || !data.email || !data.password) {
+      return handleErrorClient(res, 400, "Nombre, email y contraseña son requeridos");
     }
     
     const newUser = await createUser(data);
