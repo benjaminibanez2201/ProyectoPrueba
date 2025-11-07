@@ -17,6 +17,6 @@ export const registerValidationSchema = yup.object({
     .required("La contraseña es obligatoria"),
   role: yup
     .string()
-    .oneOf(["alumno", "empresa", "coordinador"], "Rol no válido")
+    .oneOf(["alumno", "coordinador"], "Rol no válido")
     .default("alumno"),
 });
