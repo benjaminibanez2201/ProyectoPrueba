@@ -1,4 +1,4 @@
-import { loginUser } from "../services/auth.service.js";
+import { registerUser,loginUser } from "../services/auth.service.js";
 import { createUser } from "../services/user.service.js";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 
@@ -19,19 +19,20 @@ export async function login(req, res) {
 
 export async function register(req, res) {
   try {
-    const data = req.body;
+    const userData = req.body;
     
     // VALIDAR CAMPOS REQUERIDOS
-    if (!data.name || !data.email || !data.password) {
-      return handleErrorClient(res, 400, "Nombre, email y contraseña son requeridos");
+    if (!userData.name || !userData.email || !userData.password || !userData.role) {
+      return handleErrorClient(res, 400, "Nombre, email, rol y contraseña son requeridos");
     }
-    
-    const newUser = await createUser(data);
-    delete newUser.password; // Nunca devolver la contraseña
+    //ocupa el registro del auth.service
+    const newUser = await registerUser(userData);
+
     handleSuccess(res, 201, "Usuario registrado exitosamente", newUser);
   } catch (error) {
-    if (error.code === '23505') { // Código de error de PostgreSQL para violación de unique constraint
-      handleErrorClient(res, 409, "El email ya está registrado");
+    //si falla registerUser
+    if (error.code === "El correo ya se encuentra registrado") { 
+      handleErrorClient(res, 409, error.message);
     } else {
       handleErrorServer(res, 500, "Error interno del servidor", error.message);
     }
