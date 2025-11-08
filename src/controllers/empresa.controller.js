@@ -12,7 +12,7 @@ export const generarTokenEmpresa = async (req, res) => {
     const token = jwt.sign(
       { alumnoId, tipo: "empresa" },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" } // dura 7 días
+      { expiresIn: "180d" } // dura 6 meses aprox
     );
 
     const repo = AppDataSource.getRepository(EmpresaToken);
@@ -21,7 +21,7 @@ export const generarTokenEmpresa = async (req, res) => {
       empresaNombre,
       empresaCorreo,
       alumnoId,
-      expiracion: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      expiracion: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
     });
 
     await repo.save(nuevoToken);

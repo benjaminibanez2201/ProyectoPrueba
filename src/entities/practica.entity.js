@@ -11,9 +11,9 @@ export const Practica = new EntitySchema({
       generated: "increment",
     },
     estado: {
-      type: "varchar",
-      length: 50,
-      default: "Pendiente",
+      type: "enum",
+      enum: ["pendiente", "en_curso", "finalizada", "evaluada"],
+      default: "pendiente",
     },
     fecha_inicio: {
       type: "date",
@@ -21,6 +21,23 @@ export const Practica = new EntitySchema({
     },
     fecha_fin: {
       type: "date",
+      nullable: true,
+    },
+    fecha_creacion: {
+      type: "timestamp",
+      createDate: true,
+    },
+    fecha_actualizacion: {
+      type: "timestamp",
+      updateDate: true,
+    },
+    fecha_cierre: {
+      type: "timestamp",
+      nullable: true,
+    },
+    cerrado_por: {
+      type: "varchar",
+      length: 100,
       nullable: true,
     },
   },
@@ -36,6 +53,7 @@ export const Practica = new EntitySchema({
       target: "User",
       joinColumn: { name: "empresa_id" },
       eager: true,
+      nullable: true,
     },
   },
 });
