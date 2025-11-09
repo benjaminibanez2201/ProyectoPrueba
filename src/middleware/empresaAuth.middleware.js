@@ -1,4 +1,4 @@
-import { AppDataSource } from "../config/configDB.js";
+import { AppDataSource } from "../config/configDb.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { handleErrorClient } from "../Handlers/responseHandlers.js";
 
