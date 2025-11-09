@@ -48,3 +48,8 @@ export async function deleteUser(id) {
   const user = await findUserById(id);
   return await userRepository.remove(user);
 }
+
+//para buscar los usarios alumnos
+export async function findAlumnos() {
+  return await userRepository.find({ where: { role: 'alumno' }, select: ['id', 'name', 'email', 'tipo_practica'] });
+}

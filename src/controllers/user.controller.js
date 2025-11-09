@@ -1,10 +1,4 @@
-import {
-  findNotas,
-  findNotaById,
-  createNota,
-  updateNota,
-  deleteNota,
-} from "../services/notas.services.js";
+import { findAlumnos } from "../services/user.service.js";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 
 export class NotasController {
@@ -80,5 +74,15 @@ export class NotasController {
     } catch (error) {
       handleErrorClient(res, 404, error.message);
     }
+  }
+}
+
+//para revisar el listado de alumnos(funcion del coordinador de practica)
+export async function getAlumnos(req, res) {
+  try {
+    const alumnos = await findAlumnos();
+    handleSuccess(res, 200, "Lista de alumnos obtenida exitosamente", alumnos);
+  } catch (error) {
+    handleErrorServer(res, 500, "Error al obtener la lista de alumnos", error.message);
   }
 }
