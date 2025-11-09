@@ -8,7 +8,11 @@ export async function loginUser(email, password) {
     throw new Error("Credenciales incorrectas");
   }
 
+<<<<<<< HEAD
   // ✅ ESTA LÍNEA DEBE TENER AWAIT
+=======
+  // LSTA LÍNEA DEBE TENER AWAIT
+>>>>>>> origin/main
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     throw new Error("Credenciales incorrectas");
@@ -20,10 +24,17 @@ export async function loginUser(email, password) {
     role: user.role 
   };
   
+<<<<<<< HEAD
   // ✅ GENERAR TOKEN
   const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
 
   // ✅ ELIMINAR PASSWORD ANTES DE RETORNAR
+=======
+  // GENERAR TOKEN
+  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+  // ELIMINAR PASSWORD ANTES DE RETORNAR
+>>>>>>> origin/main
   const userWithoutPassword = { ...user };
   delete userWithoutPassword.password;
 

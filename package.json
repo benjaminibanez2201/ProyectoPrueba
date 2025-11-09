@@ -17,6 +17,7 @@
   "author": "Xider Zombie",
   "license": "MIT",
   "dependencies": {
+<<<<<<< HEAD
     "axios": "^1.7.4",             
     "bcrypt": "^6.0.0",            
     "bcryptjs": "^2.4.3",          
@@ -28,6 +29,19 @@
     "reflect-metadata": "^0.2.2",   
     "typeorm": "^0.3.20",          
     "yup": "^1.7.1"                
+=======
+    "axios": "^1.7.4",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
+    "pg": "^8.11.3",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.20",
+    "yup": "^1.7.1"
+>>>>>>> origin/main
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
@@ -40,4 +54,8 @@
     "url": "https://github.com/benjaminibanez2201/ProyectoPrueba/issues"
   },
   "homepage": "https://github.com/benjaminibanez2201/ProyectoPrueba#readme"
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

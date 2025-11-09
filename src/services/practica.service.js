@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { AppDataSource } from "../config/configDB.js";
+=======
+import { AppDataSource } from "../config/configDb.js";
+>>>>>>> origin/main
 import { Practica } from "../entities/practica.entity.js";
 
 const practicaRepository = AppDataSource.getRepository(Practica);
