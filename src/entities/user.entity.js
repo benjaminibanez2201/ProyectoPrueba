@@ -9,6 +9,11 @@ export const User = new EntitySchema({
       type: "int",
       generated: "increment",
     },
+    name: {
+      type: "varchar",
+      length: 100,
+      nullable: false,
+    },
     email: {
       type: "varchar",
       length: 255,
@@ -20,6 +25,11 @@ export const User = new EntitySchema({
       length: 255,
       nullable: false,
     },
+    role: {
+      type: "varchar",
+      length: 50,
+      default: "alumno", // 'alumno', 'empresa', 'coordinador'
+    },
     created_at: {
       type: "timestamp",
       createDate: true,
@@ -29,6 +39,18 @@ export const User = new EntitySchema({
       type: "timestamp",
       updateDate: true,
       default: () => "CURRENT_TIMESTAMP",
+    },
+  },
+  relations: {
+    practicasComoAlumno: { //Estas relaciones son para que tengamos mas flexibilidad a la hora de hacer consultas en la BDD
+      type: "one-to-many",
+      target: "Practica",
+      inverseSide: "student",
+    },
+    practicasComoEmpresa: {
+      type: "one-to-many",
+      target: "Practica",
+      inverseSide: "empresa",
     },
   },
 });

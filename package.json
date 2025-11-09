@@ -1,24 +1,43 @@
 {
   "name": "users-page-project",
   "version": "1.0.0",
-  "description": "A project to display users with a simple interface.",
-  "main": "src/app.js",
+  "description": "Backend del sistema de gestión de prácticas profesionales.",
+  "main": "src/index.js",
+  "type": "module",
   "scripts": {
-    "start": "live-server src",
-    "build": "echo 'Build step not defined'",
-    "test": "echo 'No tests defined'"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
   },
   "keywords": [
-    "users",
-    "web",
-    "javascript"
+    "express",
+    "nodejs",
+    "typeorm",
+    "postgresql"
   ],
-  "author": "Your Name",
+  "author": "Xider Zombie",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.21.1"
+    "axios": "^1.7.4",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
+    "pg": "^8.11.3",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.20",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
-    "live-server": "^1.2.1"
-  }
+    "nodemon": "^3.1.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/benjaminibanez2201/ProyectoPrueba.git"
+  },
+  "bugs": {
+    "url": "https://github.com/benjaminibanez2201/ProyectoPrueba/issues"
+  },
+  "homepage": "https://github.com/benjaminibanez2201/ProyectoPrueba#readme"
 }
