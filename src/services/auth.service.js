@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { findUserByEmail } from "./user.service.js";
+import { findUserByEmail, createUser } from "./user.service.js";
 
 export async function loginUser(email, password) {
   const user = await findUserByEmail(email);
@@ -28,4 +28,19 @@ export async function loginUser(email, password) {
   delete userWithoutPassword.password;
 
   return { user: userWithoutPassword, token };
+}
+
+export async function registerUser(userData) {
+  //ver si existe el usuario
+  const userExists = await findUserByEmail(userData.email);
+  if (userExists) {
+    throw new Error("El correo ya se encuentra registrado");
+  }
+
+  //no existe, se crea el usuario
+  const newUser = await createUser(userData);
+
+  //se devuelve el usuario sin la contraseña
+  const {password,... userWithoutPassword} = newUser;
+  return userWithoutPassword;
 }
