@@ -8,14 +8,24 @@ export async function loginUser(email, password) {
     throw new Error("Credenciales incorrectas");
   }
 
-  const isMatch = bcrypt.compare(password, user.password);
+  // ✅ ESTA LÍNEA DEBE TENER AWAIT
+  const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     throw new Error("Credenciales incorrectas");
   }
 
-  const payload = { sub: user.id, email: user.email };
+  const payload = { 
+    sub: user.id, 
+    email: user.email,
+    role: user.role 
+  };
+  
+  // ✅ GENERAR TOKEN
   const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-  delete user.password;
-  return { user, token };
+  // ✅ ELIMINAR PASSWORD ANTES DE RETORNAR
+  const userWithoutPassword = { ...user };
+  delete userWithoutPassword.password;
+
+  return { user: userWithoutPassword, token };
 }
