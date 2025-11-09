@@ -1,3 +1,20 @@
-node_modules
+# Ignorar carpetas de dependencias (de ambos)
+backend/node_modules
+frontend/node_modules
+
+# Ignorar carpeta de "build" (del frontend)
+frontend/dist
+
+# Ignorar archivos de variables de entorno (de ambos)
 .env
-database.sqlite
+backend/.env
+frontend/.env
+
+# Ignorar archivos de base de datos (del backend)
+backend/database.sqlite
+
+# Ignorar archivos de Log (de cualquier proyecto)
+*.log
+
+# Ignorar archivos de sistema operativo (macOS)
+.DS_Store
