@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { login } from '../services/auth.service';
+import { showErrorAlert, showSuccessAlert } from '../helpers/sweetAlert.js';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -7,56 +9,91 @@ const Login = () => {
     const [password, setPassword] = useState('');
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        console.log({ email, password });
-    };    return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 w-full max-w-md transform transition-all hover:scale-105">
-                <form className="space-y-6" onSubmit={handleSubmit}>
-                    <h1 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 mb-8">
-                        Iniciar sesión
-                    </h1>
-                    
-                    <div className="space-y-2">
-                        <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="usuario@ejemplo.com"
-                            required
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all duration-300"
-                        />
-                    </div>
+    e.preventDefault();
 
-                    <div className="space-y-2">
-                        <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
-                            Contraseña
-                        </label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="**********"
-                            required
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all duration-300"
-                        />
-                    </div>
+    try {
+      const response = await login({ email, password });
 
-                    <button 
-                        type="submit" 
-                        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300"
-                    >
-                        Iniciar sesión
-                    </button>
-                </form>
-            </div>
-        </div>
-    );
+      if (response.status === 'Success') {
+        showSuccessAlert('¡Bienvenido!', 'Inicio de sesión correcto');
+        
+        //obtiene el rol del backend
+        const userRole = response.data.user.role;
+
+        //redirige al usuario según rol
+        if (userRole === 'alumno') {
+          navigate('/home-alumno'); 
+        } else if (userRole === 'coordinador') {
+          navigate('/home-coordinador'); 
+        } else {
+          navigate('/home');
+        }
+      } else {
+        //muestra el error que vino del backend
+        showErrorAlert('Error', response.message || response.errorDetails);
+      }
+    } catch (error) {
+      console.error("Error al iniciar sesión: ", error);
+      showErrorAlert('Error', 'No se pudo conectar al servidor');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 w-full max-w-md transform transition-all hover:scale-105">
+        
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <h1 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-600 mb-8">
+            Iniciar sesión
+          </h1>
+          
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="...@ubb.cl"
+              required
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
+              Contraseña
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="**********"
+              required
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-300"
+          >
+            Iniciar sesión
+          </button>
+
+          <p className="text-center text-gray-600 mt-6">
+            ¿No tienes una cuenta? 
+            <Link to="/register" className="text-blue-600 hover:underline font-semibold ml-1">
+              Regístrate aquí
+            </Link>
+          </p>
+
+        </form>
+      </div>
+    </div>
+  );
 }
-
 export default Login;

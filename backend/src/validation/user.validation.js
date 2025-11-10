@@ -19,4 +19,8 @@ export const registerValidationSchema = yup.object({
     .string()
     .oneOf(["alumno", "coordinador"], "Rol no válido")
     .default("alumno"),
+  tipo_practica: yup
+    .string()
+    .nullable()
+    .optional(),
 });

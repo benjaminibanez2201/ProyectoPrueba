@@ -21,13 +21,9 @@ export async function login(dataUser) {
     }
 }
 
-export async function register(data) {
+export async function register(dataUser) {//le pasa todos los datos que se necesitan para registrar
     try {
-        const { email, password } = data;
-        const response = await axios.post('/auth/register', {
-            email,
-            password
-        });
+        const response = await axios.post('/auth/register', dataUser);
         return response.data;
     } catch (error) {
         return error.response?.data || { message: 'Error al conectar con el servidor' };
@@ -37,7 +33,7 @@ export async function register(data) {
 export async function logout() {
     try {
         sessionStorage.removeItem('usuario');
-        cookies.remove('jwt-auth');
+        cookies.remove('jwt-auth', {path: '/'});
     } catch (error) {
         console.error('Error al cerrar sesión:', error);
     }
