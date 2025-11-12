@@ -67,7 +67,7 @@ export class PracticaController {
       const { id } = req.params;
       const { nuevoEstado } = req.body;
 
-      const estadosPermitidos = ["Pendiente", "En curso", "Finalizada", "Evaluada"];
+      const estadosPermitidos = ["pendiente", "en_curso", "finalizada", "evaluada"];
       if (!estadosPermitidos.includes(nuevoEstado)) {
         return handleErrorClient(res, 400, "Estado no válido");
       }
@@ -100,11 +100,11 @@ export class PracticaController {
         return handleErrorClient(res, 404, "Práctica no encontrada");
       }
 
-      if (practica.estado !== "Evaluada") {
+      if (practica.estado !== "evaluada") {
         return handleErrorClient(res, 400, "Solo se pueden cerrar prácticas que ya estén evaluadas");
       }
 
-      practica.estado = "Cerrada";
+      practica.estado = "cerrada";
       practica.fecha_fin = new Date();
 
       const updated = await updatePractica(id, practica);
