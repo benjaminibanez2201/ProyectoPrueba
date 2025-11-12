@@ -30,6 +30,11 @@ export const User = new EntitySchema({
       length: 50,
       default: "alumno", // 'alumno', 'empresa', 'coordinador'
     },
+    tipo_practica: {
+      type: "varchar",
+      length: 100,
+      nullable: true,
+    },
     created_at: {
       type: "timestamp",
       createDate: true,

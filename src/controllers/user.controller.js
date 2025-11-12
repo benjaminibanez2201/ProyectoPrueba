@@ -1,10 +1,4 @@
-import {
-  findNotas,
-  findNotaById,
-  createNota,
-  updateNota,
-  deleteNota,
-} from "../services/notas.services.js";
+import { findAlumnos, getDetallesAlumnos } from "../services/user.service.js";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 
 export class NotasController {
@@ -81,4 +75,37 @@ export class NotasController {
       handleErrorClient(res, 404, error.message);
     }
   }
+}
+
+//para revisar el listado de alumnos(funcion del coordinador de practica)
+export async function getAlumnos(req, res) {
+  try {
+    const alumnos = await findAlumnos();
+    handleSuccess(res, 200, "Lista de alumnos obtenida exitosamente", alumnos);
+  } catch (error) {
+    handleErrorServer(res, 500, "Error al obtener la lista de alumnos", error.message);
+  }
+}
+
+//para ver los detalles completos de un alumno en particular
+export const verDetallesAlumnos = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const rol = req.user?.role;
+
+        const detalles = await getDetallesAlumnos(id, rol);
+
+        return handleSuccess(res, 200, "Información completa de alumnos obtenida exitosamente", detalles);
+    } catch (error) {
+
+        //Acceso denegado por rol no autorizado
+        if (error.message.includes("Acceso denegado")) {
+            return handleErrorClient(res, 403, error.message);
+        }
+
+        if (error.message.includes("No encontrado") || error.message.includes("No es un alumno")) {
+            return handleErrorClient(res, 404, error.message);
+        }
+        return handleErrorServer(res, 500, "Error interno al obtener los detalles.", error.message);
+    }
 }
