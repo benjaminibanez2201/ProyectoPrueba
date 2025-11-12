@@ -53,3 +53,33 @@ export async function deleteUser(id) {
 export async function findAlumnos() {
   return await userRepository.find({ where: { role: 'alumno' }, select: ['id', 'name', 'email', 'tipo_practica'] });
 }
+
+// para obtener los detalles completos de un alumno por su ID
+export const getDetallesAlumnos = async (userId, rol) => {
+
+    if (rol !== 'coordinador') {
+        throw new Error("Acceso denegado: Solo coordinadores pueden acceder a esta información.");
+    }
+
+    try {
+        const userRepository = AppDataSource.getRepository(User);
+
+        const detallesCompletos = await userRepository.findOne({
+            where: { id: userId },
+            relations: [
+                "practicasComoAlumno",
+                "practicasComoAlumno.formularios",
+                "practicasComoAlumno.bitacoras",
+                "practicasComoAlumno.evaluaciones",
+                "practicasComoAlumno.informes"
+            ],
+        });
+
+        //si no existe o si el usuario no es 'alumno'
+        if (!detallesCompletos || detallesCompletos.role !== 'alumno') {
+            throw new Error("Usuario no encontrado o no es un alumno.");
+        } return detallesCompletos;
+    } catch (error) {
+        throw new Error("Error al obtener los detalles del alumno: " + error.message);
+    }
+}

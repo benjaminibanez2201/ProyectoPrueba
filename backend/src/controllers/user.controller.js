@@ -86,3 +86,26 @@ export async function getAlumnos(req, res) {
     handleErrorServer(res, 500, "Error al obtener la lista de alumnos", error.message);
   }
 }
+
+//para ver los detalles completos de un alumno en particular
+export const verDetallesAlumnos = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const rol = req.user?.role;
+
+        const detalles = await getDetallesAlumnos(id, rol);
+
+        return handleSuccess(res, 200, "Información completa de alumnos obtenida exitosamente", detalles);
+    } catch (error) {
+
+        //Acceso denegado por rol no autorizado
+        if (error.message.includes("Acceso denegado")) {
+            return handleErrorClient(res, 403, error.message);
+        }
+
+        if (error.message.includes("No encontrado") || error.message.includes("No es un alumno")) {
+            return handleErrorClient(res, 404, error.message);
+        }
+        return handleErrorServer(res, 500, "Error interno al obtener los detalles.", error.message);
+    }
+}
