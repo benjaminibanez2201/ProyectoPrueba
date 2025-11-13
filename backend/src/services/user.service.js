@@ -49,9 +49,13 @@ export async function deleteUser(id) {
   return await userRepository.remove(user);
 }
 
-//para buscar los usarios alumnos
+//para buscar los usarios alumnos (¡ESTA ES LA FUNCIÓN ARREGLADA!)
 export async function findAlumnos() {
-  return await userRepository.find({ where: { role: 'alumno' }, select: ['id', 'name', 'email', 'tipo_practica'] });
+  // Le decimos a TypeORM que cargue la relación
+  return await userRepository.find({ 
+    where: { role: 'alumno' }, 
+    relations: ['practicasComoAlumno'] // <-- ¡ESTE ES EL ARREGLO!
+  });
 }
 
 // para obtener los detalles completos de un alumno por su ID
