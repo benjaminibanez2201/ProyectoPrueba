@@ -25,7 +25,7 @@ export const validarTokenEmpresa = async (req, res, next) => {
       return handleErrorClient(res, 403, "El token de empresa ha expirado.");
     }
 
-    // ✅ Guardamos el id del alumno vinculado al token
+    // Guardamos el id del alumno vinculado al token
     req.alumnoId = registro.alumnoId;
     req.tokenEmpresa = registro;
     next();

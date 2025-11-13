@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../services/auth.service';
 import { showErrorAlert, showSuccessAlert } from '../helpers/sweetAlert.js';
+import { useAuth } from '../context/AuthContext'; // <-- 1. IMPORTAR useAuth
 
 const Login = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const { loginContext } = useAuth(); // <-- 2. OBTENER LA FUNCIÓN DEL CONTEXTO
 
     const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,19 +19,22 @@ const Login = () => {
       if (response.status === 'Success') {
         showSuccessAlert('¡Bienvenido!', 'Inicio de sesión correcto');
         
-        //obtiene el rol del backend
-        const userRole = response.data.user.role;
+        // --- LÓGICA ACTUALIZADA ---
+        // Obtenemos el usuario y el token de la respuesta
+        const userData = response.data.user;
+        const token = response.data.token; 
 
-        //redirige al usuario según rol
-        if (userRole === 'alumno') {
-          navigate('/home-alumno'); 
-        } else if (userRole === 'coordinador') {
-          navigate('/home-coordinador'); 
-        } else {
-          navigate('/home');
+        if (!userData || !token) {
+           throw new Error("La respuesta del login no incluye usuario o token.");
         }
+
+        // 4. GUARDAMOS EL USUARIO EN EL CONTEXTO
+        loginContext(userData, token);
+
+        // 5. REDIRIGIMOS A UNA SOLA RUTA
+        navigate('/panel'); 
+        
       } else {
-        //muestra el error que vino del backend
         showErrorAlert('Error', response.message || response.errorDetails);
       }
     } catch (error) {
@@ -38,6 +43,7 @@ const Login = () => {
     }
   };
 
+  // ... (Tu JSX de return es perfecto, no cambia nada)
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 w-full max-w-md transform transition-all hover:scale-105">
