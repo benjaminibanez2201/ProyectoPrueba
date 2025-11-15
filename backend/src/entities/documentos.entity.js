@@ -1,15 +1,15 @@
 import { EntitySchema } from "typeorm";
 
 export const DocumentosPractica = new EntitySchema({
-    name: "DocumentoPractica", // Nombre del objeto en TypeORM
-    tableName: "documentos_practicas", // Nombre de la tabla en la BDD
+    name: "DocumentoPractica", 
+    tableName: "documentos_practicas", 
     columns: {
         id: {
             primary: true,
             type: "int",
             generated: "increment",
         },
-        tipo: { // puede ser 'Informe', 'Bitácora', 'Evaluación', 'Formulario', etc.
+        tipo: { // 'Informe', 'Bitácora', 'Evaluación', 'Formulario', etc.
             type: "varchar",
             length: 50,
             nullable: false,
@@ -38,6 +38,7 @@ export const DocumentosPractica = new EntitySchema({
             type: "many-to-one",
             joinColumn: { name: "practicaId" }, 
             inverseSide: "documentos", 
+            nullable: false,
         },
     }
 });
