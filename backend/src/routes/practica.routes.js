@@ -8,6 +8,9 @@ const controller = new PracticaController();
 // Coordinador: puede ver todas las prácticas
 router.get("/", authMiddleware(["coordinador"]), controller.getAll);
 
+// Esta ruta permite al alumno logueado pedir solo sus datos
+router.get("/my-practice", authMiddleware(["alumno"]), controller.getMyPractica);
+
 // Coordinador, alumno o empresa pueden ver una práctica específica (si corresponde)
 router.get("/:id", authMiddleware(["coordinador", "alumno", "empresa"]), controller.getById);
 
@@ -25,5 +28,7 @@ router.patch("/:id/estado", authMiddleware(["coordinador", "empresa"]), controll
 
 // Coordinador: cerrar práctica definitivamente
 router.patch("/:id/cerrar", authMiddleware(["coordinador"]), controller.cerrarPractica);
+
+
 
 export default router;

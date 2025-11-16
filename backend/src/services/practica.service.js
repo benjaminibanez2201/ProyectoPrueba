@@ -42,3 +42,13 @@ export async function deletePractica(id) {
   const practica = await findPracticaById(id);
   return await practicaRepository.remove(practica);
 }
+
+//Buscar la practica del alumno por su id de usuario
+export async function findPracticaByStudentId(studentId) {
+  const practica = await practicaRepository.findOne({
+    where: {
+      student: { id: studentId } // Busca la práctica donde el 'student' tenga este 'id'
+    }
+  });
+  return practica; // Devuelve la práctica encontrada o 'null' si no la encuentra
+}

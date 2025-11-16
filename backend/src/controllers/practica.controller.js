@@ -4,6 +4,7 @@ import {
   createPractica,
   updatePractica,
   deletePractica,
+  findPracticaByStudentId,
 } from "../services/practica.service.js";
 
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
@@ -15,6 +16,25 @@ export class PracticaController {
       handleSuccess(res, 200, "Prácticas obtenidas correctamente", practicas);
     } catch (error) {
       handleErrorServer(res, 500, "Error al obtener prácticas", error.message);
+    }
+  }
+
+  async getMyPractica(req, res) {
+    try {
+      // req.user.id viene del token (authMiddleware)
+      const studentId = req.user.id; 
+      
+      const practica = await findPracticaByStudentId(studentId);
+      
+      // Es normal que un alumno no tenga práctica, no es un error
+      if (!practica) {
+        return handleSuccess(res, 200, "El alumno aún no tiene una práctica inscrita", null);
+      }
+      
+      handleSuccess(res, 200, "Práctica del alumno obtenida", practica);
+
+    } catch (error) {
+      handleErrorServer(res, 500, "Error al obtener la práctica del alumno", error.message);
     }
   }
 

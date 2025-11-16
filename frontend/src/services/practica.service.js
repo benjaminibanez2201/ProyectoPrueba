@@ -42,5 +42,16 @@ export const getPracticas = async () => {
   }
 };
 
+//llama al endpoint GET /practicas/my-practice del backend para obtener a el alumno logueado
+export const getMyPractica = async () => {
+  try {
+    const response = await instance.get('/practicas/my-practice');
+    return response.data.data; 
+  } catch (error) {
+    console.error('Error al obtener mi práctica:', error);
+    throw error.response?.data || error;
+  }
+};
+
 // (Podríamos añadir más funciones aquí en el futuro,
 // como updateEstado, etc.)
