@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { register } from "../services/auth.service";
 import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert.js";
+import { CheckCircle, XCircle } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,6 +19,24 @@ const Register = () => {
   // ojo de la confirmación (NUEVO)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  //para validacion de contraseña
+  const [validationState, setValidationState] = useState({
+    minLength: false,
+    uppercase: false,
+    number: false,
+  });
+
+  useEffect(() => {
+    const password = formData.password;
+    
+    // Revisa las reglas y actualiza el estado de validación
+    setValidationState({
+      minLength: password.length >= 6,
+      uppercase: /[A-Z]/.test(password),
+      number: /[0-9]/.test(password),
+    });
+  }, [formData.password]);
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevFormData) => {
@@ -75,6 +94,18 @@ const Register = () => {
     }
   };
 
+  // (Esto es solo para no repetir código HTML)
+  const ValidationCheck = ({ isMet, text }) => (
+    <li className={`flex items-center text-sm ${isMet ? 'text-green-600' : 'text-gray-500'}`}>
+      {isMet ? (
+        <CheckCircle size={16} className="mr-2 flex-shrink-0" />
+      ) : (
+        <XCircle size={16} className="mr-2 flex-shrink-0" />
+      )}
+      {text}
+    </li>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 w-full max-w-md transform transition-all hover:scale-105">
@@ -123,36 +154,41 @@ const Register = () => {
             />
           </div>
 
-          {/* --- CAMPO CONTRASEÑA (CON "OJO") --- */}
+          {/* --- CAMPO CONTRASEÑA (CON VALIDADOR) --- */}
           <div className="space-y-2">
-            <label
-              htmlFor="password"
-              className="block text-sm font-semibold text-gray-700"
-            >
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
               Contraseña
             </label>
-            {/* Contenedor relativo para el botón del ojo */}
             <div className="relative">
+              {/* Input y botón del ojo */}
               <input
-                type={showPassword ? "text" : "password"} // <-- Lógica de visibilidad
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="**********"
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-300 pr-10" // <-- pr-10 (padding) para el ojo
+                type={showPassword ? "text" : "password"} 
+                id="password" name="password"
+                value={formData.password} onChange={handleChange}
+                placeholder="**********" required
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-300 pr-10"
               />
               <button
-                type="button" // Previene que el formulario se envíe
-                onClick={() => setShowPassword(!showPassword)} // Lógica del toggle
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)} 
                 className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-blue-600"
               >
-                {/* Cambia el emoji basado en el estado */}
-                {showPassword ? "🙈" : "👁️"}
+                {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
+
+            {/* LISTA DE VALIDACIÓN */}
+            {/* Solo se muestra si el usuario ha empezado a escribir */}
+            {formData.password.length > 0 && (
+              <ul className="mt-2 space-y-1 pl-1">
+                <ValidationCheck isMet={validationState.minLength} text="Mínimo 6 caracteres" />
+                <ValidationCheck isMet={validationState.uppercase} text="Al menos una mayúscula (A-Z)" />
+                <ValidationCheck isMet={validationState.number} text="Al menos un número (0-9)" />
+              </ul>
+            )}
           </div>
+
+          
 
           {/* --- CAMPO CONFIRMAR CONTRASEÑA (CORREGIDO) --- */}
           <div className="space-y-2">
@@ -164,7 +200,7 @@ const Register = () => {
             </label>
             <div className="relative">
               <input
-                type={showConfirmPassword ? "text" : "password"} // <-- ARREGLADO
+                type={showConfirmPassword ? "text" : "password"} //ARREGLADO
                 id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
@@ -175,10 +211,10 @@ const Register = () => {
               />
               <button
                 type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)} // <-- ARREGLADO
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)} //ARREGLADO
                 className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-blue-600"
               >
-                {showConfirmPassword ? "🙈" : "👁️"} {/* <-- ARREGLADO */}
+                {showConfirmPassword ? "🙈" : "👁️"} {/* ARREGLADO */}
               </button>
             </div>
           </div>
