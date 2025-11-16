@@ -72,10 +72,7 @@ export const getDetallesAlumnos = async (userId, rol) => {
             where: { id: userId },
             relations: [
                 "practicasComoAlumno",
-                "practicasComoAlumno.formularios",
-                "practicasComoAlumno.bitacoras",
-                "practicasComoAlumno.evaluaciones",
-                "practicasComoAlumno.informes"
+                "practicasComoAlumno.documentos",
             ],
         });
 

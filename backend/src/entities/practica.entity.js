@@ -55,5 +55,10 @@ export const Practica = new EntitySchema({
       eager: true,
       nullable: true,
     },
+    documentos: { 
+        type: "one-to-many",
+        target: "DocumentoPractica", 
+        inverseSide: "practica", 
+    },
   },
 });

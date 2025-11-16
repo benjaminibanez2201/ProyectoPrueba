@@ -1,4 +1,4 @@
-import { findAlumnos } from "../services/user.service.js";
+import { getDetallesAlumnos, findAlumnos } from "../services/user.service.js";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 
 export class NotasController {
