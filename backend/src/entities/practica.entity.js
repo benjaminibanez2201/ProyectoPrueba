@@ -1,5 +1,6 @@
 import { EntitySchema } from "typeorm";
 import { User } from "./user.entity.js";
+import { EmpresaToken } from "./empresaToken.entity.js";
 
 export const Practica = new EntitySchema({
   name: "Practica",
@@ -54,6 +55,13 @@ export const Practica = new EntitySchema({
       joinColumn: { name: "empresa_id" },
       eager: true,
       nullable: true,
+    },
+    empresaToken: {
+      type: "one-to-one",
+      target: "EmpresaToken", // Apunta a tu entidad
+      inverseSide: "practica", // El nombre del campo en EmpresaToken.entity.js
+      nullable: true,
+      eager: true, // ¡La cargamos siempre!
     },
   },
 });
