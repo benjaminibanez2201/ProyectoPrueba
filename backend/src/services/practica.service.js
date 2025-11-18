@@ -93,7 +93,7 @@ export async function createPostulacion(data, studentId) {
   return practicaCompleta;
 }
 
-// Eliminar una práctica (No cambia)
+// Eliminar una práctica 
 export async function deletePractica(id) {
   const practica = await findPracticaById(id);
   return await practicaRepository.remove(practica);
