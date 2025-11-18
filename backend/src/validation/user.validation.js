@@ -12,8 +12,8 @@ export const registerValidationSchema = yup.object({
   password: yup
     .string()
     .min(6, "La contraseña debe tener al menos 6 caracteres")
-    .matches(/[A-Za-z]/, "La contraseña debe contener al menos una letra")
     .matches(/[A-Z]/, "La contraseña debe contener al menos una mayúscula")
+    .matches(/[0-9]/, "La contraseña debe contener al menos un número")
     .required("La contraseña es obligatoria"),
   role: yup
     .string()

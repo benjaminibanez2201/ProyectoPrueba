@@ -65,6 +65,10 @@ Generar token de empresa (solo coordinador): POST /api/empresa/generar-token
 
 Acceso de empresa con token: GET /api/empresa/ver-formulario?token=<TOKEN>
 
+Ver listado de alumnos (solo coordinador): GET /api/users/alumnos
+
+Ver prácticas y documentos por alumno (solo coordinador): GET /api/users/alumnos/<id_alumno>/detalles
+
 Estructura del proyecto
 bash
 Copiar código

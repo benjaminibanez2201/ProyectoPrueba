@@ -1,3 +1,4 @@
+
 import { EntitySchema } from "typeorm";
 import { User } from "./user.entity.js";
 import { EmpresaToken } from "./empresaToken.entity.js";
@@ -62,6 +63,11 @@ export const Practica = new EntitySchema({
       inverseSide: "practica", // El nombre del campo en EmpresaToken.entity.js
       nullable: true,
       eager: true, // ¡La cargamos siempre!
+    },
+    documentos: { 
+        type: "one-to-many",
+        target: "DocumentoPractica", 
+        inverseSide: "practica", 
     },
   },
 });

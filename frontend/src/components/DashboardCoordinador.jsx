@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo} from "react";
+import { CSVLink } from "react-csv";
 import { Users, Key, ClipboardList, Eye, Edit } from "lucide-react";
 import { getAlumnos } from "../services/user.service.js";
 import { showErrorAlert } from "../helpers/sweetAlert.js";
@@ -85,6 +86,39 @@ const DashboardCoordinador = ({ user }) => {
     console.log("Editar estado del ALUMNO (o su práctica):", alumno.id);
   };
 
+  // ENCABEZADOS PARA EL CSV ---
+  // El 'label' es lo que ve el usuario en el Excel.
+  // El 'key' es la clave del objeto de datos que crearemos.
+  const headers = [
+    { label: "Nombre Alumno", key: "name" },
+    { label: "Correo Institucional", key: "email" },
+    { label: "Tipo Práctica", key: "tipo_practica" },
+    { label: "Estado Práctica", key: "estado" }
+  ];
+
+  // --- 3. PREPARAMOS LOS DATOS PARA EXPORTAR ---
+  // Usamos useMemo para que esto no se recalcule en cada render,
+  // solo cuando los alumnos filtrados cambien
+  const dataParaExportar = useMemo(() => {
+    // Mapeamos los datos filtrados para "aplanarlos"
+    return alumnosFiltrados.map(alumno => {
+      // Replicamos la lógica del 'EstadoBadge' para obtener el texto del estado
+      const practica = alumno.practicasComoAlumno?.[0];
+      let estadoTexto = 'Pendiente (Sin Inscribir)'; // Default
+      if (practica) {
+        estadoTexto = practica.estado.charAt(0).toUpperCase() + practica.estado.slice(1).replace('_', ' ');
+      }
+      
+      // Devolvemos un objeto simple que coincide con los 'keys' de los headers
+      return {
+        name: alumno.name,
+        email: alumno.email,
+        tipo_practica: alumno.tipo_practica || 'N/A',
+        estado: estadoTexto
+      };
+    });
+  }, [alumnosFiltrados]); // Se actualiza solo si 'alumnosFiltrados' cambia
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
@@ -151,26 +185,42 @@ const DashboardCoordinador = ({ user }) => {
               Gestión de Alumnos (RF2)
             </h3>
             
-            {/* 7. El Filtro (ahora cuenta alumnos) */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              <button 
-                onClick={() => setFilter('todas')}
-                className={`py-2 px-4 rounded-lg font-medium ${filter === 'todas' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+            {/* --- 4. SECCIÓN DE FILTROS Y EXPORTAR (ACTUALIZADA) --- */}
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+              
+              {/* Contenedor de Filtros (Izquierda) */}
+              <div className="flex flex-wrap gap-2">
+                <button 
+                  onClick={() => setFilter('todas')}
+                  className={`py-2 px-4 rounded-lg font-medium ${filter === 'todas' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                >
+                  Todos ({alumnosFiltrados.length})
+                </button>
+                <button 
+                  onClick={() => setFilter('p1')}
+                  className={`py-2 px-4 rounded-lg font-medium ${filter === 'p1' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                >
+                  Profesional I ({alumnos.filter(a => a.tipo_practica === 'Profesional I').length})
+                </button>
+                <button 
+                  onClick={() => setFilter('p2')}
+                  className={`py-2 px-4 rounded-lg font-medium ${filter === 'p2' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                >
+                  Profesional II ({alumnos.filter(a => a.tipo_practica === 'Profesional II').length})
+                </button>
+              </div>
+
+              {/* Botón de Exportar (Derecha) */}
+              <CSVLink
+                data={dataParaExportar}
+                headers={headers}
+                filename={"listado_alumnos_practica.csv"}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 w-full sm:w-auto"
+                separator={";"}
+                target="_blank"
               >
-                Todos ({alumnosFiltrados.length})
-              </button>
-              <button 
-                onClick={() => setFilter('p1')}
-                className={`py-2 px-4 rounded-lg font-medium ${filter === 'p1' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-              >
-                Profesional I ({alumnos.filter(a => a.tipo_practica === 'Profesional I').length})
-              </button>
-              <button 
-                onClick={() => setFilter('p2')}
-                className={`py-2 px-4 rounded-lg font-medium ${filter === 'p2' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-              >
-                Profesional II ({alumnos.filter(a => a.tipo_practica === 'Profesional II').length})
-              </button>
+                Exportar a CSV
+              </CSVLink>
             </div>
 
             {/* 8. La Tabla (ahora mapea ALUMNOS) */}
