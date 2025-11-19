@@ -8,34 +8,8 @@ import instance from './root.service.js'; // 1. Importamos tu Axios (root.servic
  */
 export const getPracticas = async () => {
   try {
-    // 2. Usamos 'instance' para llamar a la ruta
-    // Tu baseURL en root.service.js es '/api'
-    // Tu ruta en practica.routes.js es '/'
-    // Por lo tanto, la URL final es '/api' + '/' = '/api'
-    // ... ¡Espera! Eso está mal.
-    //
-    // Déjame revisar...
-    // root.service.js -> baseURL: '/api'
-    // practica.routes.js -> router.get("/", ..., controller.getAll);
-    //
-    // Para que esto funcione, tu archivo 'index.js' (o app.js) del backend
-    // debe tener:
-    // app.use('/api/practicas', practicaRoutes);
-    //
-    // Si es así, la URL correcta a llamar es: '/practicas'
-    // (Axios automáticamente le pondrá el /api)
-
     const response = await instance.get('/practicas');
-
-    // 3. ¡ARREGLO DEL "DOBLE DATA"!
-    // Tu controller (el que me mostraste) envía:
-    // handleSuccess(..., practicas)
-    // Tu handleSuccess (sabemos por el login) lo envuelve en 'data':
-    // { status: 'Success', data: [ ...practicas... ] }
-    //
-    // Por eso, devolvemos response.data.data
     return response.data.data;
-    
   } catch (error) {
     console.error('Error al obtener prácticas:', error);
     throw error.response.data || error.message;
@@ -46,7 +20,7 @@ export const getPracticas = async () => {
 export const getMyPractica = async () => {
   try {
     const response = await instance.get('/practicas/my-practice');
-    return response.data.data; 
+    return response.data.data;
   } catch (error) {
     console.error('Error al obtener mi práctica:', error);
     throw error.response?.data || error;
@@ -55,3 +29,23 @@ export const getMyPractica = async () => {
 
 // (Podríamos añadir más funciones aquí en el futuro,
 // como updateEstado, etc.)
+
+/**
+ * Llama al endpoint POST /practicas/postular del backend
+ * para crear la postulación del alumno.
+ * @param {object} data - Los datos del formulario
+ */
+export const postularPractica = async (data) => {
+  try {
+    // 1. Llama al backend con los datos del formulario
+    const response = await instance.post('/practicas/postular', data);
+    
+    // 2. Devuelve la nueva práctica creada (con el token)
+    return response.data.data; 
+    
+  } catch (error) {
+    console.error('Error al postular práctica:', error);
+    // 'throw' es importante para que el formulario sepa que falló
+    throw error.response?.data || error; 
+  }
+};
