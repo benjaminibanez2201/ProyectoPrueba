@@ -4,7 +4,7 @@ export function showErrorAlert(title, text) {
   Swal.fire({
     icon: 'error',
     title: title,
-    text: text,
+    html: text,
     confirmButtonText: 'Aceptar',
     confirmButtonColor: '#d33'
   });

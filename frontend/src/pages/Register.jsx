@@ -83,7 +83,18 @@ const Register = () => {
           navigate("/login");
         }, 1500);
       } else {
-        showErrorAlert("Error", response.message || response.errorDetails);
+          // 1. Tomamos la lista de errores del backend 
+         const errorList = response.errors; 
+
+        if (errorList && Array.isArray(errorList)) {
+          // 2. Unimos todos los errores en una sola cadena con saltos de línea 
+         const formattedErrors = errorList.join('<br/>');
+        
+         // 3. Mostramos la lista completa al usuario
+          showErrorAlert('Error de Validación', formattedErrors);
+        } else {
+          showErrorAlert('Error', response.message || 'Error desconocido.');
+        }
       }
     } catch (error) {
       console.error("Error en el registro:", error);
