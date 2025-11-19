@@ -17,6 +17,9 @@ router.get("/:id", authMiddleware(["coordinador", "alumno", "empresa"]), control
 // Coordinador: crea una práctica
 router.post("/", authMiddleware(["coordinador"]), controller.create);
 
+// Alumno: postula a una práctica (RF13)
+router.post("/postular", authMiddleware(["alumno"]), controller.postularPractica);
+
 // Coordinador o empresa pueden actualizar una práctica (estado, datos, etc.)
 router.put("/:id", authMiddleware(["coordinador", "empresa"]), controller.update);
 

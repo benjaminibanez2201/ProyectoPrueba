@@ -5,6 +5,7 @@ import {
   updatePractica,
   deletePractica,
   findPracticaByStudentId,
+  createPostulacion,
 } from "../services/practica.service.js";
 
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
@@ -35,6 +36,28 @@ export class PracticaController {
 
     } catch (error) {
       handleErrorServer(res, 500, "Error al obtener la práctica del alumno", error.message);
+    }
+  }
+  async postularPractica(req, res) {
+    try {
+      const studentId = req.user.id; // ID del alumno logueado
+      const data = req.body; // Datos del formulario (nombreEmpresa, etc.)
+
+      // Validamos datos (simple)
+      if (!data.nombreEmpresa || !data.emailEmpresa || !data.nombreRepresentante) {
+        return handleErrorClient(res, 400, "Faltan datos de la empresa (nombre, email y representante)");
+      }
+      
+      const nuevaPractica = await createPostulacion(data, studentId);
+      
+      handleSuccess(res, 201, "Postulación enviada. El token se ha generado.", nuevaPractica);
+
+    } catch (error) {
+      // Manejamos el error de "práctica duplicada"
+      if (error.message.includes("Ya tienes una postulación")) {
+        return handleErrorClient(res, 409, error.message); // 409 Conflict
+      }
+      handleErrorServer(res, 500, "Error al crear la postulación", error.message);
     }
   }
 
