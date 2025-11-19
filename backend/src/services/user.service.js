@@ -21,7 +21,15 @@ export async function createUser(data) {
     tipo_practica: data.tipo_practica || null,//como en el req puse tipo de practica
   });
 
-  return await userRepository.save(newUser);
+  try {
+    return await userRepository.save(newUser); 
+  } catch (error) {
+    if (error.code === '23505') { 
+      throw new Error("El correo ya está registrado."); 
+    }
+    throw error; 
+  }
+
 }
 
 export async function findUserByEmail(email) {

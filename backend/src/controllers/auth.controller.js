@@ -1,5 +1,4 @@
 import { registerUser,loginUser } from "../services/auth.service.js";
-import { createUser } from "../services/user.service.js";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 
 export async function login(req, res) {
@@ -30,11 +29,12 @@ export async function register(req, res) {
 
     handleSuccess(res, 201, "Usuario registrado exitosamente", newUser);
   } catch (error) {
-    //si falla registerUser
-    if (error.code === "El correo ya se encuentra registrado") { 
-      handleErrorClient(res, 409, error.message);
-    } else {
-      handleErrorServer(res, 500, "Error interno del servidor", error.message);
+    // 1. Verificar si el error es por correo duplicado
+    if (error.message && error.message.includes("El correo ya está registrado.")) { 
+      // Si se encuentra, devolvemos un 409 (Conflict)
+      return handleErrorClient(res, 409, error.message);
+    }else {
+       return handleErrorServer(res, 500, "Error interno del servidor", error.message);
     }
   }
 }
