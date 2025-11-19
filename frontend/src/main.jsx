@@ -6,6 +6,7 @@ import Panel from './pages/Panel';
 import Error404 from '@pages/Error404';
 import Root from '@pages/Root';
 import Register from '@pages/Register';
+import Access from '@pages/Access';
 import ProtectedRoute from '@components/ProtectedRoute';
 import '@styles/styles.css';
 
@@ -31,7 +32,11 @@ const router = createBrowserRouter([
         path: '/register',
         element: <Register />
       },
-         {
+      {
+        path: '/empresa/acceso/:token',
+        element: <Access />
+      },
+      {
         path: '/panel',
         element: ( <ProtectedRoute>
           <Panel />

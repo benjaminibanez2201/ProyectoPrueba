@@ -1,4 +1,4 @@
-import { AppDataSource } from "../config/configDb";
+import { AppDataSource } from "../config/configDb.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
 
 export const validarTokenEmpresa = async (tokenAcceso) => {
@@ -16,6 +16,10 @@ export const validarTokenEmpresa = async (tokenAcceso) => {
     }
     if (tokenData.expiryDate < new Date()) {
         throw new Error("Token expirado");
+    }
+    if (!tokenData.practica) {
+        // Esto cubre el caso donde el token existe, pero no está ligado a una práctica activa.
+        throw new Error("El token no está asociado a una práctica válida.");
     }
     return tokenData;
 }
