@@ -2,13 +2,17 @@ import React, { useState } from "react";
 import { Upload, FileText } from "lucide-react";
 import { uploadDocumento } from "../services/documento.service";
 import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert";
+import { useLocation, useNavigate } from 'react-router-dom'; 
 
 const SubirDocumento = () => {
   //estados para manejar el formulario
   const [file, setFile] = useState(null);
   const [tipo, setTipo] = useState("");
-  const [practicaId, setPracticaId] = useState("1"); //por defecto para probar, luego vendrá automact
   const [ isUploading, setIsUploading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const initialId = location.state?.practicaId || '';
+  const [practicaId, setPracticaId] = useState(initialId); //por defecto para probar, luego vendrá automact
 
   //manejo de selccion de archivo
   const handleFileChange = (e) => {
@@ -32,8 +36,10 @@ const SubirDocumento = () => {
       const response = await uploadDocumento(file, tipo, practicaId); //llamar al servicio para subir
       if (response.status === "Success") {
         showSuccessAlert("Éxito", "Documento subido correctamente");
-        setFile(null); //limpiar el archivo seleccionado
-        setTipo(""); //limpiar el tipo seleccionado
+        // Esperamos 2 segundos y volvemos al Dashboard automáticamente
+        setTimeout(() => {
+          navigate('/panel'); 
+        }, 2000);
       } else {
         showErrorAlert(
           "Error",
@@ -49,22 +55,22 @@ const SubirDocumento = () => {
   };
 
   return (
-    <div className="min-h-screen bg-sky-200 flex justify-center pt-12 p-4">
+    <div className="min-h-screen bg-green-100 flex justify-center pt-12 p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-5xl border border-gray-100 h-full">
        {/* 3. CAMBIO: Usamos un Grid para poner el título a la izquierda y el form a la derecha (opcional, pero se ve genial en ancho) */}
         <div className="grid md:grid-cols-3 gap-8">
           
           {/* Columna Izquierda: Título e Instrucciones */}
           <div className="md:col-span-1 border-r border-gray-100 pr-4">
-            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
-              <Upload className="text-blue-600" size={32} />
+            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Upload className="text-green-600" size={32} />
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Subir Documento</h2>
             <p className="text-gray-500 text-sm mb-4">
               Sube aquí tus evidencias, informes finales o bitácoras semanales.
             </p>
             
-            <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
+            <div className="bg-green-50 p-4 rounded-lg text-sm text-green-800">
               <strong>Nota:</strong> Asegúrate de que el archivo no pese más de 10MB y esté en formato PDF o Word.
             </div>
           </div>
@@ -79,7 +85,7 @@ const SubirDocumento = () => {
                 <select
                   value={tipo}
                   onChange={(e) => setTipo(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition bg-white"
                   required
                 >
                   <option value="" disabled>Selecciona una opción...</option>
@@ -91,12 +97,13 @@ const SubirDocumento = () => {
 
               {/* --- SELECCIÓN DE ID PRÁCTICA --- */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">ID Práctica (Temporal)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">ID Práctica</label>
                 <input
                   type="number"
                   value={practicaId}
                   onChange={(e) => setPracticaId(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-50"
+                  readOnly
                 />
               </div>
 
@@ -116,7 +123,7 @@ const SubirDocumento = () => {
                       <>
                         <Upload className="mx-auto h-12 w-12 text-gray-400" />
                         <div className="flex text-sm text-gray-600 justify-center">
-                          <span className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                          <span className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-blue-500 focus-within:outline-none">
                             <span>Sube un archivo</span>
                           </span>
                           <p className="pl-1">o arrástralo aquí</p>
@@ -141,7 +148,7 @@ const SubirDocumento = () => {
                   type="submit"
                   disabled={isUploading}
                   className={`flex justify-center py-3 px-6 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white 
-                    ${isUploading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'}
+                    ${isUploading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-offset-2 focus:ring-green-500'}
                     transition-all duration-300`}
                 >
                   {isUploading ? 'Subiendo...' : 'Subir Documento'}

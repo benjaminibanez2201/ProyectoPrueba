@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Upload, FileText, Activity, Send } from "lucide-react";
 import { getMyPractica, postularPractica } from "../services/practica.service.js"; 
 import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert.js";
+import { useNavigate } from "react-router-dom";
+import DocumentsModal from "./DocumentsModal";
 
 // (EstadoBadge... no cambia)
 const EstadoBadge = ({ estado }) => {
@@ -120,9 +122,11 @@ const FormularioPostulacion = ({ onPostulacionExitosa }) => {
 
 
 const DashboardAlumno = ({ user }) => {
+  const navigate = useNavigate();
   const [practica, setPractica] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDocsModal, setShowDocsModal] = useState(false);
 
   const fetchMiPractica = useCallback(async () => {
     setIsLoading(true); 
@@ -179,11 +183,17 @@ const DashboardAlumno = ({ user }) => {
             <Upload className="text-green-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-green-800">Subir Documentos</h3>
             <p className="text-gray-600 text-sm mt-1">
-              Envía tus informes y certificados (RF8)
+              Envía tus informes y certificados (RF6)
             </p>
-            <button className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full">
-              Subir Archivos
-            </button>
+            <button 
+          onClick={() => {
+             // Navegamos a la ruta y le pasamos el ID de la práctica "escondido"
+             navigate('/upload-document', { state: { practicaId: practica.id } });
+          }}
+          className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full"
+        >
+          Subir Archivos
+        </button>
           </div>
           <div className="bg-green-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <FileText className="text-green-600 mb-3" size={32} />
@@ -191,6 +201,14 @@ const DashboardAlumno = ({ user }) => {
             <p className="text-gray-600 text-sm mt-1">
               Consulta tus entregas registradas.
             </p>
+            
+            {/* 3. BOTÓN ACTIVADO */}
+            <button 
+              onClick={() => setShowDocsModal(true)}
+              className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full"
+            >
+              Ver Mis Archivos
+            </button>
           </div>
         </div>
         
@@ -226,6 +244,17 @@ const DashboardAlumno = ({ user }) => {
         </p>
         
         {renderContent()}
+
+        {/* Modal de Documentos */}
+        {practica && (
+          <DocumentsModal
+            isOpen={showDocsModal}
+            onClose={() => setShowDocsModal(false)}
+            studentName="la práctica"
+            // Aquí pasamos los documentos de la práctica del alumno
+            documents={practica.documentos || []} 
+          />
+        )}
 
       </div>
     </div>
