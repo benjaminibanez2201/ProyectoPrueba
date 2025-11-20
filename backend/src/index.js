@@ -6,7 +6,7 @@ import { AppDataSource, connectDB } from "./config/configDb.js";
 // 1. Borramos la importación de 'routerApi' (¡ya no existe!)
 import router from "./routes/index.routes.js"; // 2. Solo importamos el router por defecto
 import path from "path";
-import { fileURLToPath } from "url";
+
 
 const app = express();
 app.use(express.json());
@@ -17,12 +17,11 @@ app.use(cors({
  credentials: true 
 }));
 
-//permite entrar a http://localhost:[puerto]/uploads/archivo.pdf
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
-
-// (Tu ruta de bienvenida "/" comentada está bien)
+// --- Configuración de Archivos Estáticos (RF6 / RF10) ---
+// Usamos process.cwd() para obtener la raíz del proyecto (donde corre el servidor)
+// y apuntamos a la carpeta 'uploads'.
+const uploadsPath = path.join(process.cwd(), 'uploads');
+app.use('/uploads', express.static(uploadsPath));
 
 // Inicializa la conexión a la base de datos
 connectDB()
@@ -37,6 +36,7 @@ connectDB()
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`Servidor iniciado en http://localhost:${PORT}`);
+    console.log(`📂 Carpeta de archivos pública: ${uploadsPath}`);
   });
  })
  .catch((error) => {

@@ -22,8 +22,11 @@ const storage = multer.diskStorage({
     },
     filename: (req, file, cb) =>{
         const timestamp = Date.now();
+        // Separamos la extensión para no borrar el punto
+        const ext = path.extname(file.originalname); 
+        const nameWithoutExt = path.basename(file.originalname, ext);
         const safeName = file.originalname.replace(/[\s\W]+/g, '_'); // Reemplaza espacios y caracteres raros
-        cb(null, `${timestamp}_${safeName}`);
+        cb(null, `${timestamp}_${safeName}${ext}`);
     }
 });
 
