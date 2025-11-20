@@ -18,3 +18,7 @@ backend/database.sqlite
 
 # Ignorar archivos de sistema operativo (macOS)
 .DS_Store
+
+#Ignorar archivos subidos (uploads)
+backend/uploads/
+uploads/

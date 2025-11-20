@@ -1,0 +1,158 @@
+import React, { useState } from "react";
+import { Upload, FileText } from "lucide-react";
+import { uploadDocumento } from "../services/documento.service";
+import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert";
+
+const SubirDocumento = () => {
+  //estados para manejar el formulario
+  const [file, setFile] = useState(null);
+  const [tipo, setTipo] = useState("");
+  const [practicaId, setPracticaId] = useState("1"); //por defecto para probar, luego vendrá automact
+  const [ isUploading, setIsUploading] = useState(false);
+
+  //manejo de selccion de archivo
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+  //manejo de envio del formulario
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!file) {
+      showErrorAlert("Error", "Debes seleccionar un archivo");
+      return;
+    }
+    if (!tipo) {
+      showErrorAlert("Error", "Debes seleccionar el tipo de documento");
+      return;
+    }
+    try {
+      setIsUploading(true); //indicar que se esta subiendo
+      const response = await uploadDocumento(file, tipo, practicaId); //llamar al servicio para subir
+      if (response.status === "Success") {
+        showSuccessAlert("Éxito", "Documento subido correctamente");
+        setFile(null); //limpiar el archivo seleccionado
+        setTipo(""); //limpiar el tipo seleccionado
+      } else {
+        showErrorAlert(
+          "Error",
+          response.message || "Error al subir el archivo"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      showErrorAlert("Error", "Ocurrió un error inesperado");
+    } finally {
+      setIsUploading(false); //indicar que ya no se esta subiendo
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-sky-200 flex justify-center pt-12 p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-5xl border border-gray-100 h-full">
+       {/* 3. CAMBIO: Usamos un Grid para poner el título a la izquierda y el form a la derecha (opcional, pero se ve genial en ancho) */}
+        <div className="grid md:grid-cols-3 gap-8">
+          
+          {/* Columna Izquierda: Título e Instrucciones */}
+          <div className="md:col-span-1 border-r border-gray-100 pr-4">
+            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Upload className="text-blue-600" size={32} />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Subir Documento</h2>
+            <p className="text-gray-500 text-sm mb-4">
+              Sube aquí tus evidencias, informes finales o bitácoras semanales.
+            </p>
+            
+            <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
+              <strong>Nota:</strong> Asegúrate de que el archivo no pese más de 10MB y esté en formato PDF o Word.
+            </div>
+          </div>
+
+          {/* Columna Derecha: El Formulario (ocupa 2 espacios) */}
+          <div className="md:col-span-2">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              {/* --- SELECCIÓN DE TIPO --- */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Documento</label>
+                <select
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white"
+                  required
+                >
+                  <option value="" disabled>Selecciona una opción...</option>
+                  <option value="Informe">Informe Final</option>
+                  <option value="Bitácora">Bitácora</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+
+              {/* --- SELECCIÓN DE ID PRÁCTICA --- */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">ID Práctica (Temporal)</label>
+                <input
+                  type="number"
+                  value={practicaId}
+                  onChange={(e) => setPracticaId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-50"
+                />
+              </div>
+
+              {/* --- INPUT DE ARCHIVO --- */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Archivo</label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:bg-gray-50 transition cursor-pointer relative">
+                  <div className="space-y-1 text-center">
+                    
+                    {file ? (
+                      <div className="flex flex-col items-center">
+                        <FileText className="mx-auto h-12 w-12 text-green-500" />
+                        <p className="text-sm text-gray-600 mt-2 font-medium">{file.name}</p>
+                        <p className="text-xs text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                        <div className="flex text-sm text-gray-600 justify-center">
+                          <span className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                            <span>Sube un archivo</span>
+                          </span>
+                          <p className="pl-1">o arrástralo aquí</p>
+                        </div>
+                        <p className="text-xs text-gray-500">PDF, DOCX, ZIP hasta 10MB</p>
+                      </>
+                    )}
+
+                    <input 
+                      type="file" 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.zip"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* --- BOTÓN DE SUBIR --- */}
+              <div className="flex justify-end"> {/* Alineamos el botón a la derecha */}
+                <button
+                  type="submit"
+                  disabled={isUploading}
+                  className={`flex justify-center py-3 px-6 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white 
+                    ${isUploading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'}
+                    transition-all duration-300`}
+                >
+                  {isUploading ? 'Subiendo...' : 'Subir Documento'}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+export default SubirDocumento;

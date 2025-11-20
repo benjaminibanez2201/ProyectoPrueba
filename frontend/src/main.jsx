@@ -8,6 +8,7 @@ import Root from '@pages/Root';
 import Register from '@pages/Register';
 import Access from '@pages/Access';
 import ProtectedRoute from '@components/ProtectedRoute';
+import SubirDocumento from  '@pages/SubirDocumento';
 import '@styles/styles.css';
 
 const router = createBrowserRouter([
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
       {
         path: '/home',
         element: <Home />
+      },
+      {
+        path: '/upload-document',
+        element: <SubirDocumento />
       }
     ]
   }
