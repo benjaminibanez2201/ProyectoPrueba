@@ -12,3 +12,11 @@ export async function createDocumentoArchivo(fileData, metadata) {
     });    
     return await documentoRepository.save(newDoc);
 }
+
+export async function getDocumentoById(id) {//buscar por id
+  return await documentoRepository.findOneBy({ id });
+}
+
+export async function deleteDocumento(id) {//eliminar registro de la bdd
+  return await documentoRepository.delete({ id });
+}

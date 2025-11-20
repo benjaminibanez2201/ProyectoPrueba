@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { uploadDocumento } from "../controllers/documento.controller.js";
+import { uploadDocumento,deleteDocumentoHandler } from "../controllers/documento.controller.js";
 import {checkAuth} from "../middleware/auth.middleware.js";
 import { uploadMiddleware } from "../middleware/upload.middleware.js";
 
@@ -10,4 +10,9 @@ const router = Router();
 //2. uploadMiddleware: manejar la subida del archivo
 //3. uploadDocumento: guarda info en la bd 
 router.post('/upload', [checkAuth, uploadMiddleware], uploadDocumento);
+
+// DELETE /api/documentos/:id
+// Borra un documento por su ID
+router.delete("/:id", checkAuth, deleteDocumentoHandler);
+
 export default router;
