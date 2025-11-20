@@ -1,8 +1,9 @@
 import React, { useState, useMemo} from "react";
 import { CSVLink } from "react-csv";
-import { Users, Key, ClipboardList, Eye, Edit } from "lucide-react";
+import { Users, Key, ClipboardList, Eye, Edit,FileText } from "lucide-react";
 import { getAlumnos } from "../services/user.service.js";
 import { showErrorAlert } from "../helpers/sweetAlert.js";
+import DocumentsModal from "./DocumentsModal";
 
 // Componente de insignia de estado (Actualizado para "Sin Práctica")
 const EstadoBadge = ({ practica }) => {
@@ -38,6 +39,7 @@ const DashboardCoordinador = ({ user }) => {
   const [error, setError] = useState(null);
   const [showTable, setShowTable] = useState(false);
   const [filter, setFilter] = useState('todas');
+  const [selectedStudentForDocs, setSelectedStudentForDocs] = useState(null);
 
   // 3. La función ahora llama a getAlumnos()
   const handleLoadAlumnos = async () => {
@@ -232,6 +234,7 @@ const DashboardCoordinador = ({ user }) => {
                     <th className="p-4 font-semibold text-blue-800">Email</th>
                     <th className="p-4 font-semibold text-blue-800">Tipo Práctica</th>
                     <th className="p-4 font-semibold text-blue-800">Estado (RF10)</th>
+                    <th className="p-4 font-semibold text-blue-800">Documentos</th>
                     <th className="p-4 font-semibold text-blue-800">Acciones</th>
                   </tr>
                 </thead>
@@ -247,6 +250,26 @@ const DashboardCoordinador = ({ user }) => {
                            Pasamos la *primera* práctica del array (si existe) */}
                         <EstadoBadge practica={alumno.practicasComoAlumno?.[0]} />
                       </td>
+                      {/* --- NUEVA CELDA DE DOCUMENTOS --- */}
+                      <td className="p-4">
+                        {(() => {
+                          const docs = alumno.practicasComoAlumno?.[0]?.documentos;
+                          if (docs && docs.length > 0) {
+                            return (
+                              <button
+                                // Simplemente guardamos el alumno en el estado. El Modal se abrirá solo.
+                                onClick={() => setSelectedStudentForDocs(alumno)}
+                                className="flex items-center gap-2 text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors font-medium text-xs"
+                              >
+                                <ClipboardList size={14} />
+                                Ver {docs.length} archivos
+                              </button>
+                            );
+                          }
+                          return <span className="text-gray-400 text-xs italic pl-2">Sin archivos</span>;
+                        })()}
+                      </td>
+                      {/* ------------hasta aquí lo del descraga de docs-------------------- */}
                       <td className="p-4 space-x-2">
                         <button 
                           onClick={() => handleVerPractica(alumno)}
@@ -281,6 +304,12 @@ const DashboardCoordinador = ({ user }) => {
         )}
 
       </div>
+        <DocumentsModal
+          isOpen={!!selectedStudentForDocs} // Es true si hay un alumno seleccionado
+          onClose={() => setSelectedStudentForDocs(null)} // Al cerrar, volvemos a null
+          studentName={selectedStudentForDocs?.name}
+          documents={selectedStudentForDocs?.practicasComoAlumno?.[0]?.documentos || []}
+        />
     </div>
   );
 };

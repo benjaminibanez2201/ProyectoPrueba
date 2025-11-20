@@ -62,7 +62,7 @@ export async function findAlumnos() {
   // Le decimos a TypeORM que cargue la relación
   return await userRepository.find({ 
     where: { role: 'alumno' }, 
-    relations: ['practicasComoAlumno'] // <-- ¡ESTE ES EL ARREGLO!
+    relations: ['practicasComoAlumno', 'practicasComoAlumno.documentos'] // le agrego la relación de documentos
   });
 }
 
