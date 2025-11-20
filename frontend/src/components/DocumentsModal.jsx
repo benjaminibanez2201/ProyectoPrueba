@@ -1,7 +1,7 @@
 import React from 'react';
-import { X, FileText, Download } from 'lucide-react';
+import { X, FileText, Download,Trash2 } from 'lucide-react';
 
-const DocumentsModal = ({ isOpen, onClose, studentName, documents }) => {
+const DocumentsModal = ({ isOpen, onClose, studentName, documents, onDelete }) => {
   if (!isOpen) return null;
 
   // URL Base para los links
@@ -59,6 +59,19 @@ const DocumentsModal = ({ isOpen, onClose, studentName, documents }) => {
                   <div className="text-gray-300 group-hover:text-blue-600 transition-colors">
                     <Download size={18} />
                   </div>
+                  {onDelete && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault(); // Evita que se abra el enlace de descarga
+                          e.stopPropagation();
+                          onDelete(doc.id); // Llamamos a la función
+                        }}
+                        className="p-1.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors z-10"
+                        title="Eliminar documento"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
                 </a>
               ))}
             </div>

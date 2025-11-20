@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react"; 
 import { Upload, FileText, Activity, Send } from "lucide-react";
 import { getMyPractica, postularPractica } from "../services/practica.service.js"; 
-import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert.js";
+import { showErrorAlert, showSuccessAlert,deleteDataAlert } from "../helpers/sweetAlert.js";
 import { useNavigate } from "react-router-dom";
 import DocumentsModal from "./DocumentsModal";
+import { deleteDocumento } from "../services/documento.service.js";
 
 // (EstadoBadge... no cambia)
 const EstadoBadge = ({ estado }) => {
@@ -148,6 +149,22 @@ const DashboardAlumno = ({ user }) => {
     fetchMiPractica();
   }, [fetchMiPractica]); 
 
+ // Función para manejar la eliminación
+  const handleDeleteDocumento = async (id) => {
+    deleteDataAlert(async () => {
+      try {
+        const response = await deleteDocumento(id);
+        if (response.status === 'Success') {
+          showSuccessAlert('Eliminado', 'El documento ha sido eliminado.');
+          fetchMiPractica(); // RECARGAR DATOS
+        } else {
+          showErrorAlert('Error', response.message);
+        }
+      } catch (error) {
+        showErrorAlert('Error', 'No se pudo eliminar el documento.');
+      }
+    });
+  };
 
   // --- Renderizado Condicional ---
   
@@ -253,6 +270,7 @@ const DashboardAlumno = ({ user }) => {
             studentName="la práctica"
             // Aquí pasamos los documentos de la práctica del alumno
             documents={practica.documentos || []} 
+            onDelete={handleDeleteDocumento}
           />
         )}
 

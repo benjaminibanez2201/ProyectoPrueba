@@ -26,3 +26,16 @@ export async function uploadDocumento(file, tipo, practicaId) {
         return error.response?.data || {status: 'Error', message: 'Error de conexión'};
     }
 }
+
+/**
+ * Elimina un documento por su ID
+ */
+export async function deleteDocumento(id) {
+  try {
+    const response = await axios.delete(`/documentos/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al eliminar documento:", error);
+    return error.response?.data || { status: "Error", message: "Error de conexión" };
+  }
+}
