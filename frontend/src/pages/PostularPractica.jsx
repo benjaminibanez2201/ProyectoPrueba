@@ -61,22 +61,19 @@ const PostularPractica = () => {
     }
   };
 
-  if (loading) return <div className="p-8 text-center">Cargando formulario...</div>;
-  if (!plantilla) return <div className="p-8 text-center text-red-500">Error al cargar la plantilla.</div>;
+if (loading) return <div className="p-12 text-center">Cargando formulario...</div>;
+  if (!plantilla) return <div className="p-12 text-center text-red-500">Error al cargar la plantilla.</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-blue-800 mb-2">{plantilla.titulo}</h1>
-        <p className="text-gray-600 mb-8">{plantilla.descripcion}</p>
-
-        {/* Renderizamos el formulario dinámico */}
-        <FormRender 
-          esquema={plantilla.esquema} 
-          valores={valoresIniciales} 
-          onSubmit={handleSubmit} 
-        />
-      </div>
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+      <FormRender 
+        esquema={plantilla.esquema} 
+        valores={valoresIniciales} 
+        onSubmit={handleSubmit}
+        userType="alumno"
+        titulo={plantilla.titulo} // <--- AQUÍ PASAMOS EL TÍTULO
+      />
+      
     </div>
   );
 };

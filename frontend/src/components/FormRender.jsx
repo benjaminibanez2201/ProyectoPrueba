@@ -1,6 +1,42 @@
 import React, { useState, useRef, useEffect } from "react"; // sacamos useState para 
 import { showErrorAlert } from "../helpers/sweetAlert.js";
-//Para el horario de alumno
+
+const DocumentHeader = () => {
+  // Rutas a las imágenes 
+  const logoIzquierdo = "/images/ubb.png"; 
+  const logoDerecho = "/images/Imagen5.png"; 
+
+  return (
+    <div className="flex flex-col md:flex-row justify-between items-center mb-8 pb-6 border-b-2 border-blue-800 gap-4 px-4">
+      {/* 1. Logo Izquierda (UBB) */}
+      <div className="w-24 md:w-32 flex justify-center items-center">
+        <img 
+          src={logoIzquierdo} 
+          alt="Logo UBB" 
+          className="w-full h-auto object-contain"
+          onError={(e) => e.target.style.display = 'none'} 
+        />
+      </div>
+
+      {/* 2. Texto Central */}
+      <div className="text-center flex-1">
+        <h2 className="text-sm md:text-base font-extrabold text-gray-900 uppercase tracking-wide leading-snug">
+          FACULTAD DE CIENCIAS EMPRESARIALES<br />ESCUELA INGENIERÍA CIVIL INFORMÁTICA
+        </h2>
+      </div>
+
+      {/* 3. Logo Derecha (Facultad) */}
+      <div className="w-26 md:w-36 flex justify-center items-center">
+        <img 
+          src={logoDerecho} 
+          alt="Logo Facultad" 
+          className="w-full h-auto object-contain"
+          onError={(e) => e.target.style.display = 'none'} 
+        />
+      </div>
+    </div>
+  );
+};
 const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
   const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
@@ -185,7 +221,7 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
 };
 
 // Componente que recibe un esquema JSON y renderiza el formulario dinámicamente.
-const FormRender = ({ esquema, valores = {}, onSubmit, readOnly = false, userType = "alumno" }) => {
+const FormRender = ({ esquema, valores = {}, onSubmit, readOnly = false, userType = "alumno", titulo }) => {
   const [respuestas, setRespuestas] = useState(valores); // Guardar las respuestas del usuario
   const canvasRefs = useRef({});// Referencias para los canvas de firma (HTML5 canvas nativo) - guardaremos algo como firmaAlumno: HTMLCanvasElement
   const [isDrawing, setIsDrawing] = useState(false); // false: no esta dibujando - cambia a true si se esta tocando el canvas
@@ -289,7 +325,7 @@ const renderField = (campo) => {
     if (userType === "empresa" && (fillBy === "alumno" || !fillBy)) {
       isReadOnly = true;
     }
-    
+
     let displayPlaceholder = placeholder;
     if (isReadOnly && !respuestas[id]) {
         displayPlaceholder = "(Campo reservado o de solo lectura)";
@@ -438,20 +474,36 @@ const renderField = (campo) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-1">
-      {esquema.map((campo) => renderField(campo))}
+    <div className="bg-white p-4 md:p-10 rounded-lg shadow-lg border border-gray-200 max-w-5xl mx-auto">
+      
+      {/* 1. CABECERA CON LOGOS */}
+      <DocumentHeader />
 
-      {!readOnly && (
-        <div className="mt-8 pt-6 border-t">
-          <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-all w-full md:w-auto shadow-md hover:shadow-lg"
-          >
-            Guardar Formulario
-          </button>
+      {/* 2. TÍTULO DEL DOCUMENTO (Aquí es donde lo querías) */}
+      {titulo && (
+        <div className="mb-8 text-center">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800 uppercase underline decoration-2 underline-offset-4">
+            {titulo}
+          </h1>
         </div>
       )}
-    </form>
+
+      {/* 3. FORMULARIO DINÁMICO */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {esquema && esquema.map((campo) => renderField(campo))}
+        
+        {!readOnly && (
+          <div className="mt-12 pt-6 border-t border-gray-200 flex justify-end">
+            <button
+              type="submit"
+              className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-3 px-8 rounded transition-all shadow-md hover:shadow-lg w-full md:w-auto flex items-center justify-center gap-2"
+            >
+              <span>Guardar Documento</span>
+            </button>
+          </div>
+        )}
+      </form>
+    </div>
   );
 };
 
