@@ -7,6 +7,7 @@ import Error404 from '@pages/Error404';
 import Root from '@pages/Root';
 import Register from '@pages/Register';
 import ProtectedRoute from '@components/ProtectedRoute';
+import PostularPractica from '@pages/PostularPractica';
 import '@styles/styles.css';
 
 const router = createBrowserRouter([
@@ -31,11 +32,19 @@ const router = createBrowserRouter([
         path: '/register',
         element: <Register />
       },
-         {
+      {
         path: '/panel',
         element: ( <ProtectedRoute>
           <Panel />
         </ProtectedRoute>
+        )
+      },
+      {
+        path: '/postular',
+        element: (
+          <ProtectedRoute>
+            <PostularPractica />
+          </ProtectedRoute>
         )
       },
       {

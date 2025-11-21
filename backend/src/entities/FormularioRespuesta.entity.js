@@ -1,5 +1,4 @@
 import { EntitySchema } from "typeorm";
-// Importamos las entidades con las que se relaciona
 import { Practica } from "./practica.entity.js";
 import { FormularioPlantilla } from "./FormularioPlantilla.entity.js";
 
@@ -12,8 +11,7 @@ export const FormularioRespuesta = new EntitySchema({
       type: "int",
       generated: "increment",
     },
-    // Aquí se guardan las respuestas del usuario
-    // Ej: { "p1": "Juan Perez", "p2": 7.0 }
+    // Aqui guardamos las respuestas del usuario
     datos: {
       type: "json",
       nullable: false,
@@ -29,18 +27,18 @@ export const FormularioRespuesta = new EntitySchema({
     },
     comentario_coordinador: {
       type: "text",
-      nullable: true, // Por si el coordinador quiere dar feedback
+      nullable: true, // Por si el coordinador quiere dar una retroalimentacion
     },
   },
   relations: {
-    // Relación con la Plantilla (¿Qué formulario respondió?)
+    // Relacion que indica que el formulario se respondió
     plantilla: {
       type: "many-to-one",
       target: "FormularioPlantilla",
       joinColumn: { name: "plantilla_id" },
       nullable: false,
     },
-    // Relación con la Práctica (¿De qué alumno es esto?)
+    // Relación que indica a que alumno pertenece la respuesta
     practica: {
       type: "many-to-one",
       target: "Practica",

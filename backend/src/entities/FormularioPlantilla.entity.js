@@ -7,12 +7,12 @@ export const FormularioPlantilla = new EntitySchema({
     id: {
       primary: true,
       type: "int",
-      generated: "increment",
+      generated: "increment",// para que vaya incrementando 
     },
     titulo: {
       type: "varchar",
       length: 200,
-      comment: "Ej: Evaluación de Empresa, Bitácora Semanal",
+      comment: "Evaluacion, Bitacora, Postulacion",
     },
     descripcion: {
       type: "text",
@@ -20,12 +20,11 @@ export const FormularioPlantilla = new EntitySchema({
     },
     tipo: {
       type: "enum",
-      // Agregamos los tipos específicos
+      // Tipos de platilla
       enum: ["postulacion", "bitacora", "evaluacion_pr1", "evaluacion_pr2"],
       unique: true, 
     },
-    // ¡EL CORAZÓN DEL SISTEMA!
-    // Aquí guardamos las preguntas, tipos de input, opciones, etc.
+    // Aqui se guardan las preguntas, tipos de input, opciones, etc.
     esquema: {
       type: "json", 
       nullable: false,

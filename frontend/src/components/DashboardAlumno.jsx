@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react"; 
-import { Upload, FileText, Activity, Send } from "lucide-react";
-import { getMyPractica, postularPractica } from "../services/practica.service.js"; 
-import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert.js";
+import { useNavigate } from "react-router-dom"; 
+import { Upload, FileText, Activity, Send, PlusCircle } from "lucide-react";
+import { getMyPractica } from "../services/practica.service.js"; 
 
-// (EstadoBadge... no cambia)
 const EstadoBadge = ({ estado }) => {
   let texto = 'Pendiente';
   if (estado) {
@@ -24,105 +23,10 @@ const EstadoBadge = ({ estado }) => {
   );
 };
 
-// --- COMPONENTE FormularioPostulacion ---
-const FormularioPostulacion = ({ onPostulacionExitosa }) => {
-  
-  const [nombreEmpresa, setNombreEmpresa] = useState("");
-  const [emailEmpresa, setEmailEmpresa] = useState("");
-  const [nombreRepresentante, setNombreRepresentante] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true); 
-
-    const data = {
-      nombreEmpresa,
-      emailEmpresa,
-      nombreRepresentante,
-    };
-
-    try {
-      // Llamamos al backend
-      const nuevaPractica = await postularPractica(data);
-      
-      // Mostramos el token (¡RF13 Manual!)
-      // Accedemos a nuevaPractica.empresaToken.token
-      const token = nuevaPractica.empresaToken?.token || "Token generado (revisa tu dashboard)";
-
-      showSuccessAlert(
-        "¡Postulación Enviada!",
-        `Tu token para la empresa es: ${token}`
-      );
-      
-      // Recargamos el dashboard
-      onPostulacionExitosa(); 
-
-    } catch (err) {
-      const errorMessage = err.message || "No se pudo enviar la postulación";
-      showErrorAlert("Error al postular", errorMessage);
-      setIsSubmitting(false); 
-    }
-  };
-
-  return (
-    <div className="mt-8 bg-green-50 p-6 rounded-xl shadow-inner border border-green-200">
-      <h3 className="text-2xl font-bold text-green-800 mb-4">
-        1. Inscribe tu Práctica (RF13)
-      </h3>
-      <p className="text-gray-600 mb-6">
-        Completa los datos de la empresa donde realizarás tu práctica.
-      </p>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre Empresa</label>
-          <input 
-            type="text" 
-            value={nombreEmpresa}
-            onChange={(e) => setNombreEmpresa(e.target.value)}
-            required 
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" 
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Email Contacto (Empresa)</label>
-          <input 
-            type="email" 
-            value={emailEmpresa}
-            onChange={(e) => setEmailEmpresa(e.target.value)}
-            required 
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" 
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre Contacto (Empresa)</label>
-          <input 
-            type="text" 
-            value={nombreRepresentante}
-            onChange={(e) => setNombreRepresentante(e.target.value)}
-            required 
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" 
-          />
-        </div>
-        <button 
-          type="submit"
-          disabled={isSubmitting} 
-          className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg w-full flex items-center justify-center gap-2 disabled:bg-gray-400"
-        >
-          <Send size={18} />
-          {isSubmitting ? "Enviando..." : "Enviar Postulación"}
-        </button>
-      </form>
-    </div>
-  );
-};
-
-
 const DashboardAlumno = ({ user }) => {
+  const navigate = useNavigate();
   const [practica, setPractica] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const fetchMiPractica = useCallback(async () => {
     setIsLoading(true); 
@@ -130,10 +34,8 @@ const DashboardAlumno = ({ user }) => {
       const miPractica = await getMyPractica(); 
       setPractica(miPractica); 
     } catch (err) {
-      // Ignoramos error 401 (logout)
       if (err.status !== 401) {
-         const errorMessage = err.message || "No se pudo cargar tu estado";
-         setError(errorMessage);
+         console.log("No se pudo cargar estado o no tiene práctica");
       }
     } finally {
       setIsLoading(false);
@@ -144,88 +46,105 @@ const DashboardAlumno = ({ user }) => {
     fetchMiPractica();
   }, [fetchMiPractica]); 
 
-
-  // --- Renderizado Condicional ---
-  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <p className="text-gray-600">Cargando tu información...</p>
+        <p className="text-gray-600">Cargando información...</p>
       </div>
     );
   }
-  // (Opcional: Podrías mostrar el error aquí si es crítico, 
-  // pero si no hay práctica, simplemente mostramos el formulario)
 
-  const renderContent = () => {
-    
-    // Si NO hay práctica, mostramos el formulario
-    if (!practica) {
-      return <FormularioPostulacion onPostulacionExitosa={fetchMiPractica} />;
-    }
-
-    // Si SÍ hay práctica, mostramos el dashboard
-    return (
-      <>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-8">
+      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-green-100">
+        
+        {/* HEADER DEL DASHBOARD */}
+        <div className="mb-8">
+          <h2 className="text-4xl font-extrabold text-green-700 mb-2">
+            Panel del Alumno
+          </h2>
+          <p className="text-gray-600">
+            Bienvenido, <span className="font-semibold">{user.name}</span>.
+            Gestiona tu proceso de práctica profesional aquí.
+          </p>
+        </div>
+        
+        {/* GRID DE TARJETAS (Siempre visible) */}
         <div className="grid md:grid-cols-3 gap-6">
-          <div className="bg-green-50 p-6 rounded-xl shadow-inner">
-            <Activity className="text-green-600 mb-3" size={32} />
-            <h3 className="text-lg font-bold text-green-800">Estado Actual</h3>
-            <div className="mt-2">
-              <EstadoBadge estado={practica.estado} />
+          
+          {/* TARJETA 1: ESTADO / INSCRIPCIÓN */}
+          <div className="bg-green-50 p-6 rounded-xl shadow-inner border border-green-100 flex flex-col justify-between h-full">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <Activity className="text-green-600" size={32} />
+                {/* Si no hay práctica, mostramos un icono de alerta o plus */}
+                {!practica && <PlusCircle className="text-blue-500" size={24} />}
+              </div>
+              <h3 className="text-lg font-bold text-green-800 mb-2">Estado Actual</h3>
+              
+              {/* AQUÍ ESTÁ LA LÓGICA CONDICIONAL DENTRO DE LA TARJETA */}
+              {practica ? (
+                <div className="mt-2">
+                  <EstadoBadge estado={practica.estado} />
+                  <p className="text-xs text-gray-500 mt-2">Tu práctica está activa.</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    No tienes ninguna práctica inscrita actualmente.
+                  </p>
+                  <button
+                    onClick={() => navigate("/postular")}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-all text-sm flex items-center justify-center gap-2"
+                  >
+                    <Send size={16} />
+                    Inscribir Práctica
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-          <div className="bg-green-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
+
+          {/* TARJETA 2: SUBIR DOCUMENTOS */}
+          <div className={`bg-green-50 p-6 rounded-xl shadow-inner border border-green-100 transition ${!practica ? 'opacity-60 grayscale' : 'hover:shadow-md'}`}>
             <Upload className="text-green-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-green-800">Subir Documentos</h3>
-            <p className="text-gray-600 text-sm mt-1">
-              Envía tus informes y certificados (RF8)
+            <p className="text-gray-600 text-sm mt-1 mb-4">
+              Envía tus informes y certificados (RF8).
             </p>
-            <button className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full">
+            <button 
+              disabled={!practica} // Deshabilitado si no hay práctica
+              className="mt-auto bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg w-full"
+            >
               Subir Archivos
             </button>
           </div>
-          <div className="bg-green-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
+
+          {/* TARJETA 3: HISTORIAL */}
+          <div className={`bg-green-50 p-6 rounded-xl shadow-inner border border-green-100 transition ${!practica ? 'opacity-60 grayscale' : 'hover:shadow-md'}`}>
             <FileText className="text-green-600 mb-3" size={32} />
-            <h3 className="text-lg font-bold text-green-800">Documentos Subidos</h3>
+            <h3 className="text-lg font-bold text-green-800">Documentos</h3>
             <p className="text-gray-600 text-sm mt-1">
               Consulta tus entregas registradas.
             </p>
           </div>
         </div>
         
-        {/* ¡BONUS! (RF13 Manual) Mostramos el token a la empresa */}
-        <div className="mt-8 bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-200">
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
-            Token para tu Empresa
-          </h3>
-          {/* ¡AQUÍ ESTÁ LA CORRECCIÓN! Era un </D>, ahora es un </p> */}
-          <p className="text-gray-600 mb-4">
-            Tu práctica está en estado: <span className="font-semibold">{practica.estado}</span>.
-            Si tu empresa necesita completar formularios, envíale este token:
-          </p>
-          
-          <p className="bg-gray-200 text-gray-900 font-mono text-lg p-4 rounded text-center break-all">
-            {practica.empresaToken?.token || "Token no disponible (contacta al soporte)"}
-          </p>
-        </div>
-      </>
-    );
-  };
-
-  
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-green-100">
-        <h2 className="text-4xl font-extrabold text-green-700 mb-2">
-          Panel del Alumno
-        </h2>
-        <p className="text-gray-600 mb-6">
-          Bienvenido, <span className="font-semibold">{user.name}</span>.
-          Aquí puedes seguir el progreso de tu práctica profesional.
-        </p>
-        
-        {renderContent()}
+        {/* SECCIÓN INFERIOR: TOKEN (Solo si hay práctica) */}
+        {practica && (
+          <div className="mt-8 bg-white p-6 rounded-xl shadow-sm border-2 border-dashed border-green-200">
+            <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
+              🎟️ Token para tu Empresa
+            </h3>
+            <p className="text-gray-600 mb-4 text-sm">
+              Copia este código y entrégaselo a tu supervisor. Él lo necesitará para ingresar al sistema y evaluarte.
+            </p>
+            
+            <div className="bg-gray-100 text-gray-800 font-mono text-lg p-4 rounded text-center border border-gray-300 select-all">
+              {practica.empresaToken?.token || "Token no disponible"}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

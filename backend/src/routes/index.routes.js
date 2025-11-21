@@ -4,6 +4,7 @@ import profileRoutes from "./profile.routes.js";
 import practicaRoutes from "./practica.routes.js";
 import userRoutes from "./user.routes.js";
 import empresaRoutes from "./empresa.routes.js";
+import formularioRoutes from "./formulario.routes.js";
 
 const router = Router();
 
@@ -13,6 +14,7 @@ router.use("/profile", profileRoutes);
 router.use("/practicas", practicaRoutes);
 router.use("/users", userRoutes);
 router.use("/empresa", empresaRoutes);
+router.use("/formularios", formularioRoutes);
 
 // Exportamos el router para que index.js lo use
 export default router;

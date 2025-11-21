@@ -19,6 +19,7 @@
     "react-csv": "^2.2.2",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
+    "react-signature-canvas": "^1.1.0-alpha.2",
     "sweetalert2": "^11.10.3"
   },
   "devDependencies": {

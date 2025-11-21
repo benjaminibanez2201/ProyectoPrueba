@@ -5,16 +5,17 @@ async function seedFormularios() {
   try {
     console.log("Iniciando Seeder de Formularios...");
     
-    // 1. Inicializamos la conexión (si no está iniciada)
+    // Inicializamos la conexion si esq no esta iniciada 
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
-
+    // (llave) Repositorio (la herramienta) para manipular la entidad FormularioPlantilla.
     const plantillaRepository = AppDataSource.getRepository(FormularioPlantilla);
 
-    // --- DEFINICIÓN DE PLANTILLAS POR DEFECTO ---
+    // Aqui definimos las plantillas por defecto
     
     const plantillasPorDefecto = [
+      // Formulario
       {
         titulo: "FORMULARIO POSTULACIÓN PRÁCTICA PROFESIONAL",
         descripcion: "Documento inicial para inscribir la práctica profesional.",
@@ -31,6 +32,7 @@ async function seedFormularios() {
             label: "Tipo de Practica",
             tipo: "select",
             options: ["Profesional 1", "Profesional 2"],
+            fillBy: "alumno",
             required: true
           },
           {
@@ -43,30 +45,35 @@ async function seedFormularios() {
             id: "nombre_alumno",
             label: "Nombre Completo",
             tipo: "text",
+            fillBy: "alumno",
             required: true
           },
           {
             id: "rut",
             label: "RUT",
             tipo: "text",
+            fillBy: "alumno",
             required: true
           },
           {
             id: "correo_alumno",
             label: "Correo Electrónico",
             tipo: "email",
+            fillBy: "alumno",
             required: true
           },
           {
             id: "direccion",
             label: "Dirección en la Ciudad",
             tipo: "text",
+            fillBy: "alumno",
             required: true
           },
           {
             id: "fono_estudiante",
             label: "Fono",
             tipo: "text",
+            fillBy: "alumno",
             required: true
           },
           //Disponibilidad
@@ -80,12 +87,14 @@ async function seedFormularios() {
             label: "Periodo de Realización", 
             tipo: "select", 
             options: ["Temporada de Verano (Enero-Marzo)", "Semestre Académico (Marzo-Diciembre)"],
+            fillBy: "alumno",
             required: true 
           },
           { 
             id: "horario_clases", 
             label: "Horario de Clases (Mañana y Tarde)", 
             tipo: "schedule", // El frontend dibujará la tabla
+            fillBy: "alumno",
             required: false 
           },
           // Datos Empresa
@@ -98,36 +107,42 @@ async function seedFormularios() {
             id: "nombre_empresa",
             label: "Nombre Empresa",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "pagina_web",
             label: "Página Web",
             tipo: "text",
-            required: true
+            fillBy: "empresa",
+            required: false
           },
           {
             id: "rubro",
             label: "Rubro (Giro)",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "fono_empresa",
             label: "Fono Empresa",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "direccion",
             label: "Dirección",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "ciudad",
             label: "Ciudad",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           //Datos supervisor practica
@@ -140,24 +155,28 @@ async function seedFormularios() {
             id: "nombre_supervisor",
             label: "Nombre Completo",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "profesion",
             label: "Profesión",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "cargo",
             label: "Cargo",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "fono_supervisor",
             label: "Fono Supervisor",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
@@ -176,6 +195,7 @@ async function seedFormularios() {
             id: "area_practica",
             label: "Area de Desarrollo de la Práctica",
             tipo: "textarea",
+            fillBy: "empresa",
             required: true
           },
           //Objetivos de la pracrica
@@ -183,6 +203,7 @@ async function seedFormularios() {
             id: "obj_practica",
             label: "Objetivos de la Práctica",
             tipo: "textarea",
+            fillBy: "empresa",
             required: true
           },
           //Actividades a desarrollar
@@ -190,6 +211,7 @@ async function seedFormularios() {
             id: "act_desarrollar",
             label: "Actividades a Desarrollar",
             tipo: "textarea",
+            fillBy: "empresa",
             required: true
           },
           { 
@@ -225,17 +247,21 @@ async function seedFormularios() {
           { 
             id: "firma_alumno", 
             label: "Firma del Alumno", 
-            tipo: "signature", // El frontend dibujará el canvas
+            tipo: "signature",
+            fillBy: "alumno",
             required: true 
           },
           { 
             id: "firma_empresa", 
             label: "Firma y Timbre de la Empresa", 
             tipo: "signature", // El frontend dibujará el canvas
+            fillBy: "empresa",
             required: true 
+            
           }
         ]
       },
+      //Bitacora
       {
         titulo: "BITÁCORA PRÁCTICA PROFESIONAL",
         descripcion: "Registro de lo realizado durante la semana o por actividad.",
@@ -318,6 +344,7 @@ async function seedFormularios() {
           }
         ]
       },
+      //Evaluacion 1
       {
         titulo: "EVALUACIÓN PRÁCTICA PROFESIONAL I",
         descripcion: "Evaluación del alumno",
@@ -369,36 +396,42 @@ async function seedFormularios() {
             id: "nombre_empresa",
             label: "Nombre Empresa",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "rubro",
             label: "Rubro (Giro)",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "direccion",
             label: "Dirección",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "ciudad",
             label: "Ciudad",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "nombre_supervisor",
             label: "Nombre Completo",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "fono_supervisor",
             label: "Fono del Supervisor",
             tipo: "text",
+            fillBy: "empresa",
             required: true
           },
           //Periodo
@@ -411,18 +444,21 @@ async function seedFormularios() {
             id: "fecha_inicio",
             label: "Fecha Inicio",
             tipo: "date",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "fecha_fin",
             label: "Fecha Término",
             tipo: "date",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "horas_crono",
             label: "Total Horas Cronológicas",
             tipo: "number",
+            fillBy: "empresa",
             required: true
           },
           {
@@ -434,6 +470,7 @@ async function seedFormularios() {
             id: "act_desarrolladas",
             label: "Actividades Desarrolladas (Breve Descripción)",
             tipo: "textarea",
+            fillBy: "empresa",
             required: true
           },
           //Evaluación
@@ -463,6 +500,7 @@ async function seedFormularios() {
             label: "Es capaz de buscar información de manera autónoma.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -470,6 +508,7 @@ async function seedFormularios() {
             label: "Incorpora tendencias sociales, tecnológicas, científicas en su trabajo.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           // ============================================================
@@ -485,6 +524,7 @@ async function seedFormularios() {
             label: "Llega en el horario indicado a los compromisos adquiridos.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -492,6 +532,7 @@ async function seedFormularios() {
             label: "Realiza efectivamente las actividades o tareas que le son encomendadas.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -499,6 +540,7 @@ async function seedFormularios() {
             label: "Acepta o asume en forma positiva las diversas instrucciones, hechos y órdenes impartidas por su supervisor.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           // ============================================================
@@ -514,6 +556,7 @@ async function seedFormularios() {
             label: "Se relaciona adecuadamente con el personal del Centro de Práctica.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -521,6 +564,7 @@ async function seedFormularios() {
             label: "Trabaja colaborativamente en equipos multidisciplinarios.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -528,6 +572,7 @@ async function seedFormularios() {
             label: "Durante el trabajo con los demás mantiene un comportamiento ético.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           // ============================================================
@@ -542,7 +587,8 @@ async function seedFormularios() {
             id: "cg4_lm", 
             label: "Comunica ideas y sentimientos en forma oral y escrita en su lengua materna.", 
             tipo: "select", 
-            options: ["A", "B", "C", "D", "E", "F"], 
+            options: ["A", "B", "C", "D", "E", "F"],
+            fillBy: "empresa", 
             required: true 
           },
           { 
@@ -550,6 +596,7 @@ async function seedFormularios() {
             label: "Comunica ideas y sentimientos en forma oral y escrita en un segundo idioma.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           // ============================================================
@@ -565,6 +612,7 @@ async function seedFormularios() {
             label: "Realiza soporte de servidores y/o herramientas de software avanzado.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -572,6 +620,7 @@ async function seedFormularios() {
             label: "Instala y/o configurar software para servidores.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -579,6 +628,7 @@ async function seedFormularios() {
             label: "Colabora en el diseño e implementación de redes de computadores.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -586,6 +636,7 @@ async function seedFormularios() {
             label: "Realiza evaluación de hardware y/o software.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -593,6 +644,7 @@ async function seedFormularios() {
             label: "Colabora en la evaluación del funcionamiento de redes de computadores.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           // ============================================================
@@ -608,6 +660,7 @@ async function seedFormularios() {
             label: "Realiza levantamiento de requisitos para un proyecto Informático.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -615,6 +668,7 @@ async function seedFormularios() {
             label: "Diseña procesos de documentación: software, procesos de la información, procesos de negocios tanto a nivel de usuario como de desarrollador.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -622,6 +676,7 @@ async function seedFormularios() {
             label: "Propone y/o aplica métodos de detección y documentación de errores ocurridos durante el desarrollo, puesta en marcha o uso de aplicaciones.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -629,6 +684,7 @@ async function seedFormularios() {
             label: "Diseña y/o implementa módulos de software acotados que utilicen tecnologías avanzadas.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -636,6 +692,7 @@ async function seedFormularios() {
             label: "Colabora en el diseño de procesos de negocios.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           // ============================================================
@@ -651,6 +708,7 @@ async function seedFormularios() {
             label: "Participa del diseño y del levantamiento de requisitos para implementar bases de datos.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -658,6 +716,7 @@ async function seedFormularios() {
             label: "Demuestra conocimientos técnicos de algún sistema administrador de bases de datos.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -665,6 +724,7 @@ async function seedFormularios() {
             label: "Domina técnicas que aportan en el modelado de datos y procesos de negocios.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           // ============================================================
@@ -680,6 +740,7 @@ async function seedFormularios() {
             label: "Demuestra conocimientos técnicos de algún sistema administrador de bases de datos.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -687,6 +748,7 @@ async function seedFormularios() {
             label: "Domina técnicas que aportan en el modelado de datos y procesos de negocios.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -694,6 +756,7 @@ async function seedFormularios() {
             label: "Colabora en el diseño de procesos de negocios.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -701,6 +764,7 @@ async function seedFormularios() {
             label: "Colabora en el diseño de un plan informático.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -708,6 +772,7 @@ async function seedFormularios() {
             label: "Colabora en el diseño e implementación de procesos de auditoría informática.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           // ============================================================
@@ -723,6 +788,7 @@ async function seedFormularios() {
             label: "Demuestra capacidad de autogestión para Investigar tecnologías emergentes.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -730,6 +796,7 @@ async function seedFormularios() {
             label: "Aplica sus conocimientos teóricos para resolver problemas complejos en ámbitos del Ingeniero Civil Informático.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           { 
@@ -737,6 +804,7 @@ async function seedFormularios() {
             label: "Demuestra capacidad analítica y de abstracción al enfrentar problemas.", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: true 
           },
           // ============================================================
@@ -754,13 +822,15 @@ async function seedFormularios() {
             label: "1. Descripción de la Actividad / Competencia", 
             tipo: "textarea", 
             placeholder: "Describa la actividad realizada...",
+            fillBy: "empresa",
             required: false // Opcional, por si no hay nada extra que agregar
           },
           { 
             id: "otra_competencia_1_eval", 
             label: "Evaluación (1)", 
             tipo: "select", 
-            options: ["A", "B", "C", "D", "E", "F"], 
+            options: ["A", "B", "C", "D", "E", "F"],
+            fillBy: "empresa", 
             required: false 
           },
 
@@ -770,6 +840,7 @@ async function seedFormularios() {
             label: "2. Descripción de la Actividad / Competencia", 
             tipo: "textarea", 
             placeholder: "Describa la actividad realizada...",
+            fillBy: "empresa",
             required: false 
           },
           { 
@@ -777,6 +848,7 @@ async function seedFormularios() {
             label: "Evaluación (2)", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: false 
           },
 
@@ -786,6 +858,7 @@ async function seedFormularios() {
             label: "3. Descripción de la Actividad / Competencia", 
             tipo: "textarea", 
             placeholder: "Describa la actividad realizada...",
+            fillBy: "empresa",
             required: false 
           },
           { 
@@ -793,6 +866,7 @@ async function seedFormularios() {
             label: "Evaluación (3)", 
             tipo: "select", 
             options: ["A", "B", "C", "D", "E", "F"], 
+            fillBy: "empresa",
             required: false 
           },
           { 
@@ -804,28 +878,33 @@ async function seedFormularios() {
             id: "fortalezas",
             label: "Fortalezas del Estudiante",
             tipo: "textarea",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "debilidades",
             label: "Debilidades del Estudiante",
             tipo: "textarea",
+            fillBy: "empresa",
             required: true
           },
           {
             id: "observaciones_generales",
             label: "Observaciones Generales",
             tipo: "textarea",
+            fillBy: "empresa",
             required: true
           },
           { 
             id: "firma_empresa", 
             label: "Firma y Timbre de la Empresa", 
             tipo: "signature", // El frontend dibujará el canvas
+            fillBy: "empresa",
             required: true 
           }
         ]
       },
+      // Evaluacion 2
       {
         titulo: "EVALUACIÓN PRÁCTICA PROFESIONAL II",
         descripcion: "Evaluación del alumno",
@@ -1337,24 +1416,22 @@ async function seedFormularios() {
       },
     ];
 
-    // --- INSERCIÓN DE DATOS ---
-
+    // Insertamos
     for (const plantilla of plantillasPorDefecto) {
-      // 1. Buscamos si existe por TIPO
+      // Buscamos si existe por el tipo
       const existe = await plantillaRepository.findOne({ 
         where: { tipo: plantilla.tipo } 
       });
 
       if (!existe) {
-        // 2. Si no existe, la CREAMOS
+        // Si no existe, la creamos
         const nuevaPlantilla = plantillaRepository.create(plantilla);
         await plantillaRepository.save(nuevaPlantilla);
         console.log(`Plantilla creada: ${plantilla.titulo}`);
       } else {
-        // 3. Si ya existe, la ACTUALIZAMOS (¡Esta es la parte nueva!)
-        // Esto forzará a que la base de datos tome tus cambios en el JSON
+        // Si ya existe, la actualizamos, esto forzará a que la base de datos tome tus cambios en el json
         await plantillaRepository.update(existe.id, { esquema: plantilla.esquema });
-        console.log(`🔄 Plantilla actualizada: ${plantilla.titulo}`);
+        console.log(`Plantilla actualizada: ${plantilla.titulo}`);
       }
     }
 
