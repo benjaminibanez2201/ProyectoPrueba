@@ -1,5 +1,7 @@
 import express from "express";
 import {
+  validarToken,
+  confirmarInicioPractica,
   generarTokenEmpresa,
   verFormulario,
   enviarEvaluacion,
@@ -16,5 +18,9 @@ router.get("/ver-formulario", validarTokenEmpresa, verFormulario);
 
 // Enviar evaluación (empresa envía datos)
 router.post("/enviar-evaluacion", validarTokenEmpresa, enviarEvaluacion);
+
+// Validar token (empresa verifica su token)
+router.get("/validar-acceso/:token", validarToken);
+router.post("/confirmar-inicio-practica", confirmarInicioPractica)
 
 export default router;

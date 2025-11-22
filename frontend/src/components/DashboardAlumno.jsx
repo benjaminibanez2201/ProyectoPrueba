@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react"; 
 import { useNavigate } from "react-router-dom"; 
 import { Upload, FileText, Activity, Send, PlusCircle } from "lucide-react";
-import { getMyPractica } from "../services/practica.service.js"; 
+import { getMyPractica, postularPractica } from "../services/practica.service.js"; 
+import { showErrorAlert, showSuccessAlert,deleteDataAlert } from "../helpers/sweetAlert.js";
+import DocumentsModal from "./DocumentsModal";
+import { deleteDocumento } from "../services/documento.service.js";
+
 
 const EstadoBadge = ({ estado }) => {
   let texto = 'Pendiente';
@@ -27,6 +31,8 @@ const DashboardAlumno = ({ user }) => {
   const navigate = useNavigate();
   const [practica, setPractica] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showDocsModal, setShowDocsModal] = useState(false);
 
   const fetchMiPractica = useCallback(async () => {
     setIsLoading(true); 
@@ -45,6 +51,28 @@ const DashboardAlumno = ({ user }) => {
   useEffect(() => {
     fetchMiPractica();
   }, [fetchMiPractica]); 
+
+
+
+ // Función para manejar la eliminación
+  const handleDeleteDocumento = async (id) => {
+    deleteDataAlert(async () => {
+      try {
+        const response = await deleteDocumento(id);
+        if (response.status === 'Success') {
+          showSuccessAlert('Eliminado', 'El documento ha sido eliminado.');
+          fetchMiPractica(); // RECARGAR DATOS
+        } else {
+          showErrorAlert('Error', response.message);
+        }
+      } catch (error) {
+        showErrorAlert('Error', 'No se pudo eliminar el documento.');
+      }
+    });
+  };
+
+  // --- Renderizado Condicional ---
+  
 
   if (isLoading) {
     return (
@@ -109,12 +137,20 @@ const DashboardAlumno = ({ user }) => {
           <div className={`bg-green-50 p-6 rounded-xl shadow-inner border border-green-100 transition ${!practica ? 'opacity-60 grayscale' : 'hover:shadow-md'}`}>
             <Upload className="text-green-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-green-800">Subir Documentos</h3>
-            <p className="text-gray-600 text-sm mt-1 mb-4">
-              Envía tus informes y certificados (RF8).
+
+            {/* BORRAMOS EL PRIMER P Y BUTTON QUE NO HACIAN NADA */}
+
+            {/* DEJAMOS ESTE QUE ES EL QUE FUNCIONA (RF6) */}
+            <p className="text-gray-600 text-sm mt-1">
+              Envía tus informes y certificados (RF6)
             </p>
             <button 
-              disabled={!practica} // Deshabilitado si no hay práctica
-              className="mt-auto bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg w-full"
+              disabled={!practica} // Tip: Puedes agregarle esto para que se bloquee si no hay práctica
+              onClick={() => {
+                 // Navegamos a la ruta y le pasamos el ID de la práctica "escondido"
+                 navigate('/upload-document', { state: { practicaId: practica?.id } });
+              }}
+              className="mt-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
               Subir Archivos
             </button>
@@ -127,6 +163,14 @@ const DashboardAlumno = ({ user }) => {
             <p className="text-gray-600 text-sm mt-1">
               Consulta tus entregas registradas.
             </p>
+            
+            {/* 3. BOTÓN ACTIVADO */}
+            <button 
+              onClick={() => setShowDocsModal(true)}
+              className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full"
+            >
+              Ver Mis Archivos
+            </button>
           </div>
         </div>
         
@@ -144,6 +188,18 @@ const DashboardAlumno = ({ user }) => {
               {practica.empresaToken?.token || "Token no disponible"}
             </div>
           </div>
+        )}
+
+        {/* Modal de Documentos */}
+        {practica && (
+          <DocumentsModal
+            isOpen={showDocsModal}
+            onClose={() => setShowDocsModal(false)}
+            studentName="la práctica"
+            // Aquí pasamos los documentos de la práctica del alumno
+            documents={practica.documentos || []} 
+            onDelete={handleDeleteDocumento}
+          />
         )}
 
       </div>

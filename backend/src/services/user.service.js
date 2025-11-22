@@ -21,7 +21,15 @@ export async function createUser(data) {
     tipo_practica: data.tipo_practica || null,//como en el req puse tipo de practica
   });
 
-  return await userRepository.save(newUser);
+  try {
+    return await userRepository.save(newUser); 
+  } catch (error) {
+    if (error.code === '23505') { 
+      throw new Error("El correo ya está registrado."); 
+    }
+    throw error; 
+  }
+
 }
 
 export async function findUserByEmail(email) {
@@ -54,7 +62,7 @@ export async function findAlumnos() {
   // Le decimos a TypeORM que cargue la relación
   return await userRepository.find({ 
     where: { role: 'alumno' }, 
-    relations: ['practicasComoAlumno'] // <-- ¡ESTE ES EL ARREGLO!
+    relations: ['practicasComoAlumno', 'practicasComoAlumno.documentos'] // le agrego la relación de documentos
   });
 }
 

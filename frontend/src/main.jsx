@@ -6,10 +6,15 @@ import Panel from './pages/Panel';
 import Error404 from '@pages/Error404';
 import Root from '@pages/Root';
 import Register from '@pages/Register';
+import Access from '@pages/Access';
 import ProtectedRoute from '@components/ProtectedRoute';
+
 import PostularPractica from '@pages/PostularPractica';
 import GestionFormularios from '@pages/GestionFormularios';
 import VistaPrevia from './pages/VistaPrevia';
+
+import SubirDocumento from  '@pages/SubirDocumento';
+
 import '@styles/styles.css';
 
 const router = createBrowserRouter([
@@ -35,6 +40,13 @@ const router = createBrowserRouter([
         element: <Register />
       },
       {
+
+
+        path: '/empresa/acceso/:token',
+        element: <Access />
+      },
+      {
+
         path: '/panel',
         element: ( <ProtectedRoute>
           <Panel />
@@ -69,6 +81,10 @@ const router = createBrowserRouter([
       {
         path: '/home',
         element: <Home />
+      },
+      {
+        path: '/upload-document',
+        element: <SubirDocumento />
       }
     ]
   }

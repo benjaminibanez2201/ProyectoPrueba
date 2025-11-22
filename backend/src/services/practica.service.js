@@ -106,7 +106,7 @@ export async function findPracticaByStudentId(studentId) {
       student: { id: studentId } 
     },
     // Añadimos esto para asegurar que el token llegue al DashboardAlumno
-    relations: ['empresaToken'] 
+    relations: ['empresaToken', 'documentos'] //se agrega 'documentos' para que lleguen los documentos asociados
   });
   return practica; 
 }
