@@ -6,9 +6,8 @@ const DocumentHeader = () => {
   const logoIzquierdo = "/images/ubb.png"; 
   const logoDerecho = "/images/Imagen5.png"; 
 
-  return (
-    <div className="flex flex-col md:flex-row justify-between items-center mb-8 pb-6 border-b-2 border-blue-800 gap-4 px-4">
-      {/* 1. Logo Izquierda (UBB) */}
+  return ( 
+    <div className="flex flex-col md:flex-row justify-between items-center mb-8 pb-6 border-b-2 border-blue-800 gap-4 px-4"> 
       <div className="w-24 md:w-32 flex justify-center items-center">
         <img 
           src={logoIzquierdo} 
@@ -17,15 +16,13 @@ const DocumentHeader = () => {
           onError={(e) => e.target.style.display = 'none'} 
         />
       </div>
-
-      {/* 2. Texto Central */}
-      <div className="text-center flex-1">
+      
+      <div className="text-center flex-1"> 
         <h2 className="text-sm md:text-base font-extrabold text-gray-900 uppercase tracking-wide leading-snug">
           FACULTAD DE CIENCIAS EMPRESARIALES<br />ESCUELA INGENIERÍA CIVIL INFORMÁTICA
         </h2>
       </div>
 
-      {/* 3. Logo Derecha (Facultad) */}
       <div className="w-26 md:w-36 flex justify-center items-center">
         <img 
           src={logoDerecho} 
@@ -222,9 +219,9 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
 
 // Componente que recibe un esquema JSON y renderiza el formulario dinámicamente.
 const FormRender = ({ esquema, valores = {}, onSubmit, readOnly = false, userType = "alumno", titulo }) => {
-  const [respuestas, setRespuestas] = useState(valores); // Guardar las respuestas del usuario
-  const canvasRefs = useRef({});// Referencias para los canvas de firma (HTML5 canvas nativo) - guardaremos algo como firmaAlumno: HTMLCanvasElement
-  const [isDrawing, setIsDrawing] = useState(false); // false: no esta dibujando - cambia a true si se esta tocando el canvas
+  const [respuestas, setRespuestas] = useState(valores); 
+  const canvasRefs = useRef({});
+  const [isDrawing, setIsDrawing] = useState(false); 
 
   
   // Actualizar el estado cuando el usuario escribe
@@ -314,14 +311,12 @@ const renderField = (campo) => {
     
     let isReadOnly = readOnly || fieldReadOnly;
 
-    // CASO 1: Soy Alumno mirando campo de Empresa
-    // Antes ocultábamos (return null), ahora solo bloqueamos.
+    // Alumno mirando campo de Empresa
     if (userType === "alumno" && fillBy === "empresa") {
       isReadOnly = true;
     }
 
-    // CASO 2: Soy Empresa mirando campo de Alumno
-    // La empresa ve lo que llenó el alumno, pero no lo puede editar.
+    // Empresa mirando campo de Alumno
     if (userType === "empresa" && (fillBy === "alumno" || !fillBy)) {
       isReadOnly = true;
     }
@@ -331,7 +326,7 @@ const renderField = (campo) => {
         displayPlaceholder = "(Campo reservado o de solo lectura)";
     }
 
-    // 1. HEADER (Separadores)
+    // header 
     if (tipo === "header") {
       return (
         <div key={id} className="mt-8 mb-4 border-b-2 border-blue-200 pb-2">
@@ -340,7 +335,7 @@ const renderField = (campo) => {
       );
     }
 
-    // 2. TEXT / EMAIL / DATE / NUMBER
+    // text / email / date / number
     if (["text", "email", "date", "number"].includes(tipo)) {
       return (
         <div key={id} className="mb-4">
@@ -362,7 +357,7 @@ const renderField = (campo) => {
       );
     }
 
-    // 3. TEXTAREA
+    // textarea
     if (tipo === "textarea") {
       return (
         <div key={id} className="mb-4">
@@ -382,7 +377,7 @@ const renderField = (campo) => {
       );
     }
 
-    // 4. SELECT
+    // select
     if (tipo === "select") {
       return (
         <div key={id} className="mb-4">
@@ -407,7 +402,7 @@ const renderField = (campo) => {
       );
     }
 
-    // 5. SCHEDULE (Horario)
+    // schedule para el horario
     if (tipo === "schedule") {
       return (
         <div key={id} className="mb-6">
@@ -416,7 +411,7 @@ const renderField = (campo) => {
           </label>
 
           <ScheduleInput
-            value={respuestas[id] || {}}    // <- importante para evitar undefined
+            value={respuestas[id] || {}}    // para evitar undefined
             onChange={(newVal) => handleChange(id, newVal)}
             readOnly={isReadOnly}
           />
@@ -424,7 +419,7 @@ const renderField = (campo) => {
       );
     }
 
-    // 6. SIGNATURE (Firma - Implementación Nativa)
+    // signature para la firma
     if (tipo === "signature") {
       return (
         <div key={id} className="mb-6">
@@ -475,11 +470,7 @@ const renderField = (campo) => {
 
   return (
     <div className="bg-white p-4 md:p-10 rounded-lg shadow-lg border border-gray-200 max-w-5xl mx-auto">
-      
-      {/* 1. CABECERA CON LOGOS */}
       <DocumentHeader />
-
-      {/* 2. TÍTULO DEL DOCUMENTO (Aquí es donde lo querías) */}
       {titulo && (
         <div className="mb-8 text-center">
           <h1 className="text-xl md:text-2xl font-bold text-gray-800 uppercase underline decoration-2 underline-offset-4">
@@ -487,8 +478,6 @@ const renderField = (campo) => {
           </h1>
         </div>
       )}
-
-      {/* 3. FORMULARIO DINÁMICO */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {esquema && esquema.map((campo) => renderField(campo))}
         

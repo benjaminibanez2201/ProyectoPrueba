@@ -8,6 +8,8 @@ import Root from '@pages/Root';
 import Register from '@pages/Register';
 import ProtectedRoute from '@components/ProtectedRoute';
 import PostularPractica from '@pages/PostularPractica';
+import GestionFormularios from '@pages/GestionFormularios';
+import VistaPrevia from './pages/VistaPrevia';
 import '@styles/styles.css';
 
 const router = createBrowserRouter([
@@ -44,6 +46,23 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <PostularPractica />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/admin/formularios',
+        element: (
+          <ProtectedRoute>
+            <GestionFormularios />
+          </ProtectedRoute>
+        )
+      },
+      {
+        // :tipo es la variable (ej: bitacora, evaluacion_pr1)
+        path: '/admin/formularios/preview/:tipo', 
+        element: (
+          <ProtectedRoute>
+            <VistaPrevia />
           </ProtectedRoute>
         )
       },
