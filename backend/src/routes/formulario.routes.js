@@ -8,4 +8,6 @@ const controller = new FormularioController();
 // Ruta para obtener la estructura del formulario
 router.get("/plantilla/:tipo", controller.getPlantillaByTipo);
 
+router.get("/", controller.getAllPlantillas); // Listar todas
+router.put("/:id", controller.updatePlantilla); // Guardar cambios
 export default router;
