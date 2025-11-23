@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-// CORRECCIÓN: Rutas ajustadas para coincidir con la estructura estándar src/pages/ -> src/services/
 import { validarTokenEmpresa, confirmarInicioPractica } from '../services/empresa.service.js';
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js'; 
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 const Access = () => {
     // Obtener el token de los parámetros de la URL
@@ -13,7 +12,7 @@ const Access = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [confirmado, setConfirmado] = useState(false);
-    const [estadoPractica, setEstadoPractica] = useState('');
+    const [procesando, setProcesando] = useState(false);
 
     // Validar el token al cargar el componente
     useEffect(() => {
@@ -25,16 +24,21 @@ const Access = () => {
 
         const validarAcceso = async () => {
             try {
-                // Llama al servicio (GET)
                 const response = await validarTokenEmpresa(token);
+
+                if (!response?.data?.data) {
+                    throw new Error('Respuesta del servidor inválida');
+                }
 
                 // El backend usa handleSuccess, por lo que la data está en response.data
                 setData(response.data.data); 
 
-                setEstadoPractica(response.data.data.estadoPractica || 'pendiente');
+                if (response.data.data.estadoPractica === 'en_curso') {
+                    setConfirmado(true);
+                }
             } catch (err) {
-                // Captura el error del backend (ej. Token inválido/expirado)
-                setError(err.message || 'Token inválido o expirado.'); 
+                console.error('Error al validar el token:', err);
+                setError(err.message || 'Token inválido o expirado.');
             } finally {
                 setLoading(false);
             }
@@ -45,36 +49,43 @@ const Access = () => {
 
     // Función para confirmar el inicio de la práctica
     const handleConfirmar = async () => {
-        // Validación de estado: solo se confirma si está pendiente
-        if (estadoPractica !== 'pendiente') {
+        // Validación de estado actual
+        if (!data){
+            showErrorAlert('Error', 'No hay datos de práctica disponibles.');
+            return;
+        }
+        
+        if (data.estadoPractica !== 'pendiente') {
             showErrorAlert('Advertencia', 'La práctica ya ha sido iniciada o finalizada.');
             return;
         }
 
-        try {
-            setLoading(true);
+        if (confirmado) {
+            showErrorAlert('Advertencia', 'La práctica ya ha sido confirmada.');
+            return;
+        }
 
-            // Llama al servicio de confirmación (POST)
+        try {
+            setProcesando(true);
+
             const response = await confirmarInicioPractica(token, true);
 
-            showSuccessAlert("Éxito", response.message);
+            showSuccessAlert("Éxito", response.message || 'La práctica ha sido confirmada exitosamente.');
             setConfirmado(true);
-            setEstadoPractica('en_curso');
+            setData(prevData => ({
+                ...prevData,
+                estadoPractica: 'en_curso'
+            }));
 
         } catch (err) {
+            console.error('Error al confirmar práctica:', err);
             showErrorAlert("Error", err.message || 'Error al confirmar el inicio de la práctica.');
             // Usar setError para renderizar el mensaje de error en la pantalla
             setError("Fallo al registrar la confirmación."); 
         } finally {
-            setLoading(false);
+            setProcesando(false);
         }
     };
-
-    // Helper para la consistencia de datos de la UI
-    const alumnoNombre = data?.alumnoNombre || "Cargando...";
-    const empresaNombre = data?.empresaNombre || "Cargando...";
-    const tipoPractica = data?.tipoPractica || "Cargando...";
-
 
     // --- Componentes de la UI ---
     
@@ -97,6 +108,20 @@ const Access = () => {
             <StatusMessage type="error" message={error} />
         </div>
     );
+
+    // Validar que existan los datos necesarios
+    if (!data) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+                <div className="max-w-md w-full">
+                    <StatusMessage type="error" message="No se pudieron cargar los datos de la práctica." />
+                </div>
+            </div>
+        );
+    }
+
+    const { alumnoNombre, empresaNombre, tipoPractica, estadoPractica } = data;
+    const estaEnCurso = estadoPractica === 'en_curso' || confirmado;
 
     // Vista principal de confirmación
     return (
@@ -123,10 +148,10 @@ const Access = () => {
                         
                         <button 
                             onClick={handleConfirmar}
-                            disabled={loading}
+                            disabled={procesando}
                             className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50"
                         >
-                            {loading ? 'Confirmando...' : 'Confirmar Inicio de Práctica'}
+                            {procesando ? 'Confirmando...' : 'Confirmar Inicio de Práctica'}
                         </button>
                     </>
                 )}
