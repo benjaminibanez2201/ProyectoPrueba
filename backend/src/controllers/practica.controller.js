@@ -38,10 +38,18 @@ async getMyPractica(req, res) {
       handleErrorServer(res, 500, "Error al obtener la práctica del alumno", error.message);
     }
   }
-  async postularPractica(req, res) {
+ async postularPractica(req, res) {
     try {
-      const studentId = req.user.id; // ID del alumno logueado
-      const data = req.body; // Datos del formulario (nombreEmpresa, etc.)
+      // --- CORRECCIÓN CRÍTICA AQUÍ ---
+      // Antes: const studentId = req.user.id;
+      const studentId = req.user.id || req.user.sub; 
+      // -------------------------------
+
+      const data = req.body; 
+
+      if (!studentId) {
+         return handleErrorClient(res, 400, "Error de identidad: No se pudo obtener tu ID.");
+      }
 
       // Validamos datos (simple)
       if (!data.nombreEmpresa || !data.emailEmpresa || !data.nombreRepresentante) {
@@ -53,9 +61,8 @@ async getMyPractica(req, res) {
       handleSuccess(res, 201, "Postulación enviada. El token se ha generado.", nuevaPractica);
 
     } catch (error) {
-      // Manejamos el error de "práctica duplicada"
-      if (error.message.includes("Ya tienes una postulación")) {
-        return handleErrorClient(res, 409, error.message); // 409 Conflict
+      if (error.message.includes("Ya tienes una práctica")) { // Ajusta el mensaje si es necesario
+        return handleErrorClient(res, 409, error.message); 
       }
       handleErrorServer(res, 500, "Error al crear la postulación", error.message);
     }

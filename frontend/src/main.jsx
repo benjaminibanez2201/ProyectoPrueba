@@ -12,6 +12,7 @@ import ProtectedRoute from '@components/ProtectedRoute';
 import PostularPractica from '@pages/PostularPractica';
 import GestionFormularios from '@pages/GestionFormularios';
 import VistaPrevia from './pages/VistaPrevia';
+import EditarFormulario from './pages/EditarFormulario';
 
 import SubirDocumento from  '@pages/SubirDocumento';
 
@@ -70,11 +71,18 @@ const router = createBrowserRouter([
         )
       },
       {
-        // :tipo es la variable (ej: bitacora, evaluacion_pr1)
         path: '/admin/formularios/preview/:tipo', 
         element: (
           <ProtectedRoute>
             <VistaPrevia />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/admin/formularios/editar/:id',
+        element: (
+          <ProtectedRoute>
+             <EditarFormulario />
           </ProtectedRoute>
         )
       },
