@@ -1,7 +1,7 @@
 import { AppDataSource } from "../config/configDb.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import jwt from "jsonwebtoken";
-import { handleErrorClient } from "../Handlers/responseHandlers.js"; // si no lo tienes, no pasa nada
+import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
 import { validarTokenEmpresa } from "../services/empresa.service.js";
 
 // --- Generar Token ---
