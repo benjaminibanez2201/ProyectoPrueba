@@ -101,12 +101,16 @@ export async function deletePractica(id) {
 
 // Buscar la practica del alumno por su id de usuario
 export async function findPracticaByStudentId(studentId) {
+  if (!studentId) {
+    console.error("ALERTA: Se intentó buscar práctica sin ID de estudiante.");
+    return null; 
+  }
+
   const practica = await practicaRepository.findOne({
     where: {
       student: { id: studentId } 
     },
-    // Añadimos esto para asegurar que el token llegue al DashboardAlumno
-    relations: ['empresaToken', 'documentos'] //se agrega 'documentos' para que lleguen los documentos asociados
+    relations: ['empresaToken', 'documentos'] 
   });
   return practica; 
 }

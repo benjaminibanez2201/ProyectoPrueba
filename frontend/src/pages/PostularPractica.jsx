@@ -45,7 +45,7 @@ const PostularPractica = () => {
       // Mapeamos los campos del formulario a lo que espera tu backend (practica.service)
       const datosParaBackend = {
         nombreEmpresa: respuestas.nombre_empresa,
-        emailEmpresa: respuestas.email_supervisor, // Ojo con el ID que usaste en el JSON
+        emailEmpresa: respuestas.correo_supervisor, // Ojo con el ID que usaste en el JSON
         nombreRepresentante: respuestas.nombre_supervisor,
         // ... puedes enviar todo el objeto 'respuestas' también si quieres guardarlo como JSON
         datosFormulario: respuestas 
@@ -54,7 +54,7 @@ const PostularPractica = () => {
       await postularPractica(datosParaBackend);
       
       showSuccessAlert("¡Éxito!", "Tu postulación ha sido enviada correctamente.");
-      navigate("/dashboard"); // Volver al dashboard
+      navigate("/panel"); // Volver al panel del alumno
       
     } catch (error) {
       showErrorAlert("Error", "No se pudo enviar la postulación.");

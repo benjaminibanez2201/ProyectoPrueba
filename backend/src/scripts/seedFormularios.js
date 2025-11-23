@@ -107,7 +107,6 @@ async function seedFormularios() {
             id: "nombre_empresa",
             label: "Nombre Empresa",
             tipo: "text",
-            fillBy: "empresa",
             required: true
           },
           {
@@ -155,7 +154,6 @@ async function seedFormularios() {
             id: "nombre_supervisor",
             label: "Nombre Completo",
             tipo: "text",
-            fillBy: "empresa",
             required: true
           },
           {

@@ -9,7 +9,7 @@ const controller = new PracticaController();
 router.get("/", authMiddleware(["coordinador"]), controller.getAll);
 
 // Esta ruta permite al alumno logueado pedir solo sus datos
-router.get("/my-practice", authMiddleware(["alumno"]), controller.getMyPractica);
+router.get("/me", authMiddleware(["alumno"]), controller.getMyPractica);
 
 // Coordinador, alumno o empresa pueden ver una práctica específica (si corresponde)
 router.get("/:id", authMiddleware(["coordinador", "alumno", "empresa"]), controller.getById);
