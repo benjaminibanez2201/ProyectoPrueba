@@ -1,11 +1,6 @@
 import instance from './root.service.js'; // 1. Importamos tu Axios (root.service)
 
-/**
- * Esta es la función getPracticas() que tu Dashboard está buscando.
- * Es la función del FRONTEND que llama al BACKEND.
- *
- * Llama al endpoint GET /api/practicas
- */
+
 export const getPracticas = async () => {
   try {
     const response = await instance.get('/practicas');
@@ -19,7 +14,7 @@ export const getPracticas = async () => {
 //llama al endpoint GET /practicas/my-practice del backend para obtener a el alumno logueado
 export const getMyPractica = async () => {
   try {
-    const response = await instance.get('/practicas/my-practice');
+    const response = await instance.get('/practicas/me');
     return response.data.data;
   } catch (error) {
     console.error('Error al obtener mi práctica:', error);
@@ -27,14 +22,7 @@ export const getMyPractica = async () => {
   }
 };
 
-// (Podríamos añadir más funciones aquí en el futuro,
-// como updateEstado, etc.)
 
-/**
- * Llama al endpoint POST /practicas/postular del backend
- * para crear la postulación del alumno.
- * @param {object} data - Los datos del formulario
- */
 export const postularPractica = async (data) => {
   try {
     // 1. Llama al backend con los datos del formulario

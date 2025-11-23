@@ -20,14 +20,14 @@ export class PracticaController {
     }
   }
 
-  async getMyPractica(req, res) {
+async getMyPractica(req, res) {
     try {
-      // req.user.id viene del token (authMiddleware)
-      const studentId = req.user.id; 
-      
+      const studentId = req.user.id || req.user.sub; 
+      if (!studentId) {
+        return handleErrorClient(res, 400, "No se pudo identificar al usuario");
+      }
       const practica = await findPracticaByStudentId(studentId);
       
-      // Es normal que un alumno no tenga práctica, no es un error
       if (!practica) {
         return handleSuccess(res, 200, "El alumno aún no tiene una práctica inscrita", null);
       }
