@@ -108,6 +108,8 @@ export async function findPracticaByStudentId(studentId) {
 
   const practica = await practicaRepository.findOne({
     where: {
+      // ⚠️ ERROR COMÚN: poner 'id: studentId' aquí busca por ID de práctica
+      // ✅ LO CORRECTO: es entrar a la relación 'student'
       student: { id: studentId } 
     },
     relations: ['empresaToken', 'documentos'] 
