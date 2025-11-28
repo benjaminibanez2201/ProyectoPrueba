@@ -35,7 +35,7 @@ const Access = () => {
 
                 setData(response.data); 
 
-                if (response.data.estadoPractica === 'en_curso') {
+                if (response.data.estado === 'en_curso') {
                     setConfirmado(true);
                 }
             } catch (err) {
@@ -55,7 +55,7 @@ const Access = () => {
             return;
         }
         
-        if (data.estadoPractica !== 'pendiente') {
+        if (data.estado !== 'pendiente_revision') {
             showErrorAlert('Advertencia', 'La práctica ya ha sido iniciada o finalizada.');
             return;
         }
@@ -74,7 +74,7 @@ const Access = () => {
             setConfirmado(true);
             setData(prevData => ({
                 ...prevData,
-                estadoPractica: 'en_curso'
+                estado: 'en_curso'
             }));
 
         } catch (err) {
@@ -130,8 +130,8 @@ const Access = () => {
         );
     }
 
-    const { alumnoNombre, empresaNombre, estadoPractica } = data;
-    const estaEnCurso = estadoPractica === 'en_curso' || confirmado;
+    const { alumnoNombre, empresaNombre, estado } = data;
+    const estaEnCurso = estado === 'en_curso' || confirmado;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
@@ -167,7 +167,7 @@ const Access = () => {
                         <div className="flex items-center">
                             <CheckCircle className="w-6 h-6 text-green-600 mr-3" />
                             <div>
-                                <p className="font-semibold text-green-800">La práctica ya está EN CURSO</p>
+                                <p className="font-semibold text-green-800">La práctica ya está en curso</p>
                                 <p className="text-green-700 text-sm">La práctica fue confirmada exitosamente.</p>
                             </div>
                         </div>

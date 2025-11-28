@@ -74,7 +74,7 @@ export const validarToken = async (req, res) => {
       alumnoNombre: alumno.name, 
       tipoPractica: practica.tipoPractica, 
       empresaNombre: tokenData.empresaNombre, 
-      estadoPractica: practica.estado,
+      estado: practica.estado,
     });
   } catch (error) {
     console.error("Error al validar token:", error.message);
