@@ -33,7 +33,7 @@ export class FormularioController {
     try {
       const plantillas = await plantillaRepository.find({
         // AQUÍ ESTABA EL ERROR: Cambiamos "updatedAt" por "actualizadoEn"
-        select: ["id", "titulo", "tipo", "descripcion", "actualizadoEn"],
+        select: ["id", "titulo", "tipo", "descripcion", "actualizadoEn", "esquema"],
         order: { tipo: "ASC" }
       });
       

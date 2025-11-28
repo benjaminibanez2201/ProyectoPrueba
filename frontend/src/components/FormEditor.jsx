@@ -13,8 +13,17 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
     { value: "date", label: "Fecha" },
     { value: "email", label: "Correo Electrónico" },
     { value: "header", label: "Título de Sección (Separador)" },
+    //{ value: "select", label: "Pregunta de selección" },
+    //{ value: "schedule", label: "Cronograma" },
+
+
     // Podemos agregar select o schedule después si quieres
   ];
+  const camposPara = [
+    {value: "alumno", label: "Alumno"},
+    {value: "empresa", label: "Empresa"},
+    {value: "ambos", label: "Ambos"}
+  ]
 
   // 1. Función para agregar una nueva pregunta vacía
   const addField = () => {
@@ -97,6 +106,20 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
               </select>
             </div>
 
+            {/* Select: Quien debe rellenar el campo */}
+            <div className="w-full md:w-48">
+              <label className="block text-xs text-gray-500 font-bold mb-1 uppercase">Campo para:</label>
+              <select
+                value={campo.fillBy || "alumno"}
+                onChange={(e) => updateField(index, "fillBy", e.target.value)}
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+              >
+                {camposPara.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Checkbox: Obligatorio */}
             <div className="flex flex-col items-center justify-center pt-4 md:pt-0">
                <label className="flex items-center gap-2 cursor-pointer">
@@ -109,6 +132,7 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
                  <span className="text-sm text-gray-700">Obligatorio</span>
                </label>
             </div>
+            
 
             {/* Botón: Eliminar */}
             <button 
