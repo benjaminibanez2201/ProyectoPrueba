@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { validarTokenEmpresa, confirmarInicioPractica } from '../services/empresa.service.js';
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js'; 
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Building2, User, Briefcase, Clock, LogOut } from 'lucide-react';
 
 const Access = () => {
-    // Obtener el token de los parámetros de la URL
     const { token } = useParams();
+    const navigate = useNavigate();
 
-    const [data, setData] = useState(null); // Almacenar los detalles de la práctica
+    const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [confirmado, setConfirmado] = useState(false);
     const [procesando, setProcesando] = useState(false);
 
-    // Validar el token al cargar el componente
+    const handleCerrarSesion = () => {
+        navigate('/auth');
+    };
+
     useEffect(() => {
         if (!token) {
             setError("Error: Token no proporcionado.");
@@ -26,14 +29,13 @@ const Access = () => {
             try {
                 const response = await validarTokenEmpresa(token);
 
-                if (!response?.data?.data) {
+                if (!response?.data) {
                     throw new Error('Respuesta del servidor inválida');
                 }
 
-                // El backend usa handleSuccess, por lo que la data está en response.data
-                setData(response.data.data); 
+                setData(response.data); 
 
-                if (response.data.data.estadoPractica === 'en_curso') {
+                if (response.data.estadoPractica === 'en_curso') {
                     setConfirmado(true);
                 }
             } catch (err) {
@@ -47,9 +49,7 @@ const Access = () => {
         validarAcceso();
     }, [token]);
 
-    // Función para confirmar el inicio de la práctica
     const handleConfirmar = async () => {
-        // Validación de estado actual
         if (!data){
             showErrorAlert('Error', 'No hay datos de práctica disponibles.');
             return;
@@ -80,82 +80,169 @@ const Access = () => {
         } catch (err) {
             console.error('Error al confirmar práctica:', err);
             showErrorAlert("Error", err.message || 'Error al confirmar el inicio de la práctica.');
-            // Usar setError para renderizar el mensaje de error en la pantalla
             setError("Fallo al registrar la confirmación."); 
         } finally {
             setProcesando(false);
         }
     };
 
-    // --- Componentes de la UI ---
-    
-    // Componente de Mensaje
-    const StatusMessage = ({ type, message }) => (
-        <div className={`p-4 rounded-lg text-white font-semibold flex items-center ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-            {type === 'success' ? <CheckCircle size={20} className="mr-2" /> : <XCircle size={20} className="mr-2" />}
-            {message}
-        </div>
-    );
-
-    if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <p className="text-gray-700 text-xl animate-pulse">Validando Token y Cargando datos de la Práctica...</p>
-        </div>
-    );
-
-    if (error) return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <StatusMessage type="error" message={error} />
-        </div>
-    );
-
-    // Validar que existan los datos necesarios
-    if (!data) {
+    // Loading State
+    if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-                <div className="max-w-md w-full">
-                    <StatusMessage type="error" message="No se pudieron cargar los datos de la práctica." />
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center space-y-4">
+                    <Loader2 className="w-16 h-16 text-green-700 animate-spin mx-auto" />
+                    <p className="text-gray-700 text-xl font-medium">Validando Token...</p>
                 </div>
             </div>
         );
     }
 
-    const { alumnoNombre, empresaNombre, tipoPractica, estadoPractica } = data;
+    // Error State
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-50 p-4">
+                <div className="max-w-2xl mx-auto pt-20">
+                    <div className="bg-white shadow-lg rounded-xl p-8">
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="bg-red-100 rounded-full p-4">
+                                <XCircle className="w-16 h-16 text-red-600" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800">Acceso Denegado</h2>
+                            <p className="text-gray-600">{error}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!data) {
+        return (
+            <div className="min-h-screen bg-gray-50 p-4">
+                <div className="max-w-2xl mx-auto pt-20">
+                    <div className="bg-white shadow-lg rounded-xl p-8 text-center">
+                        <XCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-700 text-lg font-semibold">No se pudieron cargar los datos.</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const { alumnoNombre, empresaNombre, estadoPractica } = data;
     const estaEnCurso = estadoPractica === 'en_curso' || confirmado;
 
-    // Vista principal de confirmación
     return (
-        <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
-            <div className="bg-white shadow-2xl rounded-xl p-8 max-w-lg w-full space-y-6">
-                <h1 className="text-3xl font-bold text-center text-blue-700">
-                    Portal de Confirmación de Práctica
-                </h1>
-                
-                {estadoPractica === 'en_curso' || confirmado ? (
-                    <StatusMessage type="success" message={`La práctica de ${alumnoNombre} ya está OFICIALMENTE EN CURSO.`} />
-                ) : (
-                    <>
-                        <div className="border border-gray-200 p-4 rounded-lg space-y-2">
-                            <p className="text-gray-700"><span className="font-semibold">Empresa:</span> {empresaNombre}</p>
-                            <p className="text-gray-700"><span className="font-semibold">Alumno:</span> {alumnoNombre}</p>
-                            <p className="text-gray-700"><span className="font-semibold">Tipo de Práctica:</span> {tipoPractica}</p>
-                            <p className="text-gray-700"><span className="font-semibold">Estado Actual:</span> Pendiente de su confirmación.</p>
+        <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+            {/* Header igual al panel de alumno */}
+            <header className="bg-white shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                    <h1 className="text-2xl font-bold text-blue-700">Portal de Prácticas</h1>
+                    <button 
+                        onClick={handleCerrarSesion}
+                        className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-semibold"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </div>
+            </header>
+
+            {/* Contenido principal */}
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Título de sección */}
+                <div className="bg-white rounded-xl shadow-md p-8 mb-6">
+                    <h2 className="text-3xl font-bold text-green-800 mb-2">
+                        Portal de Confirmación de Práctica
+                    </h2>
+                    <p className="text-gray-600">
+                        Bienvenido, <span className="font-semibold">{empresaNombre}</span>. Gestiona la confirmación de inicio de práctica aquí.
+                    </p>
+                </div>
+
+                {/* Estado de la práctica - Banner */}
+                {estaEnCurso && (
+                    <div className="bg-green-100 border-l-4 border-green-600 rounded-lg p-4 mb-6">
+                        <div className="flex items-center">
+                            <CheckCircle className="w-6 h-6 text-green-600 mr-3" />
+                            <div>
+                                <p className="font-semibold text-green-800">La práctica ya está EN CURSO</p>
+                                <p className="text-green-700 text-sm">La práctica fue confirmada exitosamente.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Grid de tarjetas - Estilo panel alumno */}
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                    {/* Tarjeta Estado */}
+                    <div className="bg-green-50 rounded-xl shadow-md p-6 border-t-4 border-green-600">
+                        <div className="flex items-center mb-4">
+                            <div className="bg-green-600 rounded-lg p-2 mr-3">
+                                <Clock className="w-6 h-6 text-white" />
+                            </div>
+                            <h3 className="text-lg font-bold text-green-800">Estado Actual</h3>
+                        </div>
+                        <p className={`text-xl font-semibold ${estaEnCurso ? 'text-green-700' : 'text-blue-600'}`}>
+                            {estaEnCurso ? 'En Curso' : 'Pendiente revisión'}
+                        </p>
+                        <p className="text-gray-600 text-sm mt-2">
+                            {estaEnCurso ? 'La práctica está activa.' : 'Requiere tu confirmación.'}
+                        </p>
+                    </div>
+
+                    {/* Tarjeta Alumno */}
+                    <div className="bg-green-50 rounded-xl shadow-md p-6 border-t-4 border-green-600">
+                        <div className="flex items-center mb-4">
+                            <div className="bg-green-600 rounded-lg p-2 mr-3">
+                                <User className="w-6 h-6 text-white" />
+                            </div>
+                            <h3 className="text-lg font-bold text-green-800">Alumno</h3>
+                        </div>
+                        <p className="text-xl font-semibold text-gray-800">{alumnoNombre}</p>
+                        <p className="text-gray-600 text-sm mt-2">Estudiante en práctica</p>
+                    </div>
+                </div>
+
+                {/* Sección de acción */}
+                {!estaEnCurso && (
+                    <div className="bg-white rounded-xl shadow-md p-8">
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">Confirmar Inicio de Práctica</h3>
+                        
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                            <div className="flex items-start">
+                                <Building2 className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <p className="text-gray-700 text-sm leading-relaxed">
+                                        Al presionar <span className="font-semibold">"Confirmar Inicio"</span>, 
+                                        usted acepta formalmente que la práctica del alumno{' '}
+                                        <span className="font-semibold">{alumnoNombre}</span> ha comenzado en su institución.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
-                        <p className="text-gray-600 text-sm">
-                            Al presionar "Confirmar Inicio", usted acepta formalmente que la práctica del alumno {alumnoNombre} ha comenzado en su institución y que su estado será cambiado a **"en_curso"** en el sistema.
-                        </p>
-                        
                         <button 
                             onClick={handleConfirmar}
                             disabled={procesando}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                         >
-                            {procesando ? 'Confirmando...' : 'Confirmar Inicio de Práctica'}
+                            {procesando ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>Confirmando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle className="w-5 h-5" />
+                                    <span>Confirmar Inicio de Práctica</span>
+                                </>
+                            )}
                         </button>
-                    </>
+                    </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 };

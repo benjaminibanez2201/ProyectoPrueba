@@ -1,5 +1,6 @@
 import { AppDataSource } from "../config/configDb.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
+import { Practica } from "../entities/practica.entity.js";
 import jwt from "jsonwebtoken";
 import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
 import { validarTokenEmpresa } from "../services/empresa.service.js";
@@ -73,6 +74,7 @@ export const validarToken = async (req, res) => {
       alumnoNombre: alumno.name, 
       tipoPractica: practica.tipoPractica, 
       empresaNombre: tokenData.empresaNombre, 
+      estadoPractica: practica.estado,
     });
   } catch (error) {
     console.error("Error al validar token:", error.message);
@@ -95,7 +97,7 @@ export const confirmarInicioPractica = async (req, res) => {
     const practicaRepo = AppDataSource.getRepository(Practica);
     const practica = tokenData.practica;
 
-    if (practica.estado == 'pendiente') {
+    if (practica.estado === 'pendiente') {
       practica.estado = 'en_curso'; // actualizar estado
       practica.fechaInicio = new Date(); // registrar fecha de inicio
       await practicaRepo.save(practica);

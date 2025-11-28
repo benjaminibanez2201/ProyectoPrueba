@@ -41,8 +41,6 @@ const router = createBrowserRouter([
         element: <Register />
       },
       {
-
-
         path: '/empresa/acceso/:token',
         element: <Access />
       },
@@ -82,7 +80,7 @@ const router = createBrowserRouter([
         path: '/admin/formularios/editar/:id',
         element: (
           <ProtectedRoute>
-             <EditarFormulario />
+          <EditarFormulario />
           </ProtectedRoute>
         )
       },
