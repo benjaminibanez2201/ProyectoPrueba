@@ -13,8 +13,9 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
     { value: "date", label: "Fecha" },
     { value: "email", label: "Correo Electrónico" },
     { value: "header", label: "Título de Sección (Separador)" },
-    //{ value: "select", label: "Pregunta de selección" },
-    //{ value: "schedule", label: "Cronograma" },
+    { value: "select", label: "Pregunta de selección" },
+    { value: "schedule", label: "Horario" },
+    { value: "signature", label: "Firma Electrónica (Canvas)" },
 
 
     // Podemos agregar select o schedule después si quieres
@@ -32,7 +33,7 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
       label: "Nueva Pregunta",
       tipo: "text",
       required: false,
-      fillBy: "alumno" // Por defecto lo llena el alumno
+      fillBy: "ambos" // Por defecto lo llena el alumno
     };
     setCampos([...campos, nuevoCampo]);
   };
@@ -53,6 +54,32 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
   // 4. Guardar cambios
   const handleSave = () => {
     onSave(campos);
+  };
+
+  // 5. Función para AGREGAR una opción a un Select
+  const addOption = (index) => {
+    const nuevosCampos = [...campos];
+    const campo = nuevosCampos[index];
+
+    // Usamos un campo temporal 'tempOption' para escribir la nueva opción
+    if (!campo.tempOption || campo.tempOption.trim() === "") return;
+
+    // Si no existe el array de opciones, lo creamos
+    if (!campo.options) campo.options = [];
+
+    // Agregamos la opción y limpiamos el input temporal
+    campo.options.push(campo.tempOption);
+    campo.tempOption = ""; 
+    
+    setCampos(nuevosCampos);
+  };
+
+  // 6. Función para ELIMINAR una opción
+  const removeOption = (fieldIndex, optionIndex) => {
+    const nuevosCampos = [...campos];
+    // Borramos la opción específica usando splice
+    nuevosCampos[fieldIndex].options.splice(optionIndex, 1);
+    setCampos(nuevosCampos);
   };
 
   return (
@@ -110,7 +137,7 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
             <div className="w-full md:w-48">
               <label className="block text-xs text-gray-500 font-bold mb-1 uppercase">Campo para:</label>
               <select
-                value={campo.fillBy || "alumno"}
+                value={campo.fillBy || "ambos"}
                 onChange={(e) => updateField(index, "fillBy", e.target.value)}
                 className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none bg-white"
               >
@@ -119,6 +146,52 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
                 ))}
               </select>
             </div>
+
+            {/* --- BLOQUE ESPECIAL PARA SELECT --- */}
+            {campo.tipo === "select" && (
+              <div className="w-full mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg col-span-full">
+                <h4 className="text-xs font-bold text-blue-800 uppercase mb-2">Opciones de la lista:</h4>
+                
+                {/* Lista de opciones agregadas */}
+                <ul className="mb-3 space-y-2">
+                  {campo.options?.map((opt, i) => (
+                    <li key={i} className="flex justify-between items-center bg-white p-2 rounded border border-blue-100 shadow-sm text-sm">
+                      <span>{opt}</span>
+                      <button 
+                        onClick={() => removeOption(index, i)}
+                        className="text-red-500 hover:text-red-700 font-bold px-2"
+                        title="Borrar opción"
+                      >
+                        ✕
+                      </button>
+                    </li>
+                  ))}
+                  {(!campo.options || campo.options.length === 0) && (
+                    <li className="text-gray-400 text-sm italic">Sin opciones definidas...</li>
+                  )}
+                </ul>
+
+                {/* Input para agregar nueva opción */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Escribe una opción (ej: Sí/No)"
+                    value={campo.tempOption || ""}
+                    onChange={(e) => updateField(index, "tempOption", e.target.value)}
+                    className="flex-1 p-2 border rounded text-sm focus:outline-none focus:border-blue-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') addOption(index);
+                    }}
+                  />
+                  <button
+                    onClick={() => addOption(index)}
+                    className="bg-blue-600 text-white px-4 py-1 rounded text-sm font-bold hover:bg-blue-700"
+                  >
+                    Agregar
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Checkbox: Obligatorio */}
             <div className="flex flex-col items-center justify-center pt-4 md:pt-0">

@@ -2,6 +2,7 @@ import { AppDataSource } from "../config/configDb.js";
 import { Practica } from "../entities/practica.entity.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { User } from "../entities/user.entity.js"; // 1. Importamos User
+import { sendTokenEmail } from "./email.service.js";
 import crypto from 'crypto';
 import { In } from "typeorm"; // ¡Importamos 'In' para el chequeo!
 
@@ -87,6 +88,22 @@ export async function createPostulacion(data, studentId) {
   
   // 8. Guardamos el Token
   await tokenRepository.save(tokenData);
+  // --- AQUÍ AGREGAMOS EL ENVÍO DE CORREO ---
+  try {
+    // data.nombreRepresentante viene del formulario
+    // alumno.nombre viene de la base de datos (lo buscaste al principio)
+    // tokenData.token es el código generado
+    await sendTokenEmail(
+      data.emailEmpresa, 
+      data.nombreRepresentante, 
+      tokenData.token, 
+      alumno.name || "Un Estudiante" // Asegúrate de tener el nombre del alumno disponible
+    );
+  } catch (emailError) {
+    // Si falla el correo, NO queremos que falle la postulación, solo lo logueamos
+    console.error("⚠️ La postulación se creó pero el correo falló:", emailError);
+  }
+  // ---------------------------------------------
 
   // 9. Devolvemos la práctica completa
   const practicaCompleta = await findPracticaById(newPractica.id);

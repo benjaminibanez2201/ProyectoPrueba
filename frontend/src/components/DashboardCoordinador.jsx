@@ -220,11 +220,11 @@ const DashboardCoordinador = ({ user }) => {
                     <th className="p-4 font-semibold text-blue-800">Alumno</th>
                     <th className="p-4 font-semibold text-blue-800">Email</th>
 
-                    <th className="p-4 font-semibold text-blue-800">Tipo</th>
+                    <th className="p-4 font-semibold text-blue-800">Tipo Práctica</th>
                     <th className="p-4 font-semibold text-blue-800">Estado</th>
 
-                    <th className="p-4 font-semibold text-blue-800">Tipo Práctica</th>
-                    <th className="p-4 font-semibold text-blue-800">Estado (RF10)</th>
+                    
+                    
                     <th className="p-4 font-semibold text-blue-800">Documentos</th>
 
                     <th className="p-4 font-semibold text-blue-800">Acciones</th>
