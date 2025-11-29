@@ -8,6 +8,7 @@ import Root from '@pages/Root';
 import Register from '@pages/Register';
 import Access from '@pages/Access';
 import ProtectedRoute from '@components/ProtectedRoute';
+import CrearFormulario from './pages/CrearFormulario';
 
 import PostularPractica from '@pages/PostularPractica';
 import GestionFormularios from '@pages/GestionFormularios';
@@ -41,11 +42,13 @@ const router = createBrowserRouter([
         element: <Register />
       },
       {
-
-
         path: '/empresa/acceso/:token',
         element: <Access />
       },
+      {
+        path: '/admin/formularios/nuevo',
+        element: <ProtectedRoute><CrearFormulario /></ProtectedRoute>
+        },
       {
 
         path: '/panel',
