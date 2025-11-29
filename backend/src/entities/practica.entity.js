@@ -14,7 +14,7 @@ export const Practica = new EntitySchema({
     },
     estado: {
       type: "enum",
-      enum: ["pendiente", "pendiente_revision", "en_curso", "finalizada", "evaluada", "cerrada"],
+      enum: ["pendiente", "pendiente_revision","confirmada_por_empresa", "en_curso", "finalizada", "evaluada", "cerrada"],
       default: "pendiente",
     },
     fecha_inicio: {

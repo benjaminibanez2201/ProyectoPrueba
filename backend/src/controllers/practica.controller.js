@@ -38,7 +38,7 @@ async getMyPractica(req, res) {
       handleErrorServer(res, 500, "Error al obtener la práctica del alumno", error.message);
     }
   }
- async postularPractica(req, res) {
+async postularPractica(req, res) {
     try {
       // --- CORRECCIÓN CRÍTICA AQUÍ ---
       // Antes: const studentId = req.user.id;
@@ -48,7 +48,7 @@ async getMyPractica(req, res) {
       const data = req.body; 
 
       if (!studentId) {
-         return handleErrorClient(res, 400, "Error de identidad: No se pudo obtener tu ID.");
+        return handleErrorClient(res, 400, "Error de identidad: No se pudo obtener tu ID.");
       }
 
       // Validamos datos (simple)
@@ -117,7 +117,7 @@ async getMyPractica(req, res) {
       const { id } = req.params;
       const { nuevoEstado } = req.body;
 
-      const estadosPermitidos = ["pendiente", "en_curso", "finalizada", "evaluada"];
+      const estadosPermitidos = ["pendiente", "confirmada_por_empresa", "en_curso", "finalizada", "evaluada"];
       if (!estadosPermitidos.includes(nuevoEstado)) {
         return handleErrorClient(res, 400, "Estado no válido");
       }

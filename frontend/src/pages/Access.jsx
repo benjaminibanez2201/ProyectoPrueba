@@ -29,13 +29,23 @@ const Access = () => {
             try {
                 const response = await validarTokenEmpresa(token);
 
+                console.log('Respuesta completa del servidor:', response);
+                console.log('Data recibida:', response?.data);
+
                 if (!response?.data) {
                     throw new Error('Respuesta del servidor inválida');
                 }
 
+                console.log('Datos de práctica procesados:', response.data);
+                console.log('Estado de práctica:', response.data.estado);
+
                 setData(response.data); 
 
                 if (response.data.estado === 'en_curso') {
+                    console.log('Práctica ya está en curso');
+                    setConfirmado(true);
+                } else if (response.data.estado === 'confirmada_por_empresa') {
+                    console.log('Práctica confirmada, esperando aprobación del coordinador');
                     setConfirmado(true);
                 }
             } catch (err) {
@@ -131,7 +141,9 @@ const Access = () => {
     }
 
     const { alumnoNombre, empresaNombre, estado } = data;
-    const estaEnCurso = estado === 'en_curso' || confirmado;
+    const estaEnCurso = estado === 'en_curso';
+    const estaConfirmada = estado === 'confirmada_por_empresa';
+    const yaProcesada = estaEnCurso || estaConfirmada;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
@@ -174,7 +186,7 @@ const Access = () => {
                     </div>
                 )}
 
-                {/* Grid de tarjetas - Estilo panel alumno */}
+                {/* Grid de tarjetas*/}
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                     {/* Tarjeta Estado */}
                     <div className="bg-green-50 rounded-xl shadow-md p-6 border-t-4 border-green-600">

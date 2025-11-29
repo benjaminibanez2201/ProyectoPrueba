@@ -97,15 +97,42 @@ export const confirmarInicioPractica = async (req, res) => {
     const practicaRepo = AppDataSource.getRepository(Practica);
     const practica = tokenData.practica;
 
-    if (practica.estado === 'pendiente') {
-      practica.estado = 'en_curso'; // actualizar estado
+    if (practica.estado === 'pendiente_revision') {
+      practica.estado = 'confirmada_por_empresa'; // actualizar estado
       practica.fechaInicio = new Date(); // registrar fecha de inicio
       await practicaRepo.save(practica);
 
-      return handleSuccess(res, 200, `Práctica ${practica.id} iniciada y en curso.`, practica);
+      console.log('Práctica confirmada por empresa, esperando aprobación del coordinador');
+
+      return handleSuccess(res, 200, "Confirmación recibida. El coordinador revisará e iniciará la práctica.", {
+        practicaId: practica.id,
+        estado: practica.estado,
+        fechaConfirmacion: practica.fechaConfirmacionEmpresa,
+        alumnoNombre: practica.student.name,
+        empresaNombre: tokenData.empresaNombre,
+        mensajeParaEmpresa: "Su confirmación ha sido registrada. El coordinador validará el inicio de la práctica."
+      });
     }
 
-    return handleSuccess(res, 200, "La práctica ya ha sido iniciada anteriormente.");
+    // Si la práctica ya fue confirmada anteriormente
+    if (practica.estado === 'confirmada_por_empresa') {
+      return handleSuccess(res, 200, "Ya confirmaste el inicio de esta práctica. Esperando aprobación del coordinador.", {
+        estado: practica.estado,
+        practicaId: practica.id
+      });
+    }
+
+    // Si la práctica ya fue confirmada por el coordinador y está en curso
+    if (practica.estado === 'en_curso') {
+      return handleSuccess(res, 200, "La práctica ya ha sido aprobada por el coordinador y está en curso.", {
+        estado: practica.estado,
+        practicaId: practica.id
+      });
+    }
+
+    return handleSuccess(res, 200, "Estado de práctica no válido para confirmación.", {
+      estado: practica.estado
+    });
 
   } catch (error) {
     console.error("Error al confirmar inicio de práctica:", error);

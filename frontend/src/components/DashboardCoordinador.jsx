@@ -125,7 +125,7 @@ const DashboardCoordinador = ({ user }) => {
         </p>
 
         {/* GRID DE TARJETAS */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           
           {/* Tarjeta 1: Ver Alumnos */}
           <div className="bg-blue-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
@@ -171,6 +171,20 @@ const DashboardCoordinador = ({ user }) => {
             >
               Gestionar Plantillas
             </button>
+          </div>
+
+          {/* Tarjeta 5: Aprobar Prácticas (NUEVA) */}
+          <div className="bg-red-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
+              <FileText className="text-red-600 mb-3" size={32} />
+              <h3 className="text-lg font-bold text-red-800">Gestionar Prácticas</h3>
+              <p className="text-gray-600 text-sm mt-1">Revisa confirmaciones de empresas (RF1)</p>
+              <button 
+                  // Redirección directa a la ruta /coordinador/aprobar-practicas
+                  onClick={() => navigate("/coordinador/aprobar-practicas")} 
+                  className="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg w-full"
+              >
+                  Revisar Pendientes
+              </button>
           </div>
 
         </div>
