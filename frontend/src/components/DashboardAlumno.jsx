@@ -158,7 +158,7 @@ const DashboardAlumno = ({ user }) => {
                 <div className="mt-2">
                   <EstadoBadge estado={practica.estado} />
                   
-                  {/* 👇 AQUÍ USAMOS EL MENSAJE DINÁMICO */}
+                  {/* AQUÍ USAMOS EL MENSAJE DINÁMICO */}
                   <p className="text-xs text-gray-500 mt-2">
                     {getMensajeAyuda(practica.estado)}
                   </p>

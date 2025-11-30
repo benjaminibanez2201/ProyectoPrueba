@@ -1,21 +1,33 @@
 import React, { useState, useMemo } from "react";
 import { CSVLink } from "react-csv";
 import { useNavigate } from "react-router-dom"; // Hook para navegar
-import { Users, Key, ClipboardList, Eye, Edit, FileCog } from "lucide-react"; // Iconos
+import { Users, Key, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock } from "lucide-react"; // Iconos
 import { getAlumnos } from "../services/user.service.js";
 import { showErrorAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 
 // --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---
 const EstadoBadge = ({ practica }) => {
-  // 1. Obtenemos el estado crudo (ej: 'enviada_a_empresa') o 'pendiente' si no existe
+  // 1. Obtenemos el estado crudo
   const estado = practica ? practica.estado : 'pendiente';
 
-  // 2. DICCIONARIO DE COLORES
+  // 2. DICCIONARIO DE ICONOS
+  const icons = {
+    pendiente: AlertCircle,
+    enviada_a_empresa: Mail,
+    pendiente_validacion: Clock,
+    rechazada: AlertTriangle,
+    en_curso: Activity,
+    finalizada: Flag,
+    evaluada: ClipboardCheck,
+    cerrada: Lock
+  };
+
+  // 3. DICCIONARIO DE COLORES
   const statusColors = {
     pendiente: "bg-gray-100 text-gray-600 border border-gray-200",
     enviada_a_empresa: "bg-blue-50 text-blue-700 border border-blue-200",
-    pendiente_validacion: "bg-yellow-50 text-yellow-800 border border-yellow-200 font-bold",
+    pendiente_validacion: "bg-yellow-50 text-yellow-800 border border-yellow-200 font-bold", 
     rechazada: "bg-red-50 text-red-700 border border-red-200",
     en_curso: "bg-green-50 text-green-700 border border-green-200",
     finalizada: "bg-orange-50 text-orange-800 border border-orange-200",
@@ -23,7 +35,7 @@ const EstadoBadge = ({ practica }) => {
     cerrada: "bg-gray-800 text-white border border-gray-600",
   };
 
-  // 3. DICCIONARIO DE TEXTOS
+  // 4. DICCIONARIO DE TEXTOS
   const statusLabels = {
     pendiente: "Sin Inscribir Empresa",
     enviada_a_empresa: "Esperando Empresa",
@@ -31,17 +43,23 @@ const EstadoBadge = ({ practica }) => {
     rechazada: "Observada",
     en_curso: "En Curso",
     finalizada: "Finalizada",
-    evaluada: "Evaluada (Lista para Nota)",
+    evaluada: "Evaluada",
     cerrada: "Cerrada"
   };
 
-  // 4. Seleccionamos color y texto (con fallback por seguridad)
+  // Selección de recursos
+  const IconComponent = icons[estado] || AlertCircle;
   const colorClass = statusColors[estado] || statusColors.pendiente;
   const texto = statusLabels[estado] || estado;
 
   return (
-    <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>
-      {texto}
+    <span className={`
+      inline-flex items-center gap-1.5 
+      px-2.5 py-1 rounded-md border text-xs font-medium 
+      ${colorClass}
+    `}>
+      <IconComponent size={14} className="shrink-0" />
+      <span>{texto}</span>
     </span>
   );
 };
