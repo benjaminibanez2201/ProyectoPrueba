@@ -37,6 +37,7 @@ export const FormularioRespuesta = new EntitySchema({
       target: "FormularioPlantilla",
       joinColumn: { name: "plantilla_id" },
       nullable: false,
+      eager: true,
     },
     // Relación que indica a que alumno pertenece la respuesta
     practica: {

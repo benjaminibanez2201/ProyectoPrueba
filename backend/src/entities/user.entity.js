@@ -1,4 +1,5 @@
 import { EntitySchema } from "typeorm";
+import { Practica } from "./practica.entity.js"; // 👈 IMPORTANTE: SIN ESTO NO SE CARGAN LAS RELACIONES
 
 export const User = new EntitySchema({
   name: "User",
@@ -28,7 +29,7 @@ export const User = new EntitySchema({
     role: {
       type: "varchar",
       length: 50,
-      default: "alumno", // 'alumno', 'empresa', 'coordinador'
+      default: "alumno", 
     },
     tipo_practica: {
       type: "varchar",
@@ -47,7 +48,7 @@ export const User = new EntitySchema({
     },
   },
   relations: {
-    practicasComoAlumno: { //Estas relaciones son para que tengamos mas flexibilidad a la hora de hacer consultas en la BDD
+    practicasComoAlumno: {
       type: "one-to-many",
       target: "Practica",
       inverseSide: "student",

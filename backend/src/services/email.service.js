@@ -35,8 +35,7 @@ export const sendEmail = async (destinatario, asunto, htmlContent) => {
 export const sendTokenEmail = async (emailEmpresa, nombreSupervisor, token, nombreAlumno) => {
   // Aquí definimos el link donde la empresa debería entrar (aunque la página no exista aún)
   // Suponemos que la ruta será /empresa/login
-  const linkAcceso = `http://localhost:5173/empresa/login?token=${token}`;
-
+  const linkAcceso = `http://localhost:5173/empresa/acceso/${token}`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: #0056b3; padding: 20px; text-align: center;">

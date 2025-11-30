@@ -131,7 +131,7 @@ async function seedFormularios() {
             required: true
           },
           {
-            id: "direccion",
+            id: "direccion_empresa",
             label: "Dirección",
             tipo: "text",
             fillBy: "empresa",

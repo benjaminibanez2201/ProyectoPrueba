@@ -78,5 +78,11 @@ export const Practica = new EntitySchema({
         target: "DocumentoPractica", 
         inverseSide: "practica", 
     },
+    formularioRespuestas: {
+      type: "one-to-many",
+      target: "FormularioRespuesta",
+      inverseSide: "practica", // Debe coincidir con la entidad respuesta
+      eager: true, // Opcional, pero ayuda
+    },
   },
 });

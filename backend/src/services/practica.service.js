@@ -1,19 +1,26 @@
 import { AppDataSource } from "../config/configDb.js";
 import { Practica } from "../entities/practica.entity.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
-import { User } from "../entities/user.entity.js"; // 1. Importamos User
+import { User } from "../entities/user.entity.js";
+// 👇 1. IMPORTACIONES NUEVAS
+import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
+import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
 import { sendTokenEmail } from "./email.service.js";
 import crypto from 'crypto';
-import { In } from "typeorm"; // ¡Importamos 'In' para el chequeo!
+import { In } from "typeorm";
 
 const practicaRepository = AppDataSource.getRepository(Practica);
 const tokenRepository = AppDataSource.getRepository(EmpresaToken);
-const userRepository = AppDataSource.getRepository(User); // 2. Repositorio de usuarios
+const userRepository = AppDataSource.getRepository(User);
+// 👇 2. REPOSITORIOS NUEVOS
+const respuestaRepository = AppDataSource.getRepository(FormularioRespuesta);
+const plantillaRepository = AppDataSource.getRepository(FormularioPlantilla);
 
 // Obtener todas las prácticas
 export async function findPracticas() {
   return await practicaRepository.find({
-    relations: ['student', 'empresaToken']
+    // Agregamos formularioRespuestas para que el admin pueda verlas si quiere
+    relations: ['student', 'empresaToken', 'formularioRespuestas', 'formularioRespuestas.plantilla']
   });
 }
 
@@ -21,29 +28,30 @@ export async function findPracticas() {
 export async function findPracticaById(id) {
   const practica = await practicaRepository.findOne({ 
     where: { id },
-    relations: ['student', 'empresaToken'] 
+    // 👇 Vital: Traer las respuestas para mostrarlas en el modal del Coordinador
+    relations: ['student', 'empresaToken', 'formularioRespuestas', 'formularioRespuestas.plantilla'] 
   });
   if (!practica) throw new Error("Práctica no encontrada");
   return practica;
 }
 
-// Crear nueva práctica (No cambia)
+// Crear nueva práctica (Admin)
 export async function createPractica(data) {
   const nueva = practicaRepository.create(data);
   return await practicaRepository.save(nueva);
 }
 
-// Actualizar una práctica (No cambia)
+// Actualizar una práctica
 export async function updatePractica(id, changes) {
   const practica = await findPracticaById(id);
   practicaRepository.merge(practica, changes);
   return await practicaRepository.save(practica);
 }
 
-// --- FUNCIÓN "MOTOR" PARA EL RF13 (CORREGIDA) ---
+// --- FUNCIÓN "MOTOR" PARA EL RF13 (ACTUALIZADA CON RESPUESTAS) ---
 export async function createPostulacion(data, studentId) {
   
-  // 1. Verificamos si el alumno ya tiene una práctica ACTIVA
+  // A. Verificamos si el alumno ya tiene una práctica ACTIVA
   const estadosActivos = [
       "enviada_a_empresa", 
       "pendiente_validacion", 
@@ -58,62 +66,69 @@ export async function createPostulacion(data, studentId) {
     }
   });
   if (existingPractica) {
-    throw new Error(`Ya tienes una práctica en estado: ${existingPractica.estado}.`);
+    throw new Error(`Ya tienes una práctica activa (Estado: ${existingPractica.estado}).`);
   }
 
-  // 2. ¡ARREGLO CLAVE! Buscamos al usuario real en la BD
-  // Esto evita que student_id quede null.
+  // B. Buscamos al usuario real
   const alumno = await userRepository.findOneBy({ id: studentId });
   if (!alumno) throw new Error("Usuario alumno no encontrado");
 
-  // 3. Creamos la Práctica
+  // C. 👇 BUSCAR LA PLANTILLA DE POSTULACIÓN
+  // Esto es vital. Asumimos que tienes una plantilla con tipo 'postulacion'
+  const plantillaPostulacion = await plantillaRepository.findOne({ where: { tipo: 'postulacion' } });
+  
+  if (!plantillaPostulacion) {
+     // Si esto falla, es porque no corriste el seeder de formularios
+     throw new Error("Error del sistema: No existe la plantilla de 'postulacion'. Contacte al soporte.");
+  }
+
+  // D. Creamos la Práctica (Limpia, sin columna 'datos')
   const practicaData = practicaRepository.create({
     estado: 'enviada_a_empresa', 
-    student: alumno, // <-- ¡Le pasamos el objeto completo!
+    student: alumno, 
   });
-  
-  // 4. Guardamos la práctica
   const newPractica = await practicaRepository.save(practicaData);
 
-  // 5. Generamos el token
-  const token = crypto.randomBytes(20).toString('hex');
+  // E. 👇 GUARDAR LA RESPUESTA EN LA TABLA SEPARADA
+  const nuevaRespuesta = respuestaRepository.create({
+      datos: data, // Aquí va el JSON completo del formulario
+      estado: 'enviado',
+      fecha_envio: new Date(),
+      plantilla: plantillaPostulacion, // Relación con la plantilla
+      practica: newPractica            // Relación con la práctica
+  });
+  await respuestaRepository.save(nuevaRespuesta);
 
-  // 6. Calculamos la fecha de expiración
+  // F. Generamos el token
+  const token = crypto.randomBytes(20).toString('hex');
   const fechaExpiracion = new Date();
   fechaExpiracion.setDate(fechaExpiracion.getDate() + 30);
 
-  // 7. Creamos el Token de Empresa
+  // G. Creamos el Token de Empresa
   const tokenData = tokenRepository.create({
     token: token,
     empresaNombre: data.nombreEmpresa,
     empresaCorreo: data.emailEmpresa,
     expiracion: fechaExpiracion,
-    
-    practica: newPractica, // Vinculación
+    practica: newPractica, 
   });
   
-  // 8. Guardamos el Token
   await tokenRepository.save(tokenData);
-  // --- AQUÍ AGREGAMOS EL ENVÍO DE CORREO ---
+
+  // H. Envío de Correo
   try {
-    // data.nombreRepresentante viene del formulario
-    // alumno.nombre viene de la base de datos (lo buscaste al principio)
-    // tokenData.token es el código generado
     await sendTokenEmail(
       data.emailEmpresa, 
       data.nombreRepresentante, 
       tokenData.token, 
-      alumno.name || "Un Estudiante" // Asegúrate de tener el nombre del alumno disponible
+      alumno.name || "Un Estudiante"
     );
   } catch (emailError) {
-    // Si falla el correo, NO queremos que falle la postulación, solo lo logueamos
     console.error("⚠️ La postulación se creó pero el correo falló:", emailError);
   }
-  // ---------------------------------------------
 
-  // 9. Devolvemos la práctica completa
-  const practicaCompleta = await findPracticaById(newPractica.id);
-  return practicaCompleta;
+  // I. Devolvemos la práctica completa (re-consultando para traer relaciones)
+  return await findPracticaById(newPractica.id);
 }
 
 // Eliminar una práctica 
@@ -124,18 +139,12 @@ export async function deletePractica(id) {
 
 // Buscar la practica del alumno por su id de usuario
 export async function findPracticaByStudentId(studentId) {
-  if (!studentId) {
-    console.error("ALERTA: Se intentó buscar práctica sin ID de estudiante.");
-    return null; 
-  }
+  if (!studentId) return null; 
 
   const practica = await practicaRepository.findOne({
-    where: {
-      // ⚠️ ERROR COMÚN: poner 'id: studentId' aquí busca por ID de práctica
-      // ✅ LO CORRECTO: es entrar a la relación 'student'
-      student: { id: studentId } 
-    },
-    relations: ['empresaToken', 'documentos'] 
+    where: { student: { id: studentId } },
+    // 👇 Agregamos las relaciones aquí también para que el alumno vea sus respuestas si quiere
+    relations: ['empresaToken', 'documentos', 'formularioRespuestas', 'formularioRespuestas.plantilla'] 
   });
   return practica; 
 }

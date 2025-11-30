@@ -64,18 +64,18 @@ export const enviarEvaluacion = async (req, res) => {
 export const validarToken = async (req, res) => {
   try {
     const { token } = req.params;
+
+    // tokenData viene del servicio -> NO tiene practica, NO tiene student
     const tokenData = await validarTokenEmpresa(token);
 
-    const practica = tokenData.practica; 
-    const alumno = practica.student; 
-
     return handleSuccess(res, 200, "Token de empresa validado.", {
-      practicaId: practica.id, 
-      alumnoNombre: alumno.name, 
-      tipoPractica: practica.tipoPractica, 
-      empresaNombre: tokenData.empresaNombre, 
-      estado: practica.estado,
+      practicaId: tokenData.practicaId,
+      alumnoNombre: tokenData.alumnoNombre,
+      empresaNombre: tokenData.empresaNombre,
+      estado: tokenData.estado,
+      formularioRespuestas: tokenData.formularioRespuestas
     });
+
   } catch (error) {
     console.error("Error al validar token:", error.message);
     return handleErrorClient(res, 400, error.message);
