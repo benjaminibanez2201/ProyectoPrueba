@@ -117,7 +117,16 @@ async getMyPractica(req, res) {
       const { id } = req.params;
       const { nuevoEstado } = req.body;
 
-      const estadosPermitidos = ["pendiente", "en_curso", "finalizada", "evaluada"];
+      const estadosPermitidos = [
+          "pendiente", 
+          "enviada_a_empresa", 
+          "pendiente_validacion", 
+          "rechazada", 
+          "en_curso", 
+          "finalizada", 
+          "evaluada", 
+          "cerrada"
+      ];
       if (!estadosPermitidos.includes(nuevoEstado)) {
         return handleErrorClient(res, 400, "Estado no válido");
       }
@@ -166,6 +175,52 @@ async getMyPractica(req, res) {
       });
     } catch (error) {
       handleErrorServer(res, 500, "Error al cerrar práctica", error.message);
+    }
+  }
+  // Aprobar práctica (Paso de "pendiente_validacion" a "en_curso")
+  async aprobarInicioPractica(req, res) {
+    try {
+      const { id } = req.params;
+      const userRole = req.user?.role;
+
+      if (userRole !== "coordinador") {
+        return handleErrorClient(res, 403, "Solo el coordinador puede aprobar prácticas.");
+      }
+
+      const practica = await findPracticaById(id);
+      if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
+
+      // Cambiamos al estado oficial de inicio
+      practica.estado = "en_curso";
+      
+      // Opcional: Podrías guardar la fecha real de inicio aquí si quisieras
+      // practica.fecha_inicio = new Date();
+
+      const updated = await updatePractica(id, practica);
+      handleSuccess(res, 200, "Práctica aprobada y puesta En Curso.", updated);
+    } catch (error) {
+      handleErrorServer(res, 500, "Error al aprobar la práctica", error.message);
+    }
+  }
+
+  // Observar/Rechazar práctica (Devuelve la pelota al alumno)
+  async observarPractica(req, res) {
+    try {
+      const { id } = req.params;
+      const userRole = req.user?.role;
+
+      if (userRole !== "coordinador") return handleErrorClient(res, 403, "Sin permisos");
+
+      const practica = await findPracticaById(id);
+      if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
+
+      // Cambiamos al estado que definimos para correcciones
+      practica.estado = "rechazada"; 
+      
+      const updated = await updatePractica(id, practica);
+      handleSuccess(res, 200, "Práctica observada. Se ha notificado al alumno.", updated);
+    } catch (error) {
+      handleErrorServer(res, 500, "Error al observar práctica", error.message);
     }
   }
 

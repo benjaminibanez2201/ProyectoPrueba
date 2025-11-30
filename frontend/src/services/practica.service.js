@@ -11,7 +11,7 @@ export const getPracticas = async () => {
   }
 };
 
-//llama al endpoint GET /practicas/my-practice del backend para obtener a el alumno logueado
+//llama al endpoint GET /practicas/me del backend para obtener a el alumno logueado
 export const getMyPractica = async () => {
   try {
     const response = await instance.get('/practicas/me');

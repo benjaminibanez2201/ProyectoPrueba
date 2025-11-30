@@ -1,32 +1,46 @@
 import React, { useState, useMemo } from "react";
 import { CSVLink } from "react-csv";
 import { useNavigate } from "react-router-dom"; // Hook para navegar
-import { Users, Key, ClipboardList, Eye, Edit, FileCog, FileText} from "lucide-react"; // Iconos
+import { Users, Key, ClipboardList, Eye, Edit, FileCog } from "lucide-react"; // Iconos
 import { getAlumnos } from "../services/user.service.js";
 import { showErrorAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 
 // --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---
 const EstadoBadge = ({ practica }) => {
-  let estado = 'pendiente';
-  let texto = 'Pendiente (Sin Inscribir)';
+  // 1. Obtenemos el estado crudo (ej: 'enviada_a_empresa') o 'pendiente' si no existe
+  const estado = practica ? practica.estado : 'pendiente';
 
-  if (practica) {
-    estado = practica.estado;
-    texto = estado.charAt(0).toUpperCase() + estado.slice(1).replace('_', ' ');
-  }
-
-  const S = {
-    pendiente: "bg-gray-100 text-gray-800",
-    pendiente_revision: "bg-yellow-100 text-yellow-800",
-    en_curso: "bg-blue-100 text-blue-800",
-    finalizada: "bg-green-100 text-green-800",
-    evaluada: "bg-purple-100 text-purple-800",
-    cerrada: "bg-gray-200 text-gray-500",
+  // 2. DICCIONARIO DE COLORES
+  const statusColors = {
+    pendiente: "bg-gray-100 text-gray-600 border border-gray-200",
+    enviada_a_empresa: "bg-blue-50 text-blue-700 border border-blue-200",
+    pendiente_validacion: "bg-yellow-50 text-yellow-800 border border-yellow-200 font-bold",
+    rechazada: "bg-red-50 text-red-700 border border-red-200",
+    en_curso: "bg-green-50 text-green-700 border border-green-200",
+    finalizada: "bg-orange-50 text-orange-800 border border-orange-200",
+    evaluada: "bg-purple-50 text-purple-700 border border-purple-200",
+    cerrada: "bg-gray-800 text-white border border-gray-600",
   };
-  
+
+  // 3. DICCIONARIO DE TEXTOS
+  const statusLabels = {
+    pendiente: "Sin Inscribir Empresa",
+    enviada_a_empresa: "Esperando Empresa",
+    pendiente_validacion: "Requiere Validación",
+    rechazada: "Observada",
+    en_curso: "En Curso",
+    finalizada: "Finalizada",
+    evaluada: "Evaluada (Lista para Nota)",
+    cerrada: "Cerrada"
+  };
+
+  // 4. Seleccionamos color y texto (con fallback por seguridad)
+  const colorClass = statusColors[estado] || statusColors.pendiente;
+  const texto = statusLabels[estado] || estado;
+
   return (
-    <span className={`px-2 py-1 text-xs font-medium rounded-full ${S[estado] || S.cerrada}`}>
+    <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>
       {texto}
     </span>
   );
@@ -35,7 +49,7 @@ const EstadoBadge = ({ practica }) => {
 // --- COMPONENTE PRINCIPAL ---
 const DashboardCoordinador = ({ user }) => {
   // 1. Hooks
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [alumnos, setAlumnos] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -52,12 +66,12 @@ const DashboardCoordinador = ({ user }) => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const alumnosArray = await getAlumnos(); 
-      
+
+      const alumnosArray = await getAlumnos();
+
       setAlumnos(alumnosArray);
       setShowTable(true);
-      
+
     } catch (err) {
       const errorMessage = err.message || "No se pudo cargar la lista";
       setError(errorMessage);
@@ -70,7 +84,7 @@ const DashboardCoordinador = ({ user }) => {
   // 3. Filtros
   const alumnosFiltrados = alumnos.filter(alumno => {
     if (filter === 'todas') return true;
-    const tipo = alumno.tipo_practica; 
+    const tipo = alumno.tipo_practica;
     if (filter === 'p1' && tipo === 'Profesional I') return true;
     if (filter === 'p2' && tipo === 'Profesional II') return true;
     return false;
@@ -87,15 +101,26 @@ const DashboardCoordinador = ({ user }) => {
   const dataParaExportar = useMemo(() => {
     return alumnosFiltrados.map(alumno => {
       const practica = alumno.practicasComoAlumno?.[0];
-      let estadoTexto = 'Pendiente (Sin Inscribir)';
-      if (practica) {
-        estadoTexto = practica.estado.charAt(0).toUpperCase() + practica.estado.slice(1).replace('_', ' ');
-      }
+      // Usamos la misma lógica simple para el CSV
+      const estadoRaw = practica ? practica.estado : 'pendiente';
+
+      // Mapeo manual simple para el CSV (opcional, podrías reusar el diccionario arriba)
+      const labelMap = {
+        pendiente: "Sin Inscribir Empresa",
+        enviada_a_empresa: "Esperando Empresa",
+        pendiente_validacion: "Requiere Validación",
+        rechazada: "Observada",
+        en_curso: "En Curso",
+        finalizada: "Finalizada",
+        evaluada: "Evaluada (Lista para Nota)",
+        cerrada: "Cerrada"
+      };
+
       return {
         name: alumno.name,
         email: alumno.email,
         tipo_practica: alumno.tipo_practica || 'N/A',
-        estado: estadoTexto
+        estado: labelMap[estadoRaw] || estadoRaw
       };
     });
   }, [alumnosFiltrados]);
@@ -105,8 +130,10 @@ const DashboardCoordinador = ({ user }) => {
     const idPractica = alumno.practicasComoAlumno?.[0]?.id;
     if (idPractica) {
       console.log("Ver detalles:", idPractica);
+      // Aquí podrías navegar a una vista de detalle: navigate(`/admin/practica/${idPractica}`)
     }
   };
+
   const handleEditarEstado = (alumno) => {
     console.log("Editar estado:", alumno.id);
   };
@@ -116,7 +143,7 @@ const DashboardCoordinador = ({ user }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
-        
+
         <h2 className="text-4xl font-extrabold text-blue-700 mb-2">
           Panel del Coordinador
         </h2>
@@ -126,14 +153,14 @@ const DashboardCoordinador = ({ user }) => {
 
         {/* GRID DE TARJETAS */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          
+
           {/* Tarjeta 1: Ver Alumnos */}
           <div className="bg-blue-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <Users className="text-blue-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-blue-800">Ver Alumnos</h3>
             <p className="text-gray-600 text-sm mt-1">Revisa alumnos inscritos (RF2)</p>
-            <button 
-              onClick={handleLoadAlumnos} 
+            <button
+              onClick={handleLoadAlumnos}
               className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
               {showTable ? 'Ocultar Alumnos' : 'Gestionar Alumnos'}
@@ -165,8 +192,8 @@ const DashboardCoordinador = ({ user }) => {
             <FileCog className="text-orange-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-orange-800">Formularios</h3>
             <p className="text-gray-600 text-sm mt-1">Edita las plantillas (RF12)</p>
-            <button 
-              onClick={() => navigate("/admin/formularios")} 
+            <button
+              onClick={() => navigate("/admin/formularios")}
               className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
               Gestionar Plantillas
@@ -182,11 +209,11 @@ const DashboardCoordinador = ({ user }) => {
         {error && (
           <p className="text-red-600 bg-red-100 p-4 rounded-lg text-center mt-8">{error}</p>
         )}
-        
+
         {showTable && !isLoading && !error && (
           <div className="mt-12">
             <h3 className="text-2xl font-bold text-blue-800 mb-4">Gestión de Alumnos</h3>
-            
+
             {/* Filtros y Exportar */}
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
               <div className="flex flex-wrap gap-2">
@@ -219,14 +246,9 @@ const DashboardCoordinador = ({ user }) => {
                   <tr>
                     <th className="p-4 font-semibold text-blue-800">Alumno</th>
                     <th className="p-4 font-semibold text-blue-800">Email</th>
-
                     <th className="p-4 font-semibold text-blue-800">Tipo Práctica</th>
                     <th className="p-4 font-semibold text-blue-800">Estado</th>
-
-                    
-                    
                     <th className="p-4 font-semibold text-blue-800">Documentos</th>
-
                     <th className="p-4 font-semibold text-blue-800">Acciones</th>
                   </tr>
                 </thead>
@@ -239,16 +261,16 @@ const DashboardCoordinador = ({ user }) => {
                       <td className="p-4">
                         <EstadoBadge practica={alumno.practicasComoAlumno?.[0]} />
                       </td>
-                      {/* --- NUEVA CELDA DE DOCUMENTOS --- */}
+
+                      {/* --- CELDA DE DOCUMENTOS --- */}
                       <td className="p-4">
                         {(() => {
                           const docs = alumno.practicasComoAlumno?.[0]?.documentos;
                           if (docs && docs.length > 0) {
                             return (
                               <button
-                                // Simplemente guardamos el alumno en el estado. El Modal se abrirá solo.
                                 onClick={() => setSelectedStudentForDocs(alumno)}
-                                className="flex items-center gap-2 text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors font-medium text-xs"
+                                className="flex items-center gap-2 text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition-colors font-medium text-xs"
                               >
                                 <ClipboardList size={14} />
                                 Ver {docs.length} archivos
@@ -258,12 +280,12 @@ const DashboardCoordinador = ({ user }) => {
                           return <span className="text-gray-400 text-xs italic pl-2">Sin archivos</span>;
                         })()}
                       </td>
-                      {/* ------------hasta aquí lo del descraga de docs-------------------- */}
+
                       <td className="p-4 space-x-2">
-                        <button onClick={() => handleVerPractica(alumno)} className="p-2 bg-blue-100 text-blue-700 rounded-lg" title="Ver">
+                        <button onClick={() => handleVerPractica(alumno)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200" title="Ver Detalle">
                           <Eye size={18} />
                         </button>
-                        <button onClick={() => handleEditarEstado(alumno)} className="p-2 bg-green-100 text-green-700 rounded-lg" title="Editar">
+                        <button onClick={() => handleEditarEstado(alumno)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200" title="Aprobar/Editar">
                           <Edit size={18} />
                         </button>
                       </td>
@@ -271,7 +293,7 @@ const DashboardCoordinador = ({ user }) => {
                   ))}
                   {alumnosFiltrados.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="p-4 text-center text-gray-500">No se encontraron alumnos.</td>
+                      <td colSpan="6" className="p-4 text-center text-gray-500">No se encontraron alumnos.</td>
                     </tr>
                   )}
                 </tbody>
@@ -280,12 +302,14 @@ const DashboardCoordinador = ({ user }) => {
           </div>
         )}
       </div>
-        <DocumentsModal
-          isOpen={!!selectedStudentForDocs} // Es true si hay un alumno seleccionado
-          onClose={() => setSelectedStudentForDocs(null)} // Al cerrar, volvemos a null
-          studentName={selectedStudentForDocs?.name}
-          documents={selectedStudentForDocs?.practicasComoAlumno?.[0]?.documentos || []}
-        />
+
+      {/* MODAL DE DOCUMENTOS */}
+      <DocumentsModal
+        isOpen={!!selectedStudentForDocs}
+        onClose={() => setSelectedStudentForDocs(null)}
+        studentName={selectedStudentForDocs?.name}
+        documents={selectedStudentForDocs?.practicasComoAlumno?.[0]?.documentos || []}
+      />
     </div>
   );
 };

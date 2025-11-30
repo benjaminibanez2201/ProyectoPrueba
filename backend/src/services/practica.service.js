@@ -44,7 +44,13 @@ export async function updatePractica(id, changes) {
 export async function createPostulacion(data, studentId) {
   
   // 1. Verificamos si el alumno ya tiene una práctica ACTIVA
-  const estadosActivos = ["pendiente_revision", "en_curso"];
+  const estadosActivos = [
+      "enviada_a_empresa", 
+      "pendiente_validacion", 
+      "en_curso", 
+      "finalizada", 
+      "evaluada"
+  ];
   const existingPractica = await practicaRepository.findOne({
     where: {
       student: { id: studentId },
@@ -62,7 +68,7 @@ export async function createPostulacion(data, studentId) {
 
   // 3. Creamos la Práctica
   const practicaData = practicaRepository.create({
-    estado: 'pendiente_revision', 
+    estado: 'enviada_a_empresa', 
     student: alumno, // <-- ¡Le pasamos el objeto completo!
   });
   

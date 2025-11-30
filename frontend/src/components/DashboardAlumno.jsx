@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react"; 
-import { useNavigate } from "react-router-dom"; 
-import { Upload, FileText, Activity, Send, PlusCircle } from "lucide-react";
-import { getMyPractica, postularPractica } from "../services/practica.service.js"; 
-import { showErrorAlert, showSuccessAlert,deleteDataAlert } from "../helpers/sweetAlert.js";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Upload, FileText, Activity, Send, PlusCircle, Ticket, Info } from "lucide-react";
+import { getMyPractica, postularPractica } from "../services/practica.service.js";
+import { showErrorAlert, showSuccessAlert, deleteDataAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { deleteDocumento } from "../services/documento.service.js";
 
@@ -13,12 +13,17 @@ const EstadoBadge = ({ estado }) => {
     texto = estado.charAt(0).toUpperCase() + estado.slice(1).replace('_', ' ');
   }
   const S = {
-    pendiente: "bg-yellow-100 text-yellow-800",
-    pendiente_revision: "bg-blue-100 text-blue-800",
-    en_curso: "bg-blue-100 text-blue-800",
-    finalizada: "bg-green-100 text-green-800",
-    evaluada: "bg-purple-100 text-purple-800",
-    cerrada: "bg-gray-100 text-gray-800",
+    // Estado inicial (Si implementamos carga masiva de alumnos después)
+    pendiente: "🔴 Pendiente (Empresa no inscrita)",
+
+    // Flujo normal
+    enviada_a_empresa: "✉️ Enviado a Empresa (Esperando respuesta)",
+    pendiente_validacion: "⏳ Pendiente Validación (Coordinador)",
+    rechazada: "⚠️ Rechazada con Observaciones",
+    en_curso: "✅ En Curso",
+    finalizada: "🏁 Finalizada (Esperando Evaluación)",
+    evaluada: "📝 Evaluada por Empresa",
+    cerrada: "🔒 Cerrada (Nota Final Asignada)"
   };
   return (
     <span className={`px-2 py-1 text-xs font-medium rounded-full ${S[estado] || S.pendiente}`}>
@@ -35,26 +40,26 @@ const DashboardAlumno = ({ user }) => {
   const [showDocsModal, setShowDocsModal] = useState(false);
 
   const fetchMiPractica = useCallback(async () => {
-    setIsLoading(true); 
+    setIsLoading(true);
     try {
-      const miPractica = await getMyPractica(); 
-      setPractica(miPractica); 
+      const miPractica = await getMyPractica();
+      setPractica(miPractica);
     } catch (err) {
       if (err.status !== 401) {
-         console.log("No se pudo cargar estado o no tiene práctica");
+        console.log("No se pudo cargar estado o no tiene práctica");
       }
     } finally {
       setIsLoading(false);
     }
-  }, []); 
+  }, []);
 
   useEffect(() => {
     fetchMiPractica();
-  }, [fetchMiPractica]); 
+  }, [fetchMiPractica]);
 
 
 
- // Función para manejar la eliminación
+  // Función para manejar la eliminación
   const handleDeleteDocumento = async (id) => {
     deleteDataAlert(async () => {
       try {
@@ -72,7 +77,7 @@ const DashboardAlumno = ({ user }) => {
   };
 
   // --- Renderizado Condicional ---
-  
+
 
   if (isLoading) {
     return (
@@ -85,7 +90,7 @@ const DashboardAlumno = ({ user }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-8">
       <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-green-100">
-        
+
         {/* HEADER DEL DASHBOARD */}
         <div className="mb-8">
           <h2 className="text-4xl font-extrabold text-green-700 mb-2">
@@ -96,10 +101,10 @@ const DashboardAlumno = ({ user }) => {
             Gestiona tu proceso de práctica profesional aquí.
           </p>
         </div>
-        
+
         {/* GRID DE TARJETAS (Siempre visible) */}
         <div className="grid md:grid-cols-3 gap-6">
-          
+
           {/* TARJETA 1: ESTADO / INSCRIPCIÓN */}
           <div className="bg-green-50 p-6 rounded-xl shadow-inner border border-green-100 flex flex-col justify-between h-full">
             <div>
@@ -109,7 +114,7 @@ const DashboardAlumno = ({ user }) => {
                 {!practica && <PlusCircle className="text-blue-500" size={24} />}
               </div>
               <h3 className="text-lg font-bold text-green-800 mb-2">Estado Actual</h3>
-              
+
               {/* AQUÍ ESTÁ LA LÓGICA CONDICIONAL DENTRO DE LA TARJETA */}
               {practica ? (
                 <div className="mt-2">
@@ -144,11 +149,11 @@ const DashboardAlumno = ({ user }) => {
             <p className="text-gray-600 text-sm mt-1">
               Envía tus informes y certificados (RF6)
             </p>
-            <button 
+            <button
               disabled={!practica} // Tip: Puedes agregarle esto para que se bloquee si no hay práctica
               onClick={() => {
-                 // Navegamos a la ruta y le pasamos el ID de la práctica "escondido"
-                 navigate('/upload-document', { state: { practicaId: practica?.id } });
+                // Navegamos a la ruta y le pasamos el ID de la práctica "escondido"
+                navigate('/upload-document', { state: { practicaId: practica?.id } });
               }}
               className="mt-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
@@ -163,9 +168,9 @@ const DashboardAlumno = ({ user }) => {
             <p className="text-gray-600 text-sm mt-1">
               Consulta tus entregas registradas.
             </p>
-            
+
             {/* 3. BOTÓN ACTIVADO */}
-            <button 
+            <button
               onClick={() => setShowDocsModal(true)}
               className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
@@ -173,22 +178,31 @@ const DashboardAlumno = ({ user }) => {
             </button>
           </div>
         </div>
-        
-        {/* SECCIÓN INFERIOR: TOKEN (Solo si hay práctica) */}
+
         {practica && (
           <div className="mt-8 bg-white p-6 rounded-xl shadow-sm border-2 border-dashed border-green-200">
+
             <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-              🎟️ Token para tu Empresa
+              <Ticket size={20} /> Token para tu Empresa
+
+              {/* TOOLTIP SIN DEPENDENCIAS */}
+              <div className="relative group">
+                <Info size={18} className="text-gray-500 hover:text-gray-700 cursor-pointer" />
+                <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 hidden group-hover:block
+                        w-64 p-3 text-sm bg-gray-800 text-white rounded-lg shadow-lg z-50">
+                  Si a tu supervisor no le llega el correo o se pierde, entrégale este token.
+                  Lo necesitará para ingresar al sistema y completar el formulario y tu evaluación.
+                </div>
+              </div>
             </h3>
-            <p className="text-gray-600 mb-4 text-sm">
-              Copia este código y entrégaselo a tu supervisor. Él lo necesitará para ingresar al sistema y evaluarte.
-            </p>
-            
+
             <div className="bg-gray-100 text-gray-800 font-mono text-lg p-4 rounded text-center border border-gray-300 select-all">
               {practica.empresaToken?.token || "Token no disponible"}
             </div>
+
           </div>
         )}
+
 
         {/* Modal de Documentos */}
         {practica && (
@@ -197,7 +211,7 @@ const DashboardAlumno = ({ user }) => {
             onClose={() => setShowDocsModal(false)}
             studentName="la práctica"
             // Aquí pasamos los documentos de la práctica del alumno
-            documents={practica.documentos || []} 
+            documents={practica.documentos || []}
             onDelete={handleDeleteDocumento}
           />
         )}
