@@ -37,3 +37,23 @@ export const postularPractica = async (data) => {
     throw error.response?.data || error; 
   }
 };
+
+// Aprobar práctica (Coordinador)
+export const aprobarPractica = async (id) => {
+  try {
+    const response = await instance.patch(`/practicas/${id}/aprobar`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+// Observar/Rechazar práctica (Coordinador)
+export const observarPractica = async (id) => {
+  try {
+    const response = await instance.patch(`/practicas/${id}/observar`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
