@@ -23,6 +23,7 @@ export const Practica = new EntitySchema({
         "evaluada",                // Empresa puso nota.
         "cerrada"                  // Profe cerró el acta.
       ],
+
       default: "pendiente",
     },
     fecha_inicio: {

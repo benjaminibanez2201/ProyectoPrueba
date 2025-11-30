@@ -17,6 +17,8 @@ import EditarFormulario from './pages/EditarFormulario';
 
 import SubirDocumento from  '@pages/SubirDocumento';
 
+import AprobarPracticas from '@pages/AprobarPracticas';
+
 import '@styles/styles.css';
 
 const router = createBrowserRouter([
@@ -85,7 +87,7 @@ const router = createBrowserRouter([
         path: '/admin/formularios/editar/:id',
         element: (
           <ProtectedRoute>
-             <EditarFormulario />
+          <EditarFormulario />
           </ProtectedRoute>
         )
       },
@@ -96,6 +98,14 @@ const router = createBrowserRouter([
       {
         path: '/upload-document',
         element: <SubirDocumento />
+      },
+      {
+        path: '/coordinador/aprobar-practicas',
+        element: (
+          <ProtectedRoute>
+          <AprobarPracticas />
+          </ProtectedRoute>
+        )
       }
     ]
   }

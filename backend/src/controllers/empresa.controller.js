@@ -1,7 +1,8 @@
 import { AppDataSource } from "../config/configDb.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
+import { Practica } from "../entities/practica.entity.js";
 import jwt from "jsonwebtoken";
-import { handleErrorClient } from "../Handlers/responseHandlers.js"; // si no lo tienes, no pasa nada
+import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
 import { validarTokenEmpresa } from "../services/empresa.service.js";
 
 // --- Generar Token ---
@@ -63,18 +64,17 @@ export const enviarEvaluacion = async (req, res) => {
 export const validarToken = async (req, res) => {
   try {
     const { token } = req.params;
-
-    // Usar el servicio para validar el token
     const tokenData = await validarTokenEmpresa(token);
 
-    const practica = tokenData.practica;
-    const alumno = practica.student;
+    const practica = tokenData.practica; 
+    const alumno = practica.student; 
 
     return handleSuccess(res, 200, "Token de empresa validado.", {
-      practicaId: practica.id,
-      alumnoNombre: `${alumno.name}`,
-      tipoPractica: practica.tipoPractica,
-      empresaNombre: tokenData.empresaNombre,
+      practicaId: practica.id, 
+      alumnoNombre: alumno.name, 
+      tipoPractica: practica.tipoPractica, 
+      empresaNombre: tokenData.empresaNombre, 
+      estado: practica.estado,
     });
   } catch (error) {
     console.error("Error al validar token:", error.message);
@@ -97,15 +97,42 @@ export const confirmarInicioPractica = async (req, res) => {
     const practicaRepo = AppDataSource.getRepository(Practica);
     const practica = tokenData.practica;
 
-    if (practica.estado == 'pendiente') {
-      practica.estado = 'en_curso'; // actualizar estado
+    if (practica.estado === 'pendiente_revision') {
+      practica.estado = 'confirmada_por_empresa'; // actualizar estado
       practica.fechaInicio = new Date(); // registrar fecha de inicio
       await practicaRepo.save(practica);
 
-      return handleSuccess(res, 200, `Práctica ${practica.id} iniciada y en curso.`, practica);
+      console.log('Práctica confirmada por empresa, esperando aprobación del coordinador');
+
+      return handleSuccess(res, 200, "Confirmación recibida. El coordinador revisará e iniciará la práctica.", {
+        practicaId: practica.id,
+        estado: practica.estado,
+        fechaConfirmacion: practica.fechaConfirmacionEmpresa,
+        alumnoNombre: practica.student.name,
+        empresaNombre: tokenData.empresaNombre,
+        mensajeParaEmpresa: "Su confirmación ha sido registrada. El coordinador validará el inicio de la práctica."
+      });
     }
 
-    return handleSuccess(res, 200, "La práctica ya ha sido iniciada anteriormente.");
+    // Si la práctica ya fue confirmada anteriormente
+    if (practica.estado === 'confirmada_por_empresa') {
+      return handleSuccess(res, 200, "Ya confirmaste el inicio de esta práctica. Esperando aprobación del coordinador.", {
+        estado: practica.estado,
+        practicaId: practica.id
+      });
+    }
+
+    // Si la práctica ya fue confirmada por el coordinador y está en curso
+    if (practica.estado === 'en_curso') {
+      return handleSuccess(res, 200, "La práctica ya ha sido aprobada por el coordinador y está en curso.", {
+        estado: practica.estado,
+        practicaId: practica.id
+      });
+    }
+
+    return handleSuccess(res, 200, "Estado de práctica no válido para confirmación.", {
+      estado: practica.estado
+    });
 
   } catch (error) {
     console.error("Error al confirmar inicio de práctica:", error);
