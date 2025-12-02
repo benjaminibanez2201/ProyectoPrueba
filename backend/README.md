@@ -49,11 +49,6 @@ DB_PORT=5432
 DB_USER=tu_usuario
 DB_PASSWORD=tu_password
 DB_NAME=proyecto_prueba
-
-# Configuración de Correo
-EMAIL_USER= correo
-EMAIL_PASS= contraseña de aplicacion
-
 Iniciar la base de datos PostgreSQL y sincronizar con TypeORM.
 
 Levantar el servidor:
@@ -69,6 +64,10 @@ Login: POST /api/auth/login
 Generar token de empresa (solo coordinador): POST /api/empresa/generar-token
 
 Acceso de empresa con token: GET /api/empresa/ver-formulario?token=<TOKEN>
+
+Ver listado de alumnos (solo coordinador): GET /api/users/alumnos
+
+Ver prácticas y documentos por alumno (solo coordinador): GET /api/users/alumnos/<id_alumno>/detalles
 
 Estructura del proyecto
 bash
@@ -90,3 +89,7 @@ Frontend: en desarrollo
 Funcionalidad de chat para empresas: pendiente
 
 Formularios y evaluaciones dinámicas para empresas: pendiente
+
+Autor
+Benjamín Ibáñez
+Estudiante de Ingeniería Civil en Informática – Universidad del Bío-Bío

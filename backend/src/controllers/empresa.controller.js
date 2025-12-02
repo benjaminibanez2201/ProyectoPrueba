@@ -1,0 +1,141 @@
+import { AppDataSource } from "../config/configDb.js";
+import { EmpresaToken } from "../entities/empresaToken.entity.js";
+import { Practica } from "../entities/practica.entity.js";
+import jwt from "jsonwebtoken";
+import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
+import { validarTokenEmpresa } from "../services/empresa.service.js";
+
+// --- Generar Token ---
+export const generarTokenEmpresa = async (req, res) => {
+  try {
+    const { empresaNombre, empresaCorreo, alumnoId } = req.body;
+
+    // Generar token único con JWT
+    const token = jwt.sign(
+      { alumnoId, tipo: "empresa" },
+      process.env.JWT_SECRET,
+      { expiresIn: "180d" } // dura 6 meses aprox
+    );
+
+    const repo = AppDataSource.getRepository(EmpresaToken);
+    const nuevoToken = repo.create({
+      token,
+      empresaNombre,
+      empresaCorreo,
+      alumnoId,
+      expiracion: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+    });
+
+    await repo.save(nuevoToken);
+
+    return res.json({
+      message: "Token generado exitosamente",
+      token,
+    });
+  } catch (error) {
+    console.error("Error generando token:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+// --- Ver Formulario (empresa) ---
+export const verFormulario = async (req, res) => {
+  try {
+    // más adelante traeremos el formulario del alumno
+    return res.json({ message: "Aquí se mostrará el formulario asignado al alumno." });
+  } catch (error) {
+    console.error("Error al obtener formulario:", error);
+    return handleErrorClient(res, 500, "Error interno al obtener formulario.");
+  }
+};
+
+// --- Enviar Evaluación (empresa) ---
+export const enviarEvaluacion = async (req, res) => {
+  try {
+    // más adelante procesaremos la evaluación enviada
+    return res.json({ message: "Aquí se recibirá la evaluación enviada por la empresa." });
+  } catch (error) {
+    console.error("Error al enviar evaluación:", error);
+    return handleErrorClient(res, 500, "Error interno al enviar evaluación.");
+  }
+};
+
+// --- Validar Token (empresa) ---
+export const validarToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // tokenData viene del servicio -> NO tiene practica, NO tiene student
+    const tokenData = await validarTokenEmpresa(token);
+
+    return handleSuccess(res, 200, "Token de empresa validado.", {
+      practicaId: tokenData.practicaId,
+      alumnoNombre: tokenData.alumnoNombre,
+      empresaNombre: tokenData.empresaNombre,
+      estado: tokenData.estado,
+      formularioRespuestas: tokenData.formularioRespuestas
+    });
+
+  } catch (error) {
+    console.error("Error al validar token:", error.message);
+    return handleErrorClient(res, 400, error.message);
+  }
+};
+
+// confirmar inicio de práctica
+export const confirmarInicioPractica = async (req, res) => {
+  try {
+    const { token, confirmacion } = req.body; // token enviado por la empresa y confirmación frontend
+
+    //revalidar token para asegurar vigencia
+    const tokenData = await validarTokenEmpresa(token);
+
+    if (!confirmacion) {
+      return handleSuccess(res, 200, "Acción cancelada por la empresa.");
+    }
+
+    const practicaRepo = AppDataSource.getRepository(Practica);
+    const practica = tokenData.practica;
+
+    if (practica.estado === 'pendiente_revision') {
+      practica.estado = 'confirmada_por_empresa'; // actualizar estado
+      practica.fechaInicio = new Date(); // registrar fecha de inicio
+      await practicaRepo.save(practica);
+
+      console.log('Práctica confirmada por empresa, esperando aprobación del coordinador');
+
+      return handleSuccess(res, 200, "Confirmación recibida. El coordinador revisará e iniciará la práctica.", {
+        practicaId: practica.id,
+        estado: practica.estado,
+        fechaConfirmacion: practica.fechaConfirmacionEmpresa,
+        alumnoNombre: practica.student.name,
+        empresaNombre: tokenData.empresaNombre,
+        mensajeParaEmpresa: "Su confirmación ha sido registrada. El coordinador validará el inicio de la práctica."
+      });
+    }
+
+    // Si la práctica ya fue confirmada anteriormente
+    if (practica.estado === 'confirmada_por_empresa') {
+      return handleSuccess(res, 200, "Ya confirmaste el inicio de esta práctica. Esperando aprobación del coordinador.", {
+        estado: practica.estado,
+        practicaId: practica.id
+      });
+    }
+
+    // Si la práctica ya fue confirmada por el coordinador y está en curso
+    if (practica.estado === 'en_curso') {
+      return handleSuccess(res, 200, "La práctica ya ha sido aprobada por el coordinador y está en curso.", {
+        estado: practica.estado,
+        practicaId: practica.id
+      });
+    }
+
+    return handleSuccess(res, 200, "Estado de práctica no válido para confirmación.", {
+      estado: practica.estado
+    });
+
+  } catch (error) {
+    console.error("Error al confirmar inicio de práctica:", error);
+    return handleErrorClient(res, 400, error.message)
+  }
+};
