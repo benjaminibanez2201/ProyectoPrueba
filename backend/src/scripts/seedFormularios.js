@@ -284,6 +284,11 @@ async function seedFormularios() {
         tipo: "bitacora",
         esquema: [
           {
+            id: "sep_b1",
+            label: "Antecedentes Generales",
+            tipo: "header",
+          },
+          {
             id: "nombre_alumno",
             label: "Nombre Completo",
             tipo: "text",
@@ -293,48 +298,61 @@ async function seedFormularios() {
             id: "rut",
             label: "RUT",
             tipo: "text",
+            cols: 6,
             required: true
           },
           {
             id: "correo_alumno",
             label: "Correo Electrónico",
             tipo: "email",
+            cols: 6,
             required: true
           },
           {
             id: "nombre_empresa",
             label: "Centro de Practica",
             tipo: "text",
+            cols: 6,
             required: true
           },
           {
             id: "fono_empresa",
             label: "Fono Empresa",
             tipo: "text",
+            cols: 6,
             required: true
           },
           {
             id: "nombre_supervisor",
             label: "Supervisor Empresa",
             tipo: "text",
+            cols: 6,
             required: true
           },
           {
             id: "fono_supervisor",
             label: "Fono Supervisor",
             tipo: "text",
+            cols: 6,
             required: true
+          },
+          {
+            id: "sep_b2",
+            label: "Actividades Realizadas",
+            tipo: "header",
           },
           {
             id: "fecha",
             label: "Fecha",
             tipo: "date",
+            cols: 6,
             required: true
           },
           {
             id: "duracion_actividad",
             label: "Duración Actividad",
             tipo: "text",
+            cols: 6,
             required: true
           },
           {
@@ -349,6 +367,7 @@ async function seedFormularios() {
             label: "La Actividad Asignada se Realizó en Compañía de ",
             tipo: "select",
             options: ["Jefatura", "Otro(s) Practicante(s)", "Apoyo Profesional", "En Forma Invividual", "Otra compañía"],
+            cols: 6,
             required: true
           },
           {
@@ -356,6 +375,7 @@ async function seedFormularios() {
             label: "Tipo de Actividad Realizada Corresponde a ",
             tipo: "select",
             options: ["Reunión", "Busqueda Información", "Estudio Software", "Estudio Hardware", "Trabajo Terreno", "Exposición", "Lectura de Manuales", "Estudios de Framework", "Instalación Software", "Instalación Hardware", "Otra Actividad"],
+            cols: 6,
             required: true
           }
         ]

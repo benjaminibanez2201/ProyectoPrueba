@@ -126,23 +126,19 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
   // --- 🔥 NUEVO: USE EFFECT PARA ACTUALIZAR DATOS ---
   // Esto es lo que faltaba para que se vieran los datos del alumno
   useEffect(() => {
-    // Si llegan datos nuevos, los mezclamos
-    if (valores || respuestasIniciales) {
-      setRespuestas(prev => {
-        const nuevosDatos = { ...prev, ...valores, ...respuestasIniciales };
+  if (valores || respuestasIniciales) {
+    setRespuestas(prev => {
+      const nuevosDatos = { ...prev, ...valores, ...respuestasIniciales };
 
-        // TRUCO: Comparamos el texto (JSON) para ver si realmente cambió algo.
-        // Si el contenido es idéntico, retornamos 'prev' para que React NO renderice de nuevo.
-        if (JSON.stringify(prev) === JSON.stringify(nuevosDatos)) {
-          return prev;
-        }
+      if (JSON.stringify(prev) === JSON.stringify(nuevosDatos)) {
+        return prev;
+      }
 
-        return nuevosDatos;
-      });
-    }
-    // TRUCO 2: Ponemos JSON.stringify en las dependencias.
-    // Así el efecto solo se dispara si el TEXTO cambia, no si cambia la referencia del objeto.
-  }, [JSON.stringify(valores), JSON.stringify(respuestasIniciales)]);
+      return nuevosDatos;
+    });
+  }
+}, [JSON.stringify(valores), JSON.stringify(respuestasIniciales)]);
+
   // ----------------------------------------
   // ----------------------------------------------------
 
@@ -206,177 +202,168 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     onSubmit(datosFinales);
   };
 
-  const renderField = (campo) => {
-    const {
-      id, label, tipo, required, options, placeholder,
-      min, max, readOnly: fieldReadOnly, fillBy,
-      cols = 12 // 👈 nuevo: por defecto 12 (una línea completa)
-    } = campo;
+// Coloca esto fuera (arriba) del renderField, junto a tus otras funciones/helpers:
+const colClasses = {
+  12: "md:col-span-12",
+  6: "md:col-span-6",
+  4: "md:col-span-4",
+  3: "md:col-span-3",
+  2: "md:col-span-2"
+};
 
-    let isReadOnly = readOnly || fieldReadOnly;
+// Reemplaza TU renderField por esta versión (no define componentes inline)
+const renderField = (campo) => {
+  const {
+    id, label, tipo, required, options, placeholder,
+    min, max, readOnly: fieldReadOnly, fillBy,
+    cols = 12 // por defecto
+  } = campo;
 
-    // permisos...
-    if (userType === "alumno" && fillBy === "empresa") isReadOnly = true;
-    if (userType === "empresa" && (fillBy === "alumno" || !fillBy)) isReadOnly = true;
+  let isReadOnly = readOnly || fieldReadOnly;
+  if (userType === "alumno" && fillBy === "empresa") isReadOnly = true;
+  if (userType === "empresa" && (fillBy === "alumno" || !fillBy)) isReadOnly = true;
 
-    let displayPlaceholder = placeholder;
-    if (isReadOnly && !respuestas[id]) displayPlaceholder = "";
+  let displayPlaceholder = placeholder;
+  if (isReadOnly && !respuestas[id]) displayPlaceholder = "";
 
-    const colClasses = {
-      12: "md:col-span-12",
-      6: "md:col-span-6",
-      4: "md:col-span-4",
-      3: "md:col-span-3",
-      2: "md:col-span-2"
-    };
+  const spanClass = colClasses[cols] || colClasses[12];
 
-    // *** NUEVO *** → envolvemos cada campo en un div con clases de grid-col
-    const Wrapper = ({ children }) => (
-      <div key={id} className={`col-span-12 ${colClasses[cols] || ""}`}>
-        {children}
+  // Header especial (retornamos DIV normal con key fijo)
+  if (campo.tipo === "header") {
+    return (
+      <div key={campo.id} className={`col-span-12 mt-8 mb-4 border-b-2 border-blue-200 pb-2`}>
+        <h2 className="text-xl font-bold text-blue-800">{campo.label}</h2>
       </div>
     );
+  }
 
-    // Header 
-    if (campo.tipo === "header") {
-      return (
-        <div key={campo.id} className="col-span-12 mt-8 mb-4 border-b-2 border-blue-200 pb-2">
-          <h2 className="text-xl font-bold text-blue-800">
-            {campo.label}
-          </h2>
-        </div>
-      )
-    }
-
-    // Inputs Simples
+  // Base wrapper para cada campo (NO es un componente, es un div)
+  const fieldContent = (() => {
     if (["text", "email", "date", "number"].includes(tipo)) {
       return (
-        <Wrapper>
-          <div key={id} className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
-            </label>
-            <input
-              type={tipo}
-              value={respuestas[id] || ""}
-              onChange={(e) => handleChange(id, e.target.value)}
-              disabled={isReadOnly}
-              required={required && !isReadOnly}
-              placeholder={displayPlaceholder}
-              min={min} max={max}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 font-medium"
-            />
-          </div>
-        </Wrapper>
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
+          </label>
+          <input
+            type={tipo}
+            value={respuestas[id] || ""}
+            onChange={(e) => handleChange(id, e.target.value)}
+            disabled={isReadOnly}
+            required={required && !isReadOnly}
+            placeholder={displayPlaceholder}
+            min={min} max={max}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 font-medium"
+          />
+        </div>
       );
     }
 
-    // Textarea
     if (tipo === "textarea") {
       return (
-        <Wrapper>
-          <div key={id} className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
-            </label>
-            <textarea
-              value={respuestas[id] || ""}
-              onChange={(e) => handleChange(id, e.target.value)}
-              disabled={isReadOnly}
-              required={required && !isReadOnly}
-              placeholder={displayPlaceholder}
-              rows={4}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
-            />
-          </div>
-        </Wrapper>
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
+          </label>
+          <textarea
+            value={respuestas[id] || ""}
+            onChange={(e) => handleChange(id, e.target.value)}
+            disabled={isReadOnly}
+            required={required && !isReadOnly}
+            placeholder={displayPlaceholder}
+            rows={4}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+          />
+        </div>
       );
     }
 
-    // Select
     if (tipo === "select") {
       return (
-        <Wrapper>
-          <div key={id} className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
-            </label>
-            <select
-              value={respuestas[id] || ""}
-              onChange={(e) => handleChange(id, e.target.value)}
-              disabled={isReadOnly}
-              required={required && !isReadOnly}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 bg-white"
-            >
-              <option value="">Seleccione una opción...</option>
-              {options?.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-        </Wrapper>
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
+          </label>
+          <select
+            value={respuestas[id] || ""}
+            onChange={(e) => handleChange(id, e.target.value)}
+            disabled={isReadOnly}
+            required={required && !isReadOnly}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 bg-white"
+          >
+            <option value="">Seleccione una opción...</option>
+            {options?.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
       );
     }
 
-    // Schedule (Horario)
     if (tipo === "schedule") {
       return (
-        <Wrapper>
-          <div key={id} className="mb-6">
-            <label className="block text-sm font-bold text-gray-800 mb-2">
-              {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
-            </label>
-            <ScheduleInput
-              value={respuestas[id] || {}}
-              onChange={(newVal) => handleChange(id, newVal)}
-              readOnly={isReadOnly}
-            />
-          </div>
-        </Wrapper>
+        <div className="mb-6">
+          <label className="block text-sm font-bold text-gray-800 mb-2">
+            {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
+          </label>
+          <ScheduleInput
+            value={respuestas[id] || {}}
+            onChange={(newVal) => handleChange(id, newVal)}
+            readOnly={isReadOnly}
+          />
+        </div>
       );
     }
 
-    // Signature (Firma)
     if (tipo === "signature") {
       return (
-        <Wrapper>
-          <div key={id} className="mb-6">
-            <label className="block text-sm font-bold text-gray-800 mb-2">
-              {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
-            </label>
-            {isReadOnly ? (
-              respuestas[id] && !respuestas[id].includes("pendiente") ? (
-                <div className="border rounded p-2 bg-gray-50 inline-block">
-                  <img src={respuestas[id]} alt="Firma" className="h-24" />
-                </div>
-              ) : (
-                <p className="text-gray-400 italic text-sm border p-2 rounded bg-gray-50">Sin firma registrada</p>
-              )
-            ) : (
-              <div className="border-2 border-gray-300 border-dashed rounded bg-white w-full max-w-md touch-none">
-                <canvas
-                  ref={(el) => (canvasRefs.current[id] = el)}
-                  width={500} height={200}
-                  className="w-full h-48 cursor-crosshair"
-                  onMouseDown={(e) => startDrawing(e, id)}
-                  onMouseMove={(e) => draw(e, id)}
-                  onMouseUp={() => stopDrawing(id)}
-                  onMouseLeave={() => stopDrawing(id)}
-                  onTouchStart={(e) => startDrawing(e, id)}
-                  onTouchMove={(e) => draw(e, id)}
-                  onTouchEnd={() => stopDrawing(id)}
-                />
-                <div className="bg-gray-100 p-2 text-right text-xs border-t">
-                  <button type="button" className="text-red-600 hover:text-red-800 underline font-medium" onClick={() => clearCanvas(id)}>Borrar Firma</button>
-                </div>
+        <div className="mb-6">
+          <label className="block text-sm font-bold text-gray-800 mb-2">
+            {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
+          </label>
+
+          {isReadOnly ? (
+            respuestas[id] && !respuestas[id].includes("pendiente") ? (
+              <div className="border rounded p-2 bg-gray-50 inline-block">
+                <img src={respuestas[id]} alt="Firma" className="h-24" />
               </div>
-            )}
-          </div>
-        </Wrapper>
+            ) : (
+              <p className="text-gray-400 italic text-sm border p-2 rounded bg-gray-50">Sin firma registrada</p>
+            )
+          ) : (
+            <div className="border-2 border-gray-300 border-dashed rounded bg-white w-full max-w-md touch-none">
+              <canvas
+                ref={(el) => (canvasRefs.current[id] = el)}
+                width={500} height={200}
+                className="w-full h-48 cursor-crosshair"
+                onMouseDown={(e) => startDrawing(e, id)}
+                onMouseMove={(e) => draw(e, id)}
+                onMouseUp={() => stopDrawing(id)}
+                onMouseLeave={() => stopDrawing(id)}
+                onTouchStart={(e) => startDrawing(e, id)}
+                onTouchMove={(e) => draw(e, id)}
+                onTouchEnd={() => stopDrawing(id)}
+              />
+              <div className="bg-gray-100 p-2 text-right text-xs border-t">
+                <button type="button" className="text-red-600 hover:text-red-800 underline font-medium" onClick={() => clearCanvas(id)}>Borrar Firma</button>
+              </div>
+            </div>
+          )}
+        </div>
       );
     }
+
     return null;
-  };
+  })();
+
+  // Finalmente devolvemos el wrapper DIV (con key si renderField se usa fuera del map)
+  return (
+    <div key={id} className={`col-span-12 ${spanClass}`}>
+      {fieldContent}
+    </div>
+  );
+};
+
 
   return (
     <div className="bg-white p-4 md:p-10 rounded-lg shadow-lg border border-gray-200 max-w-5xl mx-auto">
@@ -392,7 +379,11 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
         onSubmit={handleSubmit}
         className="grid grid-cols-12 gap-6"
       >
-        {esquema && esquema.map((campo) => renderField(campo))}
+        {esquema && esquema.map((campo) => (
+    <React.Fragment key={campo.id || campo.nombre}>
+        {renderField(campo)}
+    </React.Fragment>
+))}
         {!readOnly && (
           <div className="col-span-12 mt-12 pt-6 border-t border-gray-200 flex justify-end">
             <button
