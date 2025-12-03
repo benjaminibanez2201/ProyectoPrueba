@@ -87,7 +87,7 @@ const GestionFormularios = () => {
               className=" bg-blue-600 flex items-center gap-2 text-white px-4 py-2 rounded-lg  hover:bg-blue-700"
             >
               <ArrowLeft size={20} />
-              Volver al Panel
+              Volver a la página principal
             </button>
           </div>
           {/*parte central de la pantalla */}

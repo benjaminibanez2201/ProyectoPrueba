@@ -55,9 +55,8 @@ const SubirDocumento = () => {
   };
 
   return (
-    <div className="min-h-screen bg-green-100 flex justify-center pt-12 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100  flex justify-center pt-12 p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-5xl border border-gray-100 h-full">
-       {/* 3. CAMBIO: Usamos un Grid para poner el título a la izquierda y el form a la derecha (opcional, pero se ve genial en ancho) */}
         <div className="grid md:grid-cols-3 gap-8">
           
           {/* Columna Izquierda: Título e Instrucciones */}
@@ -90,21 +89,8 @@ const SubirDocumento = () => {
                 >
                   <option value="" disabled>Selecciona una opción...</option>
                   <option value="Informe">Informe Final</option>
-                  <option value="Bitácora">Bitácora</option>
                   <option value="Otro">Otro</option>
                 </select>
-              </div>
-
-              {/* --- SELECCIÓN DE ID PRÁCTICA --- */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">ID Práctica</label>
-                <input
-                  type="number"
-                  value={practicaId}
-                  onChange={(e) => setPracticaId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-50"
-                  readOnly
-                />
               </div>
 
               {/* --- INPUT DE ARCHIVO --- */}
