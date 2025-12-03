@@ -66,7 +66,7 @@ const SubirDocumento = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Subir Documento</h2>
             <p className="text-gray-500 text-sm mb-4">
-              Sube aquí tus evidencias, informes finales o bitácoras semanales.
+              Sube aquí tus evidencias, informes finales o currículum.
             </p>
             
             <div className="bg-green-50 p-4 rounded-lg text-sm text-green-800">
@@ -89,6 +89,7 @@ const SubirDocumento = () => {
                 >
                   <option value="" disabled>Selecciona una opción...</option>
                   <option value="Informe">Informe Final</option>
+                  <option value="Curriculum">Currículum</option>
                   <option value="Otro">Otro</option>
                 </select>
               </div>
