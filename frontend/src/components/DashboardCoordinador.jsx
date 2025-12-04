@@ -5,6 +5,8 @@ import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, M
 import { getAlumnos } from "../services/user.service.js";
 import { showErrorAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
+import { updateEstadoPractica } from "../services/practica.service.js";
+import Swal from "sweetalert2";
 
 // --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---
 const EstadoBadge = ({ practica }) => {
@@ -74,22 +76,14 @@ const DashboardCoordinador = ({ user }) => {
   const [showTable, setShowTable] = useState(false);
   const [filter, setFilter] = useState('todas');
   const [selectedStudentForDocs, setSelectedStudentForDocs] = useState(null);
-
-  // 2. Cargar Alumnos
-  const handleLoadAlumnos = async () => {
-    if (showTable) {
-      setShowTable(false);
-      return;
-    }
+  
+  // 1. FUNCIÓN NUEVA: Solo carga datos (sin cerrar la tabla)
+  const refreshAlumnos = async () => {
     try {
       setIsLoading(true);
       setError(null);
-
       const alumnosArray = await getAlumnos();
-
       setAlumnos(alumnosArray);
-      setShowTable(true);
-
     } catch (err) {
       const errorMessage = err.message || "No se pudo cargar la lista";
       setError(errorMessage);
@@ -98,6 +92,17 @@ const DashboardCoordinador = ({ user }) => {
       setIsLoading(false);
     }
   };
+
+  // 2. Cargar Alumnos
+  const handleLoadAlumnos = async () => {
+    if (showTable) {
+      setShowTable(false); // Si está abierta, la cerramos
+    } else {
+      setShowTable(true);  // Si está cerrada, la abrimos...
+      refreshAlumnos();    // ...y cargamos los datos
+    }
+  };
+  
 
   // 3. Filtros
   const alumnosFiltrados = alumnos.filter(alumno => {
@@ -144,17 +149,78 @@ const DashboardCoordinador = ({ user }) => {
   }, [alumnosFiltrados]);
 
   // 5. Handlers de botones (Placeholders)
+// A) Botón OJO (Ver Detalle Rápido)
   const handleVerPractica = (alumno) => {
-    const idPractica = alumno.practicasComoAlumno?.[0]?.id;
-    if (idPractica) {
-      console.log("Ver detalles:", idPractica);
-      // Aquí podrías navegar a una vista de detalle: navigate(`/admin/practica/${idPractica}`)
+    const practica = alumno.practicasComoAlumno?.[0];
+
+    if (!practica) {
+        Swal.fire("Información", "Este alumno no tiene práctica inscrita.", "info");
+        return;
     }
+
+    Swal.fire({
+        title: `Detalle: ${alumno.name}`,
+        html: `
+            <div style="text-align: left;">
+                <p><b>Empresa:</b> ${practica.empresaToken?.empresaNombre || 'No asignada'}</p>
+                <p><b>Estado Actual:</b> <span class="badge">${practica.estado}</span></p>
+                <p><b>Fecha Inicio:</b> ${practica.fecha_inicio ? new Date(practica.fecha_inicio).toLocaleDateString() : 'Pendiente'}</p>
+                <hr style="margin: 10px 0;">
+                <p><b>ID Práctica:</b> ${practica.id}</p>
+            </div>
+        `,
+        confirmButtonText: "Cerrar"
+    });
   };
 
-  const handleEditarEstado = (alumno) => {
-    console.log("Editar estado:", alumno.id);
+// B) Botón LÁPIZ (Forzar cambio de estado - Admin)
+  const handleEditarEstado = async (alumno) => {
+    const practica = alumno.practicasComoAlumno?.[0];
+
+    if (!practica) {
+        Swal.fire("Error", "No se puede editar el estado: No hay práctica.", "error");
+        return;
+    }
+
+    const { value: nuevoEstado } = await Swal.fire({
+        title: 'Modificar Estado Manualmente',
+        text: `Estado actual: ${practica.estado}`,
+        input: 'select',
+        inputOptions: {
+            'pendiente': 'Pendiente (Reinicio)',
+            'enviada_a_empresa': 'Enviada a Empresa',
+            'pendiente_validacion': 'Pendiente Validación',
+            'en_curso': 'En Curso',
+            'finalizada': 'Finalizada',
+            'rechazada': 'Rechazada',
+            'cerrada': 'Cerrada'
+        },
+        inputPlaceholder: 'Selecciona nuevo estado',
+        showCancelButton: true,
+        confirmButtonText: 'Actualizar',
+        cancelButtonText: 'Cancelar'
+    });
+
+if (nuevoEstado) {
+        try {
+            // 1. Intentamos actualizar (Lo crítico)
+            await updateEstadoPractica(practica.id, nuevoEstado);
+            
+            // 2. Mostramos éxito (porque ya sabemos que el backend respondió bien)
+            await Swal.fire("¡Listo!", `Estado actualizado a: ${nuevoEstado}`, "success");
+            
+            // 3. Intentamos recargar la tabla (Si falla, no importa tanto)
+            refreshAlumnos();
+
+        } catch (error) {
+            // Este catch SOLO saltará si falló la actualización real
+            console.error(error);
+            Swal.fire("Error", "No se pudo actualizar el estado en el servidor.", "error");
+        }
+    }
   };
+  
+  
 
 
   // --- RENDERIZADO ---

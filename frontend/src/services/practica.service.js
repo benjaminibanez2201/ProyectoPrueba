@@ -57,3 +57,16 @@ export const observarPractica = async (id) => {
     throw error.response?.data || error;
   }
 };
+
+// 👇 AQUÍ ESTABA EL ERROR: Cambiamos 'axios' por 'instance'
+export const updateEstadoPractica = async (id, nuevoEstado) => {
+  // Usamos 'instance' para que incluya la URL base y el Token
+  const response = await instance.put(`/practicas/estado/${id}`, { nuevoEstado });
+  return response.data;
+};
+
+// 👇 AQUÍ TAMBIÉN: Cambiamos 'axios' por 'instance'
+export const getPracticaById = async (id) => {
+  const response = await instance.get(`/practicas/${id}`);
+  return response.data;
+};
