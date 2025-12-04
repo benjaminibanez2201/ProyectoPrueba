@@ -9,17 +9,6 @@ export const registerValidationSchema = yup.object({
   email: yup
     .string()
     .email("Debe ser un correo institucional válido.")
-    .test(
-        'is-institutional', 
-        'El correo debe ser @ubb.cl o @alumnos.ubiobio.cl', 
-        (value) => {
-            // Permitimos que pase si el valor es nulo/vacío (aunque es required)
-            if (!value) return true; 
-
-            // Verificamos si termina en uno de los dos dominios
-            return value.endsWith('@ubb.cl') || value.endsWith('@alumnos.ubiobio.cl');
-        }
-    )
     .required("El email es obligatorio."),
   password: yup
     .string()
