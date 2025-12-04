@@ -133,7 +133,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
           return prev;
         }
 
-        // ✅ Validamos todos los campos que tengan 'validation'
+        //  Validamos todos los campos que tengan 'validation'
         esquema.forEach(campo => {
           if (campo.validation) {
             validateField(campo.id, nuevosDatos[campo.id], campo.validation);
@@ -162,7 +162,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     if (validationType && !readOnly) {
       validateField(id, value, validationType);
     }
-    
+
   };
 
   // --- LÓGICA DE CANVAS (INTACTA) ---
@@ -241,6 +241,21 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // === Validación cruzada de fechas ===
+    const fechaInicio = new Date(respuestas["fecha_inicio"]);
+    const fechaTermino = new Date(respuestas["fecha_termino"]);
+
+    if (respuestas["fecha_inicio"] && respuestas["fecha_termino"]) {
+      if (fechaInicio > fechaTermino) {
+        showErrorAlert(
+          'Fechas inválidas',
+          'La fecha de inicio debe ser menor que la fecha de término.'
+        );
+        return; // Detiene el envío
+      }
+    }
+
     const firmas = {};
     Object.keys(canvasRefs.current).forEach((key) => {
       const canvas = canvasRefs.current[key];

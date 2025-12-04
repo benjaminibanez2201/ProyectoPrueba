@@ -133,10 +133,10 @@ async actualizarEstado(req, res) {
         return handleErrorClient(res, 404, "Práctica no encontrada");
       }
 
-      // --- 🧹 LÓGICA DE REINICIO TOTAL (DELETE) ---
+      // ---  LÓGICA DE REINICIO TOTAL (DELETE) ---
       // Si el coordinador elige "Pendiente", ELIMINAMOS la práctica para que el alumno empiece de cero.
       if (nuevoEstado === 'pendiente') {
-          console.log(`🗑️ Eliminando práctica ID ${id} para reinicio completo...`);
+          console.log(`Eliminando práctica ID ${id} para reinicio completo...`);
           
           // 1. Borrar Token de Empresa
           const tokenRepo = AppDataSource.getRepository(EmpresaToken);
