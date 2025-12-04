@@ -36,17 +36,25 @@ const AprobarPracticas = () => {
     };
 
     // --- LÓGICA DEL FORMULARIO ---
-    const getRespuestasDePractica = (practica) => {
+const getRespuestasDePractica = (practica) => {
         if (!practica || !practica.formularioRespuestas) return {};
+        
         const respuesta = practica.formularioRespuestas.find(r => r.plantilla?.tipo === 'postulacion') || practica.formularioRespuestas[0];
         
-        if (!respuesta) return {};
-        const misDatos = respuesta.datos;
-        // Aplanamos datos si vienen anidados
-        if (misDatos && misDatos.datosFormulario) {
-            return { ...misDatos, ...misDatos.datosFormulario };
-        }
-        return misDatos || {};
+        if (!respuesta || !respuesta.datos) return {};
+        
+        // --- LA MAGIA DE APLANAR ---
+        // Sacamos 'datosFormulario' aparte, y dejamos el resto (datos empresa) en 'restoDatos'
+        const { datosFormulario, ...restoDatos } = respuesta.datos;
+        
+        // Mezclamos todo en un solo nivel
+        const datosUnificados = { 
+            ...(datosFormulario || {}), // Datos del Alumno sacados de la caja
+            ...restoDatos               // Datos de la Empresa
+        };
+
+        console.log("✅ Datos Unificados para FormRender:", datosUnificados);
+        return datosUnificados;
     };
 
     const handleRevisar = (practica) => {
@@ -55,29 +63,65 @@ const AprobarPracticas = () => {
     };
 
     // --- LÓGICA DE APROBACIÓN/RECHAZO ---
-    const handleDecision = async (decision) => {
+const handleDecision = async (decision) => {
         const esAprobar = decision === 'aprobar';
         let observaciones = '';
+        let destinatario = null; // Variable nueva para guardar a quién culpar
 
         if (!esAprobar) {
-            const { value: motivo } = await Swal.fire({
+            // 👇 CAMBIO 1: SweetAlert con HTML personalizado (Radios + Textarea)
+            const { value: formValues } = await Swal.fire({
                 title: 'Rechazar Solicitud',
-                input: 'textarea',
-                inputLabel: 'Motivo del rechazo (Obligatorio)',
-                inputPlaceholder: 'Falta firma, datos incorrectos...',
+                html: `
+                    <p style="margin-bottom:10px; text-align:left; font-size: 0.9em; color:#555;">Indique el motivo y quién debe corregir:</p>
+                    
+                    <textarea id="swal-input1" class="swal2-textarea" placeholder="Escriba aquí las observaciones..." style="margin: 0 0 15px 0; width: 100%;"></textarea>
+                    
+                    <div style="text-align: left; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        <label style="display:block; margin-bottom:8px; font-weight:bold; font-size:0.9em; color:#374151;">¿A quién notificar el error?</label>
+                        
+                        <label style="display:flex; align-items:center; margin-bottom:6px; cursor:pointer;">
+                            <input type="radio" name="destinatario" value="alumno" checked style="margin-right:8px;"> 
+                            <span style="font-size:0.9em;">Alumno (Datos personales, documentos)</span>
+                        </label>
+                        
+                        <label style="display:flex; align-items:center; margin-bottom:6px; cursor:pointer;">
+                            <input type="radio" name="destinatario" value="empresa" style="margin-right:8px;"> 
+                            <span style="font-size:0.9em;">Empresa (Datos supervisor, funciones)</span>
+                        </label>
+                        
+                        <label style="display:flex; align-items:center; cursor:pointer;">
+                            <input type="radio" name="destinatario" value="ambos" style="margin-right:8px;"> 
+                            <span style="font-size:0.9em;">Ambos (Error general)</span>
+                        </label>
+                    </div>
+                `,
+                focusConfirm: false,
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 confirmButtonText: 'Rechazar',
-                inputValidator: (value) => {
-                    if (!value) return '¡Debes escribir una observación!';
+                preConfirm: () => {
+                    // Recuperamos los valores del HTML inyectado
+                    const motivo = document.getElementById('swal-input1').value;
+                    const radio = document.querySelector('input[name="destinatario"]:checked');
+                    
+                    if (!motivo) {
+                        Swal.showValidationMessage('¡Debes escribir una observación!');
+                        return false;
+                    }
+                    return { motivo: motivo, destinatario: radio.value };
                 }
             });
-            if (!motivo) return; 
-            observaciones = motivo;
+
+            if (!formValues) return; // Si cancela, no hacemos nada
+            observaciones = formValues.motivo;
+            destinatario = formValues.destinatario;
+
         } else {
+            // Aprobación Normal
             const result = await Swal.fire({
                 title: '¿Aprobar Práctica?',
-                text: "El alumno pasará a estado 'En Curso'.",
+                text: "El alumno pasará a estado 'En Curso'. Se enviará correo de notificación.",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, Aprobar',
@@ -90,7 +134,8 @@ const AprobarPracticas = () => {
         try {
             await instance.put(`/coordinador/evaluar/${seleccionada.id}`, { 
                 decision, 
-                observaciones 
+                observaciones,
+                destinatario // 👇 CAMBIO 2: Enviamos el destinatario al backend
             });
             
             Swal.fire('¡Listo!', `Solicitud ${esAprobar ? 'aprobada' : 'rechazada'} exitosamente.`, 'success');

@@ -2,6 +2,7 @@ import { AppDataSource } from "../config/configDb.js";
 import { Practica } from "../entities/practica.entity.js";
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
 import { handleErrorClient, handleSuccess, handleErrorServer } from "../Handlers/responseHandlers.js";
+import { enviarNotificacionEvaluacion } from "../services/email.service.js";
 
 // 1. Obtener lista de prácticas pendientes de validación
 export const getPendientes = async (req, res) => {
@@ -24,7 +25,7 @@ export const getPendientes = async (req, res) => {
 export const evaluarSolicitud = async (req, res) => {
     try {
         const { id } = req.params; // ID de la práctica
-        const { decision, observaciones } = req.body; // decision: 'aprobar' | 'rechazar'
+        const { decision, observaciones, destinatario } = req.body; // decision: 'aprobar' | 'rechazar'
 
         const practicaRepo = AppDataSource.getRepository(Practica);
         const respuestaRepo = AppDataSource.getRepository(FormularioRespuesta);
@@ -64,6 +65,10 @@ export const evaluarSolicitud = async (req, res) => {
         }
 
         await practicaRepo.save(practica);
+
+        // 3. ENVÍO DE CORREO (Después de guardar todo)
+        // No ponemos await para que el response sea rápido y el correo se envíe en segundo plano
+        enviarNotificacionEvaluacion(practica, decision, observaciones, destinatario);
 
         return handleSuccess(res, 200, `Solicitud ${decision === 'aprobar' ? 'Aprobada' : 'Rechazada'} correctamente.`);
 

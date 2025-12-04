@@ -71,3 +71,81 @@ export const sendTokenEmail = async (emailEmpresa, nombreSupervisor, token, nomb
 
   await sendEmail(emailEmpresa, `Solicitud de Práctica: ${nombreAlumno}`, html);
 };
+
+// 4. NUEVA FUNCIÓN: Notificación de Evaluación (Aprobación/Rechazo)
+export const enviarNotificacionEvaluacion = async (practica, decision, observaciones, destinatarioError) => {
+    
+    const emailAlumno = practica.student?.email;
+    const emailEmpresa = practica.empresaToken?.empresaCorreo;
+    const nombreAlumno = practica.student?.name;
+
+    let asunto = "";
+    let mensajeHTML = "";
+    let destinatarios = [];
+
+    // --- CASO A: APROBADO ---
+    if (decision === 'aprobar') {
+        asunto = "✅ Práctica Profesional Aprobada - UBB";
+        // En caso de aprobación, notificamos a AMBOS por defecto
+        destinatarios = [emailAlumno, emailEmpresa]; 
+        
+        mensajeHTML = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: #28a745; padding: 20px; text-align: center;">
+                    <h2 style="color: white; margin: 0;">¡Felicitaciones!</h2>
+                </div>
+                <div style="padding: 20px;">
+                    <p>Estimado/a,</p>
+                    <p>La solicitud de práctica profesional de <strong>${nombreAlumno}</strong> ha sido <strong>VALIDADA Y APROBADA</strong> por la coordinación.</p>
+                    <p>El estado de la práctica es ahora: <strong style="color: #28a745;">EN CURSO</strong>.</p>
+                    <p>Pueden proceder con las actividades planificadas.</p>
+                </div>
+                <div style="background-color: #f1f1f1; padding: 10px; text-align: center; font-size: 12px; color: #666;">
+                    Universidad del Bío-Bío - Facultad de Ciencias Empresariales
+                </div>
+            </div>
+        `;
+    } 
+    
+    // --- CASO B: RECHAZADO / OBSERVADO ---
+    else if (decision === 'rechazar') {
+        asunto = "⚠️ Corrección Requerida - Práctica Profesional UBB";
+        
+        // Lógica de a quién culpar (quién recibe el correo)
+        if (destinatarioError === 'alumno') destinatarios = [emailAlumno];
+        else if (destinatarioError === 'empresa') destinatarios = [emailEmpresa];
+        else if (destinatarioError === 'ambos') destinatarios = [emailAlumno, emailEmpresa];
+        else destinatarios = [emailAlumno]; // Fallback por si acaso
+
+        mensajeHTML = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: #dc3545; padding: 20px; text-align: center;">
+                    <h2 style="color: white; margin: 0;">Solicitud Observada</h2>
+                </div>
+                <div style="padding: 20px;">
+                    <p>Se han encontrado inconsistencias en la documentación de la práctica de <strong>${nombreAlumno}</strong>.</p>
+                    
+                    <h3>Detalle de la Observación:</h3>
+                    <blockquote style="background-color: #fff3f3; padding: 15px; border-left: 5px solid #dc3545; color: #555;">
+                        ${observaciones}
+                    </blockquote>
+
+                    <p><strong>Acción Requerida:</strong> Por favor ingrese al sistema para corregir los datos solicitados a la brevedad.</p>
+                </div>
+                <div style="background-color: #f1f1f1; padding: 10px; text-align: center; font-size: 12px; color: #666;">
+                    Universidad del Bío-Bío - Facultad de Ciencias Empresariales
+                </div>
+            </div>
+        `;
+    }
+
+    // Enviar el correo usando tu función existente (sendEmail)
+    // sendEmail espera un string, si son varios, los unimos con coma
+    if (destinatarios.length > 0) {
+        // Filtramos por si alguno es null o undefined
+        const listaDestinatarios = destinatarios.filter(e => e).join(', ');
+        if (listaDestinatarios) {
+            await sendEmail(listaDestinatarios, asunto, mensajeHTML);
+        }
+    }
+};

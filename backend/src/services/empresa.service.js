@@ -114,9 +114,18 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
     let formulario = practica.formularioRespuestas.find(r => r.plantilla.tipo === 'postulacion');
 
     if (formulario) {
-        // FUSIONAMOS: Datos viejos (alumno) + Datos nuevos (empresa)
-        const datosPrevios = formulario.datos || {};
-        formulario.datos = { ...datosPrevios, ...respuestasEmpresa };
+        // Hacemos copia de lo que ya había
+        let datosFinales = formulario.datos ? JSON.parse(JSON.stringify(formulario.datos)) : {};
+        
+        console.log("💾 Datos ANTES de fusionar:", datosFinales);
+
+        // FUSIONAMOS:
+        // Lo que envía la empresa se agrega al objeto raíz, junto a lo que ya había
+        datosFinales = { ...datosFinales, ...respuestasEmpresa };
+
+        console.log("💾 Datos DESPUÉS de fusionar (A Guardar):", datosFinales);
+
+        formulario.datos = datosFinales;
         formulario.estado = 'enviado';
         
         await respuestaRepo.save(formulario);

@@ -89,6 +89,8 @@ export const confirmarInicioPractica = async (req, res) => {
     // El frontend envía: { token: '...', confirmacion: true, respuestas: { ... } }
     const { token, confirmacion, respuestas } = req.body; 
 
+    console.log("📦 DATOS RECIBIDOS DESDE FRONTEND (EMPRESA):", respuestas);
+
     if (!token) {
         return handleErrorClient(res, 400, "Falta el token de acceso.");
     }
