@@ -131,7 +131,7 @@ const Register = () => {
               htmlFor="name"
               className="block text-sm font-semibold text-gray-700"
             >
-              Nombre y Apellido
+              Nombre Completo
             </label>
             <input
               type="text"
@@ -139,7 +139,7 @@ const Register = () => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Tu nombre y apellido"
+              placeholder="Tus nombres y apellidos"
               required
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-300"
             />

@@ -97,7 +97,11 @@ const router = createBrowserRouter([
       },
       {
         path: '/upload-document',
-        element: <SubirDocumento />
+        element: (
+        <ProtectedRoute>
+        <SubirDocumento />
+        </ProtectedRoute>
+        )
       },
       {
         path: '/coordinador/aprobar-practicas',
@@ -106,7 +110,8 @@ const router = createBrowserRouter([
           <AprobarPracticas />
           </ProtectedRoute>
         )
-      }
+      },
+
     ]
   }
 ]);

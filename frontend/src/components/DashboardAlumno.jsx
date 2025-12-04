@@ -104,10 +104,10 @@ const getMensajeAyuda = (estado) => {
       return "Estado de tu solicitud.";
   }
 };
-
+//LUEGO HAY QUE MODIFICAR ESTA FUNCION PORQUE CUENTA POR D.TIPO Y TIENE QUE SER POR LOS FORM QUE HIZO EL BENJA
 // --- 2. TRACKER DE BITÁCORAS ---
 const BitacoraTracker = ({ documentos }) => {
-  const bitacoras = documentos?.filter((d) => d.tipo === "Bitácora") || [];
+  const bitacoras = documentos?.filter((d) => d.tipo === "bitacora") || [];
   const count = bitacoras.length;
   const maxObligatorias = 5;
 
@@ -215,7 +215,7 @@ const DashboardAlumno = ({ user }) => {
                       No tienes una práctica inscrita.
                     </p>
                     <button
-                      onClick={() => navigate("/postular")} 
+                      onClick={() => navigate("/postular")}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center justify-center gap-2 text-sm"
                     >
                       <Send size={16} /> Inscribir Práctica
@@ -317,12 +317,13 @@ const DashboardAlumno = ({ user }) => {
 
                 {/* Usamos practica?.documentos para evitar el crash */}
                 <BitacoraTracker documentos={practica?.documentos} />
+                {/*DESPUES HAY QUE CAMBIAR ESTO PORQUE CUENTA LOS DOCS CON NOMBRE BITACORA */}
               </div>
               {/* Contenedor de ACCIONES (Derecha) */}
               <div className="flex gap-3 mt-4 md:mt-0">
                 {/* 1. BOTÓN: COMPLETAR BITÁCORA (El formulario en la página) */}
                 <button
-                  onClick={() => navigate("/forms/responder/bitacora")}
+                  onClick={() => navigate("/forms/responder/bitacora")} // Ruta al formulario de bitácora. HAY QUE CAMBIAR LA RUTA A LA QUE CORRESPONDA
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap"
                 >
                   <BookOpen size={18} /> Completar Bitácora
@@ -354,7 +355,7 @@ const DashboardAlumno = ({ user }) => {
                   <Download size={16} /> Pauta de Evaluación.pdf
                 </button>
                 <button className="w-full flex items-center gap-2 text-left text-sm p-2 rounded hover:bg-purple-50 text-purple-700 transition">
-                  <Download size={16} /> Formato Informe Final.docx
+                  <Download size={16} /> Formato Informe Final.pdf
                 </button>
               </div>
             </div>
