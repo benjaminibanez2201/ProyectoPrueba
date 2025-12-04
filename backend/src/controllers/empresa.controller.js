@@ -3,7 +3,7 @@ import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { Practica } from "../entities/practica.entity.js";
 import jwt from "jsonwebtoken";
 import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
-import { validarTokenEmpresa } from "../services/empresa.service.js";
+import { validarTokenEmpresa, confirmarInicioPracticaService } from "../services/empresa.service.js";
 
 // --- Generar Token ---
 export const generarTokenEmpresa = async (req, res) => {
@@ -64,78 +64,42 @@ export const enviarEvaluacion = async (req, res) => {
 export const validarToken = async (req, res) => {
   try {
     const { token } = req.params;
+    // tokenData viene del servicio -> NO tiene practica, NO tiene student
     const tokenData = await validarTokenEmpresa(token);
 
-    const practica = tokenData.practica; 
-    const alumno = practica.student; 
-
     return handleSuccess(res, 200, "Token de empresa validado.", {
-      practicaId: practica.id, 
-      alumnoNombre: alumno.name, 
-      tipoPractica: practica.tipoPractica, 
-      empresaNombre: tokenData.empresaNombre, 
-      estado: practica.estado,
+      practicaId: tokenData.practicaId,
+      alumnoNombre: tokenData.alumnoNombre,
+      empresaNombre: tokenData.empresaNombre,
+      estado: tokenData.estado,
+      formularioRespuestas: tokenData.formularioRespuestas
     });
+
   } catch (error) {
     console.error("Error al validar token:", error.message);
     return handleErrorClient(res, 400, error.message);
   }
 };
 
-// confirmar inicio de práctica
+// confirmar inicio de práctica 
 export const confirmarInicioPractica = async (req, res) => {
   try {
-    const { token, confirmacion } = req.body; // token enviado por la empresa y confirmación frontend
+    // El frontend envía: { token: '...', confirmacion: true, respuestas: { ... } }
+    const { token, confirmacion, respuestas } = req.body; 
 
-    //revalidar token para asegurar vigencia
-    const tokenData = await validarTokenEmpresa(token);
+    console.log("📦 DATOS RECIBIDOS DESDE FRONTEND (EMPRESA):", respuestas);
 
-    if (!confirmacion) {
-      return handleSuccess(res, 200, "Acción cancelada por la empresa.");
+    if (!token) {
+        return handleErrorClient(res, 400, "Falta el token de acceso.");
     }
 
-    const practicaRepo = AppDataSource.getRepository(Practica);
-    const practica = tokenData.practica;
+    // Llamamos al servicio nuevo
+    const resultado = await confirmarInicioPracticaService(token, confirmacion, respuestas);
 
-    if (practica.estado === 'pendiente_revision') {
-      practica.estado = 'confirmada_por_empresa'; // actualizar estado
-      practica.fechaInicio = new Date(); // registrar fecha de inicio
-      await practicaRepo.save(practica);
-
-      console.log('Práctica confirmada por empresa, esperando aprobación del coordinador');
-
-      return handleSuccess(res, 200, "Confirmación recibida. El coordinador revisará e iniciará la práctica.", {
-        practicaId: practica.id,
-        estado: practica.estado,
-        fechaConfirmacion: practica.fechaConfirmacionEmpresa,
-        alumnoNombre: practica.student.name,
-        empresaNombre: tokenData.empresaNombre,
-        mensajeParaEmpresa: "Su confirmación ha sido registrada. El coordinador validará el inicio de la práctica."
-      });
-    }
-
-    // Si la práctica ya fue confirmada anteriormente
-    if (practica.estado === 'confirmada_por_empresa') {
-      return handleSuccess(res, 200, "Ya confirmaste el inicio de esta práctica. Esperando aprobación del coordinador.", {
-        estado: practica.estado,
-        practicaId: practica.id
-      });
-    }
-
-    // Si la práctica ya fue confirmada por el coordinador y está en curso
-    if (practica.estado === 'en_curso') {
-      return handleSuccess(res, 200, "La práctica ya ha sido aprobada por el coordinador y está en curso.", {
-        estado: practica.estado,
-        practicaId: practica.id
-      });
-    }
-
-    return handleSuccess(res, 200, "Estado de práctica no válido para confirmación.", {
-      estado: practica.estado
-    });
+    return handleSuccess(res, 200, "Confirmación exitosa.", resultado);
 
   } catch (error) {
-    console.error("Error al confirmar inicio de práctica:", error);
-    return handleErrorClient(res, 400, error.message)
+    console.error("Error al confirmar inicio:", error);
+    return handleErrorServer(res, 500, "Error al procesar la solicitud", error.message);
   }
 };

@@ -19,7 +19,7 @@ export const FormularioPlantilla = new EntitySchema({
       nullable: true,
     },
     tipo: {
-      type: "enum",
+      type: "varchar",
       // Tipos de platilla
       enum: ["postulacion", "bitacora", "evaluacion_pr1", "evaluacion_pr2"],
       unique: true, 

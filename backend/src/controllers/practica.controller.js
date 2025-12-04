@@ -7,6 +7,10 @@ import {
   findPracticaByStudentId,
   createPostulacion,
 } from "../services/practica.service.js";
+import { AppDataSource } from "../config/configDb.js";
+import { Practica } from "../entities/practica.entity.js";
+import { EmpresaToken } from "../entities/empresaToken.entity.js";
+import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
 
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 
@@ -112,23 +116,48 @@ async postularPractica(req, res) {
     }
   }
 
-  async actualizarEstado(req, res) { // permite actualizar el estado con ciertos valores
+async actualizarEstado(req, res) { 
     try {
       const { id } = req.params;
       const { nuevoEstado } = req.body;
+      const estadosPermitidos = [ "pendiente", "enviada_a_empresa", "pendiente_validacion", "rechazada", "en_curso", "finalizada", "evaluada", "cerrada" ];
 
-      const estadosPermitidos = ["pendiente", "confirmada_por_empresa", "en_curso", "finalizada", "evaluada"];
       if (!estadosPermitidos.includes(nuevoEstado)) {
         return handleErrorClient(res, 400, "Estado no válido");
       }
 
-      const practica = await findPracticaById(id);
+      const practicaRepo = AppDataSource.getRepository(Practica);
+      const practica = await practicaRepo.findOne({ where: { id } });
+      
       if (!practica) {
         return handleErrorClient(res, 404, "Práctica no encontrada");
       }
 
+      // ---  LÓGICA DE REINICIO TOTAL (DELETE) ---
+      // Si el coordinador elige "Pendiente", ELIMINAMOS la práctica para que el alumno empiece de cero.
+      if (nuevoEstado === 'pendiente') {
+          console.log(`Eliminando práctica ID ${id} para reinicio completo...`);
+          
+          // 1. Borrar Token de Empresa
+          const tokenRepo = AppDataSource.getRepository(EmpresaToken);
+          const token = await tokenRepo.findOne({ where: { practica: { id } } });
+          if (token) await tokenRepo.remove(token);
+
+          // 2. Borrar Respuestas
+          const respuestasRepo = AppDataSource.getRepository(FormularioRespuesta);
+          const respuestas = await respuestasRepo.find({ where: { practica: { id } } });
+          if (respuestas.length > 0) await respuestasRepo.remove(respuestas);
+
+          // 3. ¡AQUÍ EL CAMBIO! Borramos la práctica completa
+          await practicaRepo.remove(practica);
+
+          return handleSuccess(res, 200, "Práctica reiniciada y eliminada. El alumno puede postular nuevamente.", null);
+      }
+      // -------------------------------------
+
+      // Si NO es pendiente, actualizamos el estado normalmente
       practica.estado = nuevoEstado;
-      const updated = await updatePractica(id, practica);
+      const updated = await practicaRepo.save(practica);
 
       handleSuccess(res, 200, "Estado de práctica actualizado correctamente", updated);
     } catch (error) {
@@ -166,6 +195,52 @@ async postularPractica(req, res) {
       });
     } catch (error) {
       handleErrorServer(res, 500, "Error al cerrar práctica", error.message);
+    }
+  }
+  // Aprobar práctica (Paso de "pendiente_validacion" a "en_curso")
+  async aprobarInicioPractica(req, res) {
+    try {
+      const { id } = req.params;
+      const userRole = req.user?.role;
+
+      if (userRole !== "coordinador") {
+        return handleErrorClient(res, 403, "Solo el coordinador puede aprobar prácticas.");
+      }
+
+      const practica = await findPracticaById(id);
+      if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
+
+      // Cambiamos al estado oficial de inicio
+      practica.estado = "en_curso";
+      
+      // Opcional: Podrías guardar la fecha real de inicio aquí si quisieras
+      // practica.fecha_inicio = new Date();
+
+      const updated = await updatePractica(id, practica);
+      handleSuccess(res, 200, "Práctica aprobada y puesta En Curso.", updated);
+    } catch (error) {
+      handleErrorServer(res, 500, "Error al aprobar la práctica", error.message);
+    }
+  }
+
+  // Observar/Rechazar práctica (Devuelve la pelota al alumno)
+  async observarPractica(req, res) {
+    try {
+      const { id } = req.params;
+      const userRole = req.user?.role;
+
+      if (userRole !== "coordinador") return handleErrorClient(res, 403, "Sin permisos");
+
+      const practica = await findPracticaById(id);
+      if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
+
+      // Cambiamos al estado que definimos para correcciones
+      practica.estado = "rechazada"; 
+      
+      const updated = await updatePractica(id, practica);
+      handleSuccess(res, 200, "Práctica observada. Se ha notificado al alumno.", updated);
+    } catch (error) {
+      handleErrorServer(res, 500, "Error al observar práctica", error.message);
     }
   }
 

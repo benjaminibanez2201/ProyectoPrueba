@@ -1,4 +1,3 @@
-
 import { EntitySchema } from "typeorm";
 import { User } from "./user.entity.js";
 import { EmpresaToken } from "./empresaToken.entity.js";
@@ -14,7 +13,17 @@ export const Practica = new EntitySchema({
     },
     estado: {
       type: "enum",
-      enum: ["pendiente", "pendiente_revision","confirmada_por_empresa", "en_curso", "finalizada", "evaluada", "cerrada"],
+
+      enum: [
+        "pendiente",               // Existe el alumno en el ramo, nada más.
+        "enviada_a_empresa",       // Alumno envió form, espera a empresa.
+        "pendiente_validacion",    // Empresa respondió, espera a coordinador.
+        "rechazada",               // Coordinador rechazó (observaciones).
+        "en_curso",                // Aprobada y trabajando.
+        "finalizada",              // Terminó por fecha.
+        "evaluada",                // Empresa puso nota.
+        "cerrada"                  // Profe cerró el acta.
+      ],
       default: "pendiente",
     },
     fecha_inicio: {
@@ -68,6 +77,12 @@ export const Practica = new EntitySchema({
         type: "one-to-many",
         target: "DocumentoPractica", 
         inverseSide: "practica", 
+    },
+    formularioRespuestas: {
+      type: "one-to-many",
+      target: "FormularioRespuesta",
+      inverseSide: "practica", // Debe coincidir con la entidad respuesta
+      eager: true, // Opcional, pero ayuda
     },
   },
 });

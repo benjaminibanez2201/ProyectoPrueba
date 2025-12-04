@@ -11,7 +11,7 @@ export const getPracticas = async () => {
   }
 };
 
-//llama al endpoint GET /practicas/my-practice del backend para obtener a el alumno logueado
+//llama al endpoint GET /practicas/me del backend para obtener a el alumno logueado
 export const getMyPractica = async () => {
   try {
     const response = await instance.get('/practicas/me');
@@ -36,4 +36,37 @@ export const postularPractica = async (data) => {
     // 'throw' es importante para que el formulario sepa que falló
     throw error.response?.data || error; 
   }
+};
+
+// Aprobar práctica (Coordinador)
+export const aprobarPractica = async (id) => {
+  try {
+    const response = await instance.patch(`/practicas/${id}/aprobar`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+// Observar/Rechazar práctica (Coordinador)
+export const observarPractica = async (id) => {
+  try {
+    const response = await instance.patch(`/practicas/${id}/observar`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+// 👇 AQUÍ ESTABA EL ERROR: Cambiamos 'axios' por 'instance'
+export const updateEstadoPractica = async (id, nuevoEstado) => {
+  // Usamos 'instance' para que incluya la URL base y el Token
+  const response = await instance.put(`/practicas/estado/${id}`, { nuevoEstado });
+  return response.data;
+};
+
+// 👇 AQUÍ TAMBIÉN: Cambiamos 'axios' por 'instance'
+export const getPracticaById = async (id) => {
+  const response = await instance.get(`/practicas/${id}`);
+  return response.data;
 };

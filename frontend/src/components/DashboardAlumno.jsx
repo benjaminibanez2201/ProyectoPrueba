@@ -1,67 +1,115 @@
-import React, { useState, useEffect, useCallback } from "react"; 
-import { useNavigate } from "react-router-dom"; 
-import { Upload, FileText, Activity, Send, PlusCircle } from "lucide-react";
-import { getMyPractica, postularPractica } from "../services/practica.service.js"; 
-import { showErrorAlert, showSuccessAlert,deleteDataAlert } from "../helpers/sweetAlert.js";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Upload, FileText, Activity, Send, PlusCircle, Ticket, Info, AlertCircle, Mail, Clock, AlertTriangle, CheckCircle2, Flag, ClipboardCheck, Lock } from "lucide-react";
+import { getMyPractica, postularPractica } from "../services/practica.service.js";
+import { showErrorAlert, showSuccessAlert, deleteDataAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { deleteDocumento } from "../services/documento.service.js";
 
 
+// --- 1. BADGE CORREGIDO (Separamos color de texto) ---
 const EstadoBadge = ({ estado }) => {
-  let texto = 'Pendiente';
-  if (estado) {
-    texto = estado.charAt(0).toUpperCase() + estado.slice(1).replace('_', ' ');
-  }
-  const S = {
-    pendiente: "bg-yellow-100 text-yellow-800",
-    pendiente_revision: "bg-blue-100 text-blue-800",
-    en_curso: "bg-blue-100 text-blue-800",
-    finalizada: "bg-green-100 text-green-800",
-    evaluada: "bg-purple-100 text-purple-800",
-    cerrada: "bg-gray-100 text-gray-800",
+  
+  // A. Diccionario de Textos (Lo que lee el usuario)
+  const labels = {
+    pendiente: "Pendiente (Empresa no inscrita)",
+    enviada_a_empresa: "Enviado a Empresa",
+    pendiente_validacion: "Pendiente Validación",
+    rechazada: "Observada / Rechazada",
+    en_curso: "En Curso",
+    finalizada: "Finalizada",
+    evaluada: "Evaluada por Empresa",
+    cerrada: "Cerrada"
   };
+
+  // 2. Mapeo de Íconos Lucide
+  const icons = {
+    pendiente: AlertCircle,
+    enviada_a_empresa: Mail,
+    pendiente_validacion: Clock,
+    rechazada: AlertTriangle,
+    en_curso: Activity, // O CheckCircle2 si prefieres
+    finalizada: Flag,
+    evaluada: ClipboardCheck,
+    cerrada: Lock
+  };
+
+  // 3. Colores (Mantenemos los que ya te gustaban)
+  const colors = {
+    pendiente: "bg-gray-100 text-gray-700 border-gray-200",
+    enviada_a_empresa: "bg-blue-50 text-blue-700 border-blue-200",
+    pendiente_validacion: "bg-purple-50 text-purple-700 border-purple-200",
+    rechazada: "bg-red-50 text-red-700 border-red-200",
+    en_curso: "bg-green-50 text-green-700 border-green-200",
+    finalizada: "bg-yellow-50 text-yellow-800 border-yellow-200",
+    evaluada: "bg-orange-50 text-orange-800 border-orange-200",
+    cerrada: "bg-gray-800 text-white border-gray-600"
+  };
+
+  // Lógica para elegir el ícono y texto
+  const IconComponent = icons[estado] || AlertCircle;
+  const textoFallback = estado ? estado.charAt(0).toUpperCase() + estado.slice(1).replace(/_/g, ' ') : 'Desconocido';
+
   return (
-    <span className={`px-2 py-1 text-xs font-medium rounded-full ${S[estado] || S.pendiente}`}>
-      {texto}
+    <span className={`
+      inline-flex items-center gap-1.5 
+      px-3 py-1.5 rounded-md border text-xs font-semibold mb-1
+      ${colors[estado] || "bg-gray-100 text-gray-800"}
+    `}>
+      {/* Renderizamos el ícono con un tamaño pequeñito (size={14}) */}
+      <IconComponent size={14} className="shrink-0" />
+      
+      {/* El texto */}
+      <span>{labels[estado] || textoFallback}</span>
     </span>
   );
+};
+
+// --- 2. FUNCIÓN PARA EL MENSAJE DE AYUDA ---
+const getMensajeAyuda = (estado) => {
+  switch (estado) {
+    case 'enviada_a_empresa': return "Tu solicitud fue enviada. Esperando que tu supervisor ingrese.";
+    case 'pendiente_validacion': return "La empresa firmó. Ahora el coordinador debe aprobar.";
+    case 'rechazada': return "Hay observaciones. Revisa y corrige tu postulación.";
+    case 'en_curso': return "¡Tu práctica está activa! Recuerda subir tus bitácoras.";
+    case 'finalizada': return "Has finalizado el periodo. Sube tu informe final.";
+    case 'evaluada': return "La empresa te evaluó. Esperando cierre del profesor.";
+    case 'cerrada': return "Proceso cerrado exitosamente.";
+    default: return "Estado de tu solicitud.";
+  }
 };
 
 const DashboardAlumno = ({ user }) => {
   const navigate = useNavigate();
   const [practica, setPractica] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [showDocsModal, setShowDocsModal] = useState(false);
 
   const fetchMiPractica = useCallback(async () => {
-    setIsLoading(true); 
+    setIsLoading(true);
     try {
-      const miPractica = await getMyPractica(); 
-      setPractica(miPractica); 
+      const miPractica = await getMyPractica();
+      setPractica(miPractica);
     } catch (err) {
       if (err.status !== 401) {
-         console.log("No se pudo cargar estado o no tiene práctica");
+        console.log("No se pudo cargar estado o no tiene práctica");
       }
     } finally {
       setIsLoading(false);
     }
-  }, []); 
+  }, []);
 
   useEffect(() => {
     fetchMiPractica();
-  }, [fetchMiPractica]); 
+  }, [fetchMiPractica]);
 
-
-
- // Función para manejar la eliminación
   const handleDeleteDocumento = async (id) => {
     deleteDataAlert(async () => {
       try {
         const response = await deleteDocumento(id);
         if (response.status === 'Success') {
           showSuccessAlert('Eliminado', 'El documento ha sido eliminado.');
-          fetchMiPractica(); // RECARGAR DATOS
+          fetchMiPractica(); 
         } else {
           showErrorAlert('Error', response.message);
         }
@@ -70,9 +118,6 @@ const DashboardAlumno = ({ user }) => {
       }
     });
   };
-
-  // --- Renderizado Condicional ---
-  
 
   if (isLoading) {
     return (
@@ -85,8 +130,8 @@ const DashboardAlumno = ({ user }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-8">
       <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-green-100">
-        
-        {/* HEADER DEL DASHBOARD */}
+
+        {/* HEADER */}
         <div className="mb-8">
           <h2 className="text-4xl font-extrabold text-green-700 mb-2">
             Panel del Alumno
@@ -96,25 +141,27 @@ const DashboardAlumno = ({ user }) => {
             Gestiona tu proceso de práctica profesional aquí.
           </p>
         </div>
-        
-        {/* GRID DE TARJETAS (Siempre visible) */}
+
+        {/* GRID DE TARJETAS */}
         <div className="grid md:grid-cols-3 gap-6">
-          
-          {/* TARJETA 1: ESTADO / INSCRIPCIÓN */}
+
+          {/* TARJETA 1: ESTADO */}
           <div className="bg-green-50 p-6 rounded-xl shadow-inner border border-green-100 flex flex-col justify-between h-full">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <Activity className="text-green-600" size={32} />
-                {/* Si no hay práctica, mostramos un icono de alerta o plus */}
                 {!practica && <PlusCircle className="text-blue-500" size={24} />}
               </div>
               <h3 className="text-lg font-bold text-green-800 mb-2">Estado Actual</h3>
-              
-              {/* AQUÍ ESTÁ LA LÓGICA CONDICIONAL DENTRO DE LA TARJETA */}
+
               {practica ? (
                 <div className="mt-2">
                   <EstadoBadge estado={practica.estado} />
-                  <p className="text-xs text-gray-500 mt-2">Tu práctica está activa.</p>
+                  
+                  {/* AQUÍ USAMOS EL MENSAJE DINÁMICO */}
+                  <p className="text-xs text-gray-500 mt-2">
+                    {getMensajeAyuda(practica.estado)}
+                  </p>
                 </div>
               ) : (
                 <div>
@@ -137,18 +184,13 @@ const DashboardAlumno = ({ user }) => {
           <div className={`bg-green-50 p-6 rounded-xl shadow-inner border border-green-100 transition ${!practica ? 'opacity-60 grayscale' : 'hover:shadow-md'}`}>
             <Upload className="text-green-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-green-800">Subir Documentos</h3>
-
-            {/* BORRAMOS EL PRIMER P Y BUTTON QUE NO HACIAN NADA */}
-
-            {/* DEJAMOS ESTE QUE ES EL QUE FUNCIONA (RF6) */}
             <p className="text-gray-600 text-sm mt-1">
               Envía tus informes y certificados (RF6)
             </p>
-            <button 
-              disabled={!practica} // Tip: Puedes agregarle esto para que se bloquee si no hay práctica
+            <button
+              disabled={!practica}
               onClick={() => {
-                 // Navegamos a la ruta y le pasamos el ID de la práctica "escondido"
-                 navigate('/upload-document', { state: { practicaId: practica?.id } });
+                navigate('/upload-document', { state: { practicaId: practica?.id } });
               }}
               className="mt-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
@@ -163,41 +205,42 @@ const DashboardAlumno = ({ user }) => {
             <p className="text-gray-600 text-sm mt-1">
               Consulta tus entregas registradas.
             </p>
-            
-            {/* 3. BOTÓN ACTIVADO */}
-            <button 
+            <button
+              disabled={!practica}
               onClick={() => setShowDocsModal(true)}
-              className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full"
+              className="mt-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
               Ver Mis Archivos
             </button>
           </div>
         </div>
-        
-        {/* SECCIÓN INFERIOR: TOKEN (Solo si hay práctica) */}
-        {practica && (
+
+        {/* TOKEN INFO (Solo visible si ya envió a empresa y no ha terminado) */}
+        {practica && practica.empresaToken && practica.estado !== 'finalizada' && practica.estado !== 'cerrada' && (
           <div className="mt-8 bg-white p-6 rounded-xl shadow-sm border-2 border-dashed border-green-200">
             <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-              🎟️ Token para tu Empresa
+              <Ticket size={20} /> Token para tu Empresa
+              <div className="relative group">
+                <Info size={18} className="text-gray-500 hover:text-gray-700 cursor-pointer" />
+                <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 hidden group-hover:block w-64 p-3 text-sm bg-gray-800 text-white rounded-lg shadow-lg z-50">
+                  Si a tu supervisor no le llega el correo o se pierde, entrégale este token. 
+                  Lo necesitará para ingresar al sistema y completar tu formulario de postulación y evaluación.
+                </div>
+              </div>
             </h3>
-            <p className="text-gray-600 mb-4 text-sm">
-              Copia este código y entrégaselo a tu supervisor. Él lo necesitará para ingresar al sistema y evaluarte.
-            </p>
-            
             <div className="bg-gray-100 text-gray-800 font-mono text-lg p-4 rounded text-center border border-gray-300 select-all">
-              {practica.empresaToken?.token || "Token no disponible"}
+              {practica.empresaToken.token}
             </div>
           </div>
         )}
 
-        {/* Modal de Documentos */}
+        {/* Modal */}
         {practica && (
           <DocumentsModal
             isOpen={showDocsModal}
             onClose={() => setShowDocsModal(false)}
             studentName="la práctica"
-            // Aquí pasamos los documentos de la práctica del alumno
-            documents={practica.documentos || []} 
+            documents={practica.documentos || []}
             onDelete={handleDeleteDocumento}
           />
         )}

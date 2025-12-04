@@ -49,6 +49,11 @@ DB_PORT=5432
 DB_USER=tu_usuario
 DB_PASSWORD=tu_password
 DB_NAME=proyecto_prueba
+
+# Configuración de Correo
+EMAIL_USER= correo
+EMAIL_PASS= contraseña de aplicacion
+
 Iniciar la base de datos PostgreSQL y sincronizar con TypeORM.
 
 Levantar el servidor:
@@ -85,7 +90,3 @@ Frontend: en desarrollo
 Funcionalidad de chat para empresas: pendiente
 
 Formularios y evaluaciones dinámicas para empresas: pendiente
-
-Autor
-Benjamín Ibáñez
-Estudiante de Ingeniería Civil en Informática – Universidad del Bío-Bío

@@ -44,3 +44,21 @@ export const guardarRespuesta = async (datos) => {
         throw error.response?.data || error;
      }
 };
+
+export const crearPlantilla = async (datos) => {
+  try {
+    const response = await instance.post('/formularios', datos);
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const eliminarPlantilla = async (id) => {
+  try {
+    const response = await instance.delete(`/formularios/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

@@ -7,6 +7,9 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
+  //  1. NUEVO: Agregamos estado de carga (empieza en true)
+  const [loading, setLoading] = useState(true);
+
   // El useEffect para cargar el usuario al iniciar la app (esto está perfecto)
   useEffect(() => {
     const token = cookies.get('jwt-auth');
@@ -28,6 +31,8 @@ export const AuthProvider = ({ children }) => {
         sessionStorage.removeItem('usuario');
       }
     }
+    //  2. NUEVO: Avisamos que terminamos de verificar (haya usuario o no)
+    setLoading(false);
   }, []);
 
   // --- NUEVA FUNCIÓN ---
@@ -52,6 +57,12 @@ export const AuthProvider = ({ children }) => {
     cookies.remove('jwt-auth');
   };
 
+  //  3. NUEVO: Si está cargando, mostramos una pantalla blanca o mensaje
+  // Esto evita que ProtectedRoute te expulse antes de tiempo
+  if (loading) {
+    return <div className="h-screen flex items-center justify-center">Cargando sesión...</div>;
+  }
+
   return (
     <AuthContext.Provider value={{ user, setUser, loginContext, logoutContext }}>
       {children}
@@ -66,3 +77,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

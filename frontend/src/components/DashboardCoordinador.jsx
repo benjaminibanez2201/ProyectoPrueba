@@ -1,33 +1,67 @@
 import React, { useState, useMemo } from "react";
 import { CSVLink } from "react-csv";
 import { useNavigate } from "react-router-dom"; // Hook para navegar
-import { Users, Key, ClipboardList, Eye, Edit, FileCog, FileText} from "lucide-react"; // Iconos
+import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock } from "lucide-react"; // Iconos
 import { getAlumnos } from "../services/user.service.js";
 import { showErrorAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
+import { updateEstadoPractica } from "../services/practica.service.js";
+import Swal from "sweetalert2";
 
 // --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---
 const EstadoBadge = ({ practica }) => {
-  let estado = 'pendiente';
-  let texto = 'Pendiente (Sin Inscribir)';
+  // 1. Obtenemos el estado crudo
+  const estado = practica ? practica.estado : 'pendiente';
 
-  if (practica) {
-    estado = practica.estado;
-    texto = estado.charAt(0).toUpperCase() + estado.slice(1).replace('_', ' ');
-  }
-
-  const S = {
-    pendiente: "bg-gray-100 text-gray-800",
-    pendiente_revision: "bg-yellow-100 text-yellow-800",
-    en_curso: "bg-blue-100 text-blue-800",
-    finalizada: "bg-green-100 text-green-800",
-    evaluada: "bg-purple-100 text-purple-800",
-    cerrada: "bg-gray-200 text-gray-500",
+  // 2. DICCIONARIO DE ICONOS
+  const icons = {
+    pendiente: AlertCircle,
+    enviada_a_empresa: Mail,
+    pendiente_validacion: Clock,
+    rechazada: AlertTriangle,
+    en_curso: Activity,
+    finalizada: Flag,
+    evaluada: ClipboardCheck,
+    cerrada: Lock
   };
-  
+
+  // 3. DICCIONARIO DE COLORES
+  const statusColors = {
+    pendiente: "bg-gray-100 text-gray-600 border border-gray-200",
+    enviada_a_empresa: "bg-blue-50 text-blue-700 border border-blue-200",
+    pendiente_validacion: "bg-yellow-50 text-yellow-800 border border-yellow-200 font-bold", 
+    rechazada: "bg-red-50 text-red-700 border border-red-200",
+    en_curso: "bg-green-50 text-green-700 border border-green-200",
+    finalizada: "bg-orange-50 text-orange-800 border border-orange-200",
+    evaluada: "bg-purple-50 text-purple-700 border border-purple-200",
+    cerrada: "bg-gray-800 text-white border border-gray-600",
+  };
+
+  // 4. DICCIONARIO DE TEXTOS
+  const statusLabels = {
+    pendiente: "Sin Inscribir Empresa",
+    enviada_a_empresa: "Esperando Empresa",
+    pendiente_validacion: "Requiere Validación",
+    rechazada: "Observada",
+    en_curso: "En Curso",
+    finalizada: "Finalizada",
+    evaluada: "Evaluada",
+    cerrada: "Cerrada"
+  };
+
+  // Selección de recursos
+  const IconComponent = icons[estado] || AlertCircle;
+  const colorClass = statusColors[estado] || statusColors.pendiente;
+  const texto = statusLabels[estado] || estado;
+
   return (
-    <span className={`px-2 py-1 text-xs font-medium rounded-full ${S[estado] || S.cerrada}`}>
-      {texto}
+    <span className={`
+      inline-flex items-center gap-1.5 
+      px-2.5 py-1 rounded-md border text-xs font-medium 
+      ${colorClass}
+    `}>
+      <IconComponent size={14} className="shrink-0" />
+      <span>{texto}</span>
     </span>
   );
 };
@@ -35,29 +69,21 @@ const EstadoBadge = ({ practica }) => {
 // --- COMPONENTE PRINCIPAL ---
 const DashboardCoordinador = ({ user }) => {
   // 1. Hooks
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [alumnos, setAlumnos] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showTable, setShowTable] = useState(false);
   const [filter, setFilter] = useState('todas');
   const [selectedStudentForDocs, setSelectedStudentForDocs] = useState(null);
-
-  // 2. Cargar Alumnos
-  const handleLoadAlumnos = async () => {
-    if (showTable) {
-      setShowTable(false);
-      return;
-    }
+  
+  // 1. FUNCIÓN NUEVA: Solo carga datos (sin cerrar la tabla)
+  const refreshAlumnos = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const alumnosArray = await getAlumnos(); 
-      
+      const alumnosArray = await getAlumnos();
       setAlumnos(alumnosArray);
-      setShowTable(true);
-      
     } catch (err) {
       const errorMessage = err.message || "No se pudo cargar la lista";
       setError(errorMessage);
@@ -67,10 +93,21 @@ const DashboardCoordinador = ({ user }) => {
     }
   };
 
+  // 2. Cargar Alumnos
+  const handleLoadAlumnos = async () => {
+    if (showTable) {
+      setShowTable(false); // Si está abierta, la cerramos
+    } else {
+      setShowTable(true);  // Si está cerrada, la abrimos...
+      refreshAlumnos();    // ...y cargamos los datos
+    }
+  };
+  
+
   // 3. Filtros
   const alumnosFiltrados = alumnos.filter(alumno => {
     if (filter === 'todas') return true;
-    const tipo = alumno.tipo_practica; 
+    const tipo = alumno.tipo_practica;
     if (filter === 'p1' && tipo === 'Profesional I') return true;
     if (filter === 'p2' && tipo === 'Profesional II') return true;
     return false;
@@ -87,36 +124,110 @@ const DashboardCoordinador = ({ user }) => {
   const dataParaExportar = useMemo(() => {
     return alumnosFiltrados.map(alumno => {
       const practica = alumno.practicasComoAlumno?.[0];
-      let estadoTexto = 'Pendiente (Sin Inscribir)';
-      if (practica) {
-        estadoTexto = practica.estado.charAt(0).toUpperCase() + practica.estado.slice(1).replace('_', ' ');
-      }
+      // Usamos la misma lógica simple para el CSV
+      const estadoRaw = practica ? practica.estado : 'pendiente';
+
+      // Mapeo manual simple para el CSV (opcional, podrías reusar el diccionario arriba)
+      const labelMap = {
+        pendiente: "Sin Inscribir Empresa",
+        enviada_a_empresa: "Esperando Empresa",
+        pendiente_validacion: "Requiere Validación",
+        rechazada: "Observada",
+        en_curso: "En Curso",
+        finalizada: "Finalizada",
+        evaluada: "Evaluada (Lista para Nota)",
+        cerrada: "Cerrada"
+      };
+
       return {
         name: alumno.name,
         email: alumno.email,
         tipo_practica: alumno.tipo_practica || 'N/A',
-        estado: estadoTexto
+        estado: labelMap[estadoRaw] || estadoRaw
       };
     });
   }, [alumnosFiltrados]);
 
   // 5. Handlers de botones (Placeholders)
+// A) Botón OJO (Ver Detalle Rápido)
   const handleVerPractica = (alumno) => {
-    const idPractica = alumno.practicasComoAlumno?.[0]?.id;
-    if (idPractica) {
-      console.log("Ver detalles:", idPractica);
+    const practica = alumno.practicasComoAlumno?.[0];
+
+    if (!practica) {
+        Swal.fire("Información", "Este alumno no tiene práctica inscrita.", "info");
+        return;
+    }
+
+    Swal.fire({
+        title: `Detalle: ${alumno.name}`,
+        html: `
+            <div style="text-align: left;">
+                <p><b>Empresa:</b> ${practica.empresaToken?.empresaNombre || 'No asignada'}</p>
+                <p><b>Estado Actual:</b> <span class="badge">${practica.estado}</span></p>
+                <p><b>Fecha Inicio:</b> ${practica.fecha_inicio ? new Date(practica.fecha_inicio).toLocaleDateString() : 'Pendiente'}</p>
+                <hr style="margin: 10px 0;">
+                <p><b>ID Práctica:</b> ${practica.id}</p>
+            </div>
+        `,
+        confirmButtonText: "Cerrar"
+    });
+  };
+
+// B) Botón LÁPIZ (Forzar cambio de estado - Admin)
+  const handleEditarEstado = async (alumno) => {
+    const practica = alumno.practicasComoAlumno?.[0];
+
+    if (!practica) {
+        Swal.fire("Error", "No se puede editar el estado: No hay práctica.", "error");
+        return;
+    }
+
+    const { value: nuevoEstado } = await Swal.fire({
+        title: 'Modificar Estado Manualmente',
+        text: `Estado actual: ${practica.estado}`,
+        input: 'select',
+        inputOptions: {
+            'pendiente': 'Pendiente (Reinicio)',
+            'enviada_a_empresa': 'Enviada a Empresa',
+            'pendiente_validacion': 'Pendiente Validación',
+            'en_curso': 'En Curso',
+            'finalizada': 'Finalizada',
+            'rechazada': 'Rechazada',
+            'cerrada': 'Cerrada'
+        },
+        inputPlaceholder: 'Selecciona nuevo estado',
+        showCancelButton: true,
+        confirmButtonText: 'Actualizar',
+        cancelButtonText: 'Cancelar'
+    });
+
+if (nuevoEstado) {
+        try {
+            // 1. Intentamos actualizar (Lo crítico)
+            await updateEstadoPractica(practica.id, nuevoEstado);
+            
+            // 2. Mostramos éxito (porque ya sabemos que el backend respondió bien)
+            await Swal.fire("¡Listo!", `Estado actualizado a: ${nuevoEstado}`, "success");
+            
+            // 3. Intentamos recargar la tabla (Si falla, no importa tanto)
+            refreshAlumnos();
+
+        } catch (error) {
+            // Este catch SOLO saltará si falló la actualización real
+            console.error(error);
+            Swal.fire("Error", "No se pudo actualizar el estado en el servidor.", "error");
+        }
     }
   };
-  const handleEditarEstado = (alumno) => {
-    console.log("Editar estado:", alumno.id);
-  };
+  
+  
 
 
   // --- RENDERIZADO ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
-        
+
         <h2 className="text-4xl font-extrabold text-blue-700 mb-2">
           Panel del Coordinador
         </h2>
@@ -125,15 +236,20 @@ const DashboardCoordinador = ({ user }) => {
         </p>
 
         {/* GRID DE TARJETAS */}
+<<<<<<< HEAD
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           
+=======
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+>>>>>>> origin/dev3
           {/* Tarjeta 1: Ver Alumnos */}
           <div className="bg-blue-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <Users className="text-blue-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-blue-800">Ver Alumnos</h3>
             <p className="text-gray-600 text-sm mt-1">Revisa alumnos inscritos (RF2)</p>
-            <button 
-              onClick={handleLoadAlumnos} 
+            <button
+              onClick={handleLoadAlumnos}
               className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
               {showTable ? 'Ocultar Alumnos' : 'Gestionar Alumnos'}
@@ -165,8 +281,8 @@ const DashboardCoordinador = ({ user }) => {
             <FileCog className="text-orange-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-orange-800">Formularios</h3>
             <p className="text-gray-600 text-sm mt-1">Edita las plantillas (RF12)</p>
-            <button 
-              onClick={() => navigate("/admin/formularios")} 
+            <button
+              onClick={() => navigate("/admin/formularios")}
               className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
               Gestionar Plantillas
@@ -196,11 +312,11 @@ const DashboardCoordinador = ({ user }) => {
         {error && (
           <p className="text-red-600 bg-red-100 p-4 rounded-lg text-center mt-8">{error}</p>
         )}
-        
+
         {showTable && !isLoading && !error && (
           <div className="mt-12">
             <h3 className="text-2xl font-bold text-blue-800 mb-4">Gestión de Alumnos</h3>
-            
+
             {/* Filtros y Exportar */}
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
               <div className="flex flex-wrap gap-2">
@@ -233,14 +349,9 @@ const DashboardCoordinador = ({ user }) => {
                   <tr>
                     <th className="p-4 font-semibold text-blue-800">Alumno</th>
                     <th className="p-4 font-semibold text-blue-800">Email</th>
-
-                    <th className="p-4 font-semibold text-blue-800">Tipo</th>
-                    <th className="p-4 font-semibold text-blue-800">Estado</th>
-
                     <th className="p-4 font-semibold text-blue-800">Tipo Práctica</th>
-                    <th className="p-4 font-semibold text-blue-800">Estado (RF10)</th>
+                    <th className="p-4 font-semibold text-blue-800">Estado</th>
                     <th className="p-4 font-semibold text-blue-800">Documentos</th>
-
                     <th className="p-4 font-semibold text-blue-800">Acciones</th>
                   </tr>
                 </thead>
@@ -253,16 +364,16 @@ const DashboardCoordinador = ({ user }) => {
                       <td className="p-4">
                         <EstadoBadge practica={alumno.practicasComoAlumno?.[0]} />
                       </td>
-                      {/* --- NUEVA CELDA DE DOCUMENTOS --- */}
+
+                      {/* --- CELDA DE DOCUMENTOS --- */}
                       <td className="p-4">
                         {(() => {
                           const docs = alumno.practicasComoAlumno?.[0]?.documentos;
                           if (docs && docs.length > 0) {
                             return (
                               <button
-                                // Simplemente guardamos el alumno en el estado. El Modal se abrirá solo.
                                 onClick={() => setSelectedStudentForDocs(alumno)}
-                                className="flex items-center gap-2 text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors font-medium text-xs"
+                                className="flex items-center gap-2 text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition-colors font-medium text-xs"
                               >
                                 <ClipboardList size={14} />
                                 Ver {docs.length} archivos
@@ -272,12 +383,12 @@ const DashboardCoordinador = ({ user }) => {
                           return <span className="text-gray-400 text-xs italic pl-2">Sin archivos</span>;
                         })()}
                       </td>
-                      {/* ------------hasta aquí lo del descraga de docs-------------------- */}
+
                       <td className="p-4 space-x-2">
-                        <button onClick={() => handleVerPractica(alumno)} className="p-2 bg-blue-100 text-blue-700 rounded-lg" title="Ver">
+                        <button onClick={() => handleVerPractica(alumno)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200" title="Ver Detalle">
                           <Eye size={18} />
                         </button>
-                        <button onClick={() => handleEditarEstado(alumno)} className="p-2 bg-green-100 text-green-700 rounded-lg" title="Editar">
+                        <button onClick={() => handleEditarEstado(alumno)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200" title="Aprobar/Editar">
                           <Edit size={18} />
                         </button>
                       </td>
@@ -285,7 +396,7 @@ const DashboardCoordinador = ({ user }) => {
                   ))}
                   {alumnosFiltrados.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="p-4 text-center text-gray-500">No se encontraron alumnos.</td>
+                      <td colSpan="6" className="p-4 text-center text-gray-500">No se encontraron alumnos.</td>
                     </tr>
                   )}
                 </tbody>
@@ -294,12 +405,14 @@ const DashboardCoordinador = ({ user }) => {
           </div>
         )}
       </div>
-        <DocumentsModal
-          isOpen={!!selectedStudentForDocs} // Es true si hay un alumno seleccionado
-          onClose={() => setSelectedStudentForDocs(null)} // Al cerrar, volvemos a null
-          studentName={selectedStudentForDocs?.name}
-          documents={selectedStudentForDocs?.practicasComoAlumno?.[0]?.documentos || []}
-        />
+
+      {/* MODAL DE DOCUMENTOS */}
+      <DocumentsModal
+        isOpen={!!selectedStudentForDocs}
+        onClose={() => setSelectedStudentForDocs(null)}
+        studentName={selectedStudentForDocs?.name}
+        documents={selectedStudentForDocs?.practicasComoAlumno?.[0]?.documentos || []}
+      />
     </div>
   );
 };

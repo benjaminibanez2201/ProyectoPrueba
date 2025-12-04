@@ -67,4 +67,52 @@ export class FormularioController {
       handleErrorServer(res, 500, "Error al actualizar plantilla", error.message);
     }
   }
+  // Crear una nueva plantilla desde cero
+  async createPlantilla(req, res) {
+    try {
+      const { titulo, descripcion, tipo, esquema } = req.body;
+
+      // Validamos que no exista otro con el mismo "tipo" (clave única)
+      const existe = await plantillaRepository.findOne({ where: { tipo } });
+      if (existe) {
+        return handleErrorClient(res, 400, "Ya existe un formulario con ese código (tipo).");
+      }
+
+      const nueva = plantillaRepository.create({
+        titulo,
+        descripcion,
+        tipo, // Ej: "encuesta_satisfaccion"
+        esquema: esquema || [] // Las preguntas
+      });
+
+      await plantillaRepository.save(nueva);
+      handleSuccess(res, 201, "Formulario creado exitosamente", nueva);
+    } catch (error) {
+      handleErrorServer(res, 500, "Error al crear formulario", error.message);
+    }
+  }
+  // Eliminar una plantilla (Solo si no es del sistema)
+  async deletePlantilla(req, res) {
+    try {
+      const { id } = req.params;
+      
+      const plantilla = await plantillaRepository.findOneBy({ id: Number(id) });
+      if (!plantilla) {
+        return handleErrorClient(res, 404, "Formulario no encontrado");
+      }
+
+      // 🛡️ LISTA DE INTOCABLES
+      const protegidos = ["postulacion", "bitacora", "evaluacion_pr1", "evaluacion_pr2"];
+      
+      if (protegidos.includes(plantilla.tipo)) {
+        return handleErrorClient(res, 403, "No puedes eliminar formularios base del sistema.");
+      }
+
+      // Si pasa el filtro, lo borramos
+      await plantillaRepository.remove(plantilla);
+      handleSuccess(res, 200, "Formulario eliminado correctamente", { id });
+    } catch (error) {
+      handleErrorServer(res, 500, "Error al eliminar formulario", error.message);
+    }
+  }
 }
