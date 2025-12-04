@@ -31,7 +31,7 @@ async function seedFormularios() {
             id: "tipo_practica",
             label: "Tipo de Practica",
             tipo: "select",
-            options: ["Profesional 1", "Profesional 2"],
+            options: ["Profesional I", "Profesional II"],
             fillBy: "alumno",
             required: true,
             cols: 6,
@@ -49,6 +49,7 @@ async function seedFormularios() {
             tipo: "text",
             fillBy: "alumno",
             cols: 12,
+            validation: "nombre",
             required: true
           },
           {
@@ -57,7 +58,9 @@ async function seedFormularios() {
             tipo: "text",
             fillBy: "alumno",
             required: true,
-            cols: 6
+            cols: 6,
+            validation: "rut", 
+            placeholder: "12345678-9"
           },
           {
             id: "correo_alumno",
@@ -65,6 +68,7 @@ async function seedFormularios() {
             tipo: "email",
             fillBy: "alumno",
             cols: 6,
+            // No le voy a poner validacion al correo del alumno por que aqui inventamos un correo
             required: true
           },
           {
@@ -80,8 +84,10 @@ async function seedFormularios() {
             label: "Fono",
             tipo: "text",
             fillBy: "alumno",
+            cols: 6,
+            validation: "fono",
+            placeholder: "+56912345678",
             required: true,
-            cols: 6
           },
           //Disponibilidad
           {
@@ -131,6 +137,7 @@ async function seedFormularios() {
             tipo: "text",
             fillBy: "empresa",
             cols: 6,
+            validation: "text",
             required: true
           },
           {
@@ -139,6 +146,8 @@ async function seedFormularios() {
             tipo: "text",
             fillBy: "empresa",
             cols: 6,
+            validation: "fono",
+            placeholder: "+56912345678",
             required: true
           },
           {
@@ -167,6 +176,7 @@ async function seedFormularios() {
             id: "nombre_supervisor",
             label: "Nombre Completo",
             tipo: "text",
+            validation: "nombre",
             required: true
           },
           {
@@ -175,6 +185,7 @@ async function seedFormularios() {
             tipo: "text",
             fillBy: "empresa",
             cols: 6,
+            validation: "text",
             required: true
           },
           {
@@ -183,6 +194,7 @@ async function seedFormularios() {
             tipo: "text",
             fillBy: "empresa",
             cols: 6,
+            validation: "text",
             required: true
           },
           {
@@ -191,6 +203,8 @@ async function seedFormularios() {
             tipo: "text",
             fillBy: "empresa",
             cols: 6,
+            validation: "fono",
+            placeholder: "+56912345678",
             required: true
           },
           {
@@ -198,6 +212,7 @@ async function seedFormularios() {
             label: "Correo Electrónico - A este correo llegará el formulario",
             tipo: "email",
             cols: 6,
+            validation: "email",
             required: true
           },
           // Area de desarrollo de la practica
@@ -251,6 +266,7 @@ async function seedFormularios() {
             id: "horario_practica",
             label: "Horario de Práctica (Mañana y Tarde)",
             tipo: "schedule", // El frontend dibujará la tabla
+            fillBy: "empresa",
             required: true
           },
           // Validacion
@@ -292,6 +308,7 @@ async function seedFormularios() {
             id: "nombre_alumno",
             label: "Nombre Completo",
             tipo: "text",
+            validation: "nombre",
             required: true
           },
           {
@@ -299,6 +316,8 @@ async function seedFormularios() {
             label: "RUT",
             tipo: "text",
             cols: 6,
+            validation: "rut", 
+            placeholder: "12345678-9",
             required: true
           },
           {
@@ -306,6 +325,7 @@ async function seedFormularios() {
             label: "Correo Electrónico",
             tipo: "email",
             cols: 6,
+            // lo mismo que antes
             required: true
           },
           {
@@ -320,6 +340,8 @@ async function seedFormularios() {
             label: "Fono Empresa",
             tipo: "text",
             cols: 6,
+            validation: "fono",
+            placeholder: "+56912345678",
             required: true
           },
           {
@@ -327,6 +349,7 @@ async function seedFormularios() {
             label: "Supervisor Empresa",
             tipo: "text",
             cols: 6,
+            validation: "nombre",
             required: true
           },
           {
@@ -334,6 +357,8 @@ async function seedFormularios() {
             label: "Fono Supervisor",
             tipo: "text",
             cols: 6,
+            validation: "fono",
+            placeholder: "+56912345678",
             required: true
           },
           {
@@ -396,30 +421,39 @@ async function seedFormularios() {
             id: "nombre_alumno",
             label: "Nombre Completo",
             tipo: "text",
+            validation: "nombre",
             required: true
           },
           {
             id: "rut",
             label: "RUT",
             tipo: "text",
+            cols: 6,
+            validation: "rut", 
+            placeholder: "12345678-9",
             required: true
           },
           {
             id: "correo_alumno",
             label: "Correo Electrónico",
             tipo: "email",
+            cols: 6,
             required: true
           },
           {
             id: "direccion",
             label: "Dirección en la Ciudad",
             tipo: "text",
+            cols: 6,
             required: true
           },
           {
             id: "fono_estudiante",
             label: "Fono",
             tipo: "text",
+            cols: 6,
+            validation: "fono",
+            placeholder: "+56912345678",
             required: true
           },
           // Datos Empresa
@@ -440,6 +474,7 @@ async function seedFormularios() {
             label: "Rubro (Giro)",
             tipo: "text",
             fillBy: "empresa",
+            validation: "text",
             required: true
           },
           {
@@ -447,6 +482,7 @@ async function seedFormularios() {
             label: "Dirección",
             tipo: "text",
             fillBy: "empresa",
+            cols: 6,
             required: true
           },
           {
@@ -454,6 +490,7 @@ async function seedFormularios() {
             label: "Ciudad",
             tipo: "text",
             fillBy: "empresa",
+            cols: 6,
             required: true
           },
           {
@@ -461,6 +498,8 @@ async function seedFormularios() {
             label: "Nombre Completo",
             tipo: "text",
             fillBy: "empresa",
+            cols: 6,
+            validation: "nombre",
             required: true
           },
           {
@@ -468,6 +507,9 @@ async function seedFormularios() {
             label: "Fono del Supervisor",
             tipo: "text",
             fillBy: "empresa",
+            cols: 6,
+            validation: "fono",
+            placeholder: "+56912345678",
             required: true
           },
           //Periodo
@@ -481,6 +523,7 @@ async function seedFormularios() {
             label: "Fecha Inicio",
             tipo: "date",
             fillBy: "empresa",
+            cols: 4,
             required: true
           },
           {
@@ -488,6 +531,7 @@ async function seedFormularios() {
             label: "Fecha Término",
             tipo: "date",
             fillBy: "empresa",
+            cols: 4,
             required: true
           },
           {
@@ -495,6 +539,7 @@ async function seedFormularios() {
             label: "Total Horas Cronológicas",
             tipo: "number",
             fillBy: "empresa",
+            cols: 4,
             required: true
           },
           {
@@ -956,30 +1001,39 @@ async function seedFormularios() {
             id: "nombre_alumno",
             label: "Nombre Completo",
             tipo: "text",
+            validation: "nombre",
             required: true
           },
           {
             id: "rut",
             label: "RUT",
             tipo: "text",
+            cols: 6,
+            validation: "rut", 
+            placeholder: "12345678-9",
             required: true
           },
           {
             id: "correo_alumno",
             label: "Correo Electrónico",
             tipo: "email",
+            cols: 6,
             required: true
           },
           {
             id: "direccion",
             label: "Dirección en la Ciudad",
             tipo: "text",
+            cols: 6,
             required: true
           },
           {
             id: "fono_estudiante",
             label: "Fono",
             tipo: "text",
+            cols: 6,
+            validation: "fono",
+            placeholder: "+56912345678",
             required: true
           },
           // Datos Empresa
@@ -1000,6 +1054,7 @@ async function seedFormularios() {
             label: "Rubro (Giro)",
             tipo: "text",
             fillBy: "empresa",
+            validation: "text",
             required: true
           },
           {
@@ -1007,6 +1062,7 @@ async function seedFormularios() {
             label: "Dirección",
             tipo: "text",
             fillBy: "empresa",
+            cols: 6,
             required: true
           },
           {
@@ -1014,6 +1070,7 @@ async function seedFormularios() {
             label: "Ciudad",
             tipo: "text",
             fillBy: "empresa",
+            cols: 6,
             required: true
           },
           {
@@ -1021,6 +1078,8 @@ async function seedFormularios() {
             label: "Nombre Completo",
             tipo: "text",
             fillBy: "empresa",
+            cols: 6,
+            validation: "nombre",
             required: true
           },
           {
@@ -1028,6 +1087,9 @@ async function seedFormularios() {
             label: "Fono del Supervisor",
             tipo: "text",
             fillBy: "empresa",
+            cols: 6,
+            validation: "fono",
+            placeholder: "+56912345678",
             required: true
           },
           //Periodo
@@ -1041,6 +1103,7 @@ async function seedFormularios() {
             label: "Fecha Inicio",
             tipo: "date",
             fillBy: "empresa",
+            cols: 4,
             required: true
           },
           {
@@ -1048,6 +1111,7 @@ async function seedFormularios() {
             label: "Fecha Término",
             tipo: "date",
             fillBy: "empresa",
+            cols: 4,
             required: true
           },
           {
@@ -1055,6 +1119,7 @@ async function seedFormularios() {
             label: "Total Horas Cronológicas",
             tipo: "number",
             fillBy: "empresa",
+            cols: 4,
             required: true
           },
           {

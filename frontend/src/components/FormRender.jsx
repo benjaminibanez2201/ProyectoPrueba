@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { showErrorAlert } from "../helpers/sweetAlert.js";
+import { validarRut, validarEmail, validarTelefono, validarNombre, validarTexto } from "../helpers/formValidators";
 
 // --- 1. HEADER (INTACTO) ---
 const DocumentHeader = () => {
@@ -115,16 +116,14 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
 // --- 3. FORM RENDER PRINCIPAL (CON LA LÓGICA NUEVA AGREGADA) ---
 // Ahora aceptamos 'respuestasIniciales' (o 'valores') y 'userType'
 const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit, readOnly = false, userType = "alumno", titulo, buttonText }) => {
-
   // Fusionamos valores y respuestasIniciales por compatibilidad
   const datosEntrada = { ...valores, ...respuestasIniciales };
   const [respuestas, setRespuestas] = useState(datosEntrada);
 
   const canvasRefs = useRef({});
   const [isDrawing, setIsDrawing] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  // --- 🔥 NUEVO: USE EFFECT PARA ACTUALIZAR DATOS ---
-  // Esto es lo que faltaba para que se vieran los datos del alumno
   useEffect(() => {
     if (valores || respuestasIniciales) {
       setRespuestas(prev => {
@@ -134,19 +133,36 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
           return prev;
         }
 
+        // ✅ Validamos todos los campos que tengan 'validation'
+        esquema.forEach(campo => {
+          if (campo.validation) {
+            validateField(campo.id, nuevosDatos[campo.id], campo.validation);
+          }
+        });
+
         return nuevosDatos;
       });
     }
   }, [JSON.stringify(valores), JSON.stringify(respuestasIniciales)]);
 
+
   // ----------------------------------------
   // ----------------------------------------------------
 
-  const handleChange = (id, value) => {
+  const handleChange = (id, value, validationType) => { // 1. Agrega validationType aquí
+
+    // Guardamos el valor
     setRespuestas((prev) => ({
       ...prev,
       [id]: value,
     }));
+
+    // 2. Ejecutamos la validación si existe
+    // (Esto es lo que te faltaba, por eso se pasaba la validación por las weas)
+    if (validationType && !readOnly) {
+      validateField(id, value, validationType);
+    }
+    
   };
 
   // --- LÓGICA DE CANVAS (INTACTA) ---
@@ -243,12 +259,37 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     2: "md:col-span-2"
   };
 
+  const validateField = (name, value, validationType) => {
+    let errorMsg = "";
+
+    if (validationType === "rut" && value) {
+      if (!validarRut(value)) errorMsg = "RUT inválido (Ej: 12345678-9)";
+    }
+    if (validationType === "email" && value) {
+      if (!validarEmail(value)) errorMsg = "Email inválido";
+    }
+    if (validationType === "fono" && value) {
+      if (!validarTelefono(value)) errorMsg = "Solo números y '+'";
+    }
+    if (validationType === "nombre" && value) {
+      if (!validarNombre(value)) errorMsg = "Nombre inválido. Solo letras y espacios.";
+    }
+    if (validationType === "text" && value) {
+      if (!validarTexto(value)) errorMsg = "Solo letras y espacios.";
+    }
+    // Actualizamos el objeto de errores
+    setErrors(prev => ({
+      ...prev,
+      [name]: errorMsg
+    }));
+  };
+
   // Reemplaza TU renderField por esta versión (no define componentes inline)
   const renderField = (campo) => {
     const {
       id, label, tipo, required, options, placeholder,
       min, max, readOnly: fieldReadOnly, fillBy,
-      cols = 12 // por defecto
+      cols = 12, validation // por defecto
     } = campo;
 
     let isReadOnly = readOnly || fieldReadOnly;
@@ -280,13 +321,15 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
             <input
               type={tipo}
               value={respuestas[id] || ""}
-              onChange={(e) => handleChange(id, e.target.value)}
+              onChange={(e) => handleChange(id, e.target.value, validation)}
               disabled={isReadOnly}
               required={required && !isReadOnly}
               placeholder={displayPlaceholder}
               min={min} max={max}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 font-medium"
             />
+            {/* Mostramos el error si existe */}
+            {errors[id] && <p className="text-red-500 text-xs mt-1">{errors[id]}</p>}
           </div>
         );
       }
@@ -299,13 +342,14 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
             </label>
             <textarea
               value={respuestas[id] || ""}
-              onChange={(e) => handleChange(id, e.target.value)}
+              onChange={(e) => handleChange(id, e.target.value, validation)}
               disabled={isReadOnly}
               required={required && !isReadOnly}
               placeholder={displayPlaceholder}
               rows={4}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
             />
+            {errors[id] && <p className="text-red-500 text-xs mt-1">{errors[id]}</p>}
           </div>
         );
       }
@@ -318,7 +362,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
             </label>
             <select
               value={respuestas[id] || ""}
-              onChange={(e) => handleChange(id, e.target.value)}
+              onChange={(e) => handleChange(id, e.target.value, validation)}
               disabled={isReadOnly}
               required={required && !isReadOnly}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 bg-white"
@@ -328,6 +372,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
+            {errors[id] && <p className="text-red-500 text-xs mt-1">{errors[id]}</p>}
           </div>
         );
       }
@@ -340,7 +385,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
             </label>
             <ScheduleInput
               value={respuestas[id] || {}}
-              onChange={(newVal) => handleChange(id, newVal)}
+              onChange={(newVal) => handleChange(id, newVal, validation)}
               readOnly={isReadOnly}
             />
           </div>
@@ -423,8 +468,8 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
           <div className="col-span-12 mt-12 pt-6 border-t border-gray-200 flex justify-end">
             <button
               type="submit"
-              className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-3 px-8 rounded transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-            >
+              disabled={Object.values(errors).some(msg => msg !== "")}
+              className="bg-blue-800 hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"            >
               {buttonText || "Guardar Documento"}
             </button>
           </div>
