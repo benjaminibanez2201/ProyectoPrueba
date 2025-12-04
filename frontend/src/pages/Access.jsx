@@ -4,7 +4,8 @@ import { validarTokenEmpresa, confirmarInicioPractica } from '../services/empres
 import { getPlantilla } from '../services/formulario.service.js'; // 1. Traer la plantilla
 import FormRender from '../components/FormRender'; // 2. Traer tu componente estrella
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js'; 
-import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, ClipboardList } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, ClipboardList, Clock } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const Access = () => {
     const { token } = useParams();
@@ -78,22 +79,34 @@ const Access = () => {
     };
 
     // Lógica para enviar el formulario completado
-    const handleFormSubmit = async (respuestas) => {
+const handleFormSubmit = async (respuestas) => {
         try {
             setProcesando(true);
 
-            // 1. Enviamos respuestas + confirmación (true)
-            // IMPORTANTE: Asegúrate que confirmarInicioPractica acepte un segundo argumento (respuestas)
-            // O crea una función nueva en el servicio: completarDatosEmpresa(token, respuestas)
-            const response = await confirmarInicioPractica(token, true, respuestas);
+            // 1. Enviamos al backend (Tu servicio ya funciona, confirmado por el log)
+            await confirmarInicioPractica(token, true, respuestas);
 
-            showSuccessAlert("¡Enviado!", "Los datos han sido enviados al Coordinador para su validación.");
+            // 2. ÉXITO: Mostramos alerta y ACTUALIZAMOS ESTADO LOCAL
+            // No navegamos, no recargamos. Solo cambiamos la variable 'estado'.
+            await Swal.fire({
+                title: '¡Enviado!',
+                text: 'Los datos han sido enviados al Coordinador para su validación.',
+                icon: 'success',
+                confirmButtonText: 'Entendido'
+            });
             
-            // 2. Actualizamos el estado local para que la UI cambie inmediatamente
-            setData(prev => ({ ...prev, estado: 'pendiente_validacion' }));
+            // 3. Esto hace que React renderice la tarjeta amarilla automáticamente
+            setData(prev => ({ 
+                ...prev, 
+                estado: 'pendiente_validacion' // Forzamos el cambio visual
+            }));
+
+            // Opcional: Scrollear arriba para que vean el mensaje
+            window.scrollTo(0, 0);
 
         } catch (err) {
-            showErrorAlert("Error", err.message || 'Error al guardar los datos.');
+            console.error(err);
+            Swal.fire("Error", err.message || 'Error al guardar los datos.', "error");
         } finally {
             setProcesando(false);
         }
@@ -177,7 +190,7 @@ const Access = () => {
                                 <FormRender 
                                     esquema={plantilla.esquema} 
                                     
-                                    // 👇 2. AQUÍ USAMOS LA NUEVA FUNCIÓN
+                                    //  2. AQUÍ USAMOS LA NUEVA FUNCIÓN
                                     // Antes decíamos: respuestasIniciales={data.datos || {}}
                                     respuestasIniciales={getRespuestasAlumno()} 
                                     

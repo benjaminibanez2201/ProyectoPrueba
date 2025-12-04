@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getPendientes, evaluarSolicitud } from "../controllers/coordinador.controller.js";
-import { authMiddleware } from "../middlewares/auth.middleware.js"; // Ajusta la ruta de tu middleware
+import { authMiddleware } from "../middleware/auth.middleware.js"; // Ajusta la ruta de tu middleware
 
 const router = Router();
 
