@@ -5,7 +5,7 @@ import { getPlantilla } from '../services/formulario.service.js'; // 1. Traer la
 import FormRender from '../components/FormRender'; // 2. Traer tu componente estrella
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js'; 
 import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, ClipboardList, Clock } from 'lucide-react';
-import Swal from 'sweetalert2';
+
 
 const Access = () => {
     const { token } = useParams();
@@ -53,7 +53,7 @@ const Access = () => {
         cargarTodo();
     }, [token]);
 
-    // 👇 1. AGREGAMOS ESTA FUNCIÓN AUXILIAR
+    //  1. AGREGAMOS ESTA FUNCIÓN AUXILIAR
     // Esta función busca entre todas las respuestas de la práctica (postulación, evaluación, etc.)
     // y extrae solo la que corresponde a la 'postulacion' para mostrarla en el formulario.
     const getRespuestasAlumno = () => {
@@ -69,7 +69,7 @@ const Access = () => {
 
         const misDatos = respuestaEncontrada.datos;
 
-        // 👇 LA CORRECCIÓN MÁGICA
+        //  LA CORRECCIÓN MÁGICA
         // Si los datos están escondidos dentro de "datosFormulario", los sacamos hacia afuera.
         if (misDatos && misDatos.datosFormulario) {
             return { ...misDatos, ...misDatos.datosFormulario };
@@ -80,37 +80,36 @@ const Access = () => {
 
     // Lógica para enviar el formulario completado
 const handleFormSubmit = async (respuestas) => {
-        try {
-            setProcesando(true);
+    try {
+        setProcesando(true);
 
-            // 1. Enviamos al backend (Tu servicio ya funciona, confirmado por el log)
-            await confirmarInicioPractica(token, true, respuestas);
+        await confirmarInicioPractica(token, true, respuestas);
 
-            // 2. ÉXITO: Mostramos alerta y ACTUALIZAMOS ESTADO LOCAL
-            // No navegamos, no recargamos. Solo cambiamos la variable 'estado'.
-            await Swal.fire({
-                title: '¡Enviado!',
-                text: 'Los datos han sido enviados al Coordinador para su validación.',
-                icon: 'success',
-                confirmButtonText: 'Entendido'
-            });
-            
-            // 3. Esto hace que React renderice la tarjeta amarilla automáticamente
-            setData(prev => ({ 
-                ...prev, 
-                estado: 'pendiente_validacion' // Forzamos el cambio visual
-            }));
+        await showSuccessAlert(
+            '¡Enviado!',
+            'Los datos han sido enviados al Coordinador para su validación.'
+        );
 
-            // Opcional: Scrollear arriba para que vean el mensaje
-            window.scrollTo(0, 0);
+        setData(prev => ({
+            ...prev,
+            estado: 'pendiente_validacion'
+        }));
 
-        } catch (err) {
-            console.error(err);
-            Swal.fire("Error", err.message || 'Error al guardar los datos.', "error");
-        } finally {
-            setProcesando(false);
-        }
-    };
+        window.scrollTo(0, 0);
+
+    } catch (err) {
+        console.error(err);
+        
+        showErrorAlert(
+            'Error',
+            err.message || 'Error al guardar los datos.'
+        );
+
+    } finally {
+        setProcesando(false);
+    }
+};
+
 
     const handleCerrarSesion = () => navigate('/auth');
 

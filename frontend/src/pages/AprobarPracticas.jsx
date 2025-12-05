@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, Clock, Building2, User, Calendar, Eye, FileText } from 'lucide-react';
-import Swal from 'sweetalert2';
 import instance from '../services/root.service'; // Usamos tu instancia configurada
 import FormRender from '../components/FormRender'; // El visor del formulario
+import { showSuccessAlert, showErrorAlert, showRejectFormAlert, showConfirmAlert, showHtmlAlert, customAlert} from '../helpers/sweetAlert';
 
 const AprobarPracticas = () => {
     const [practicas, setPracticas] = useState([]);
@@ -29,7 +29,7 @@ const AprobarPracticas = () => {
             setPracticas(resPracticas.data.data || []);
         } catch (error) {
             console.error('Error:', error);
-            Swal.fire('Error', 'No se pudieron cargar los datos.', 'error');
+            showErrorAlert('Error', 'No se pudieron cargar los datos.');
         } finally {
             setLoading(false);
         }
@@ -53,7 +53,7 @@ const getRespuestasDePractica = (practica) => {
             ...restoDatos               // Datos de la Empresa
         };
 
-        console.log("✅ Datos Unificados para FormRender:", datosUnificados);
+        console.log("Datos Unificados para FormRender:", datosUnificados);
         return datosUnificados;
     };
 
@@ -64,88 +64,47 @@ const getRespuestasDePractica = (practica) => {
 
     // --- LÓGICA DE APROBACIÓN/RECHAZO ---
 const handleDecision = async (decision) => {
-        const esAprobar = decision === 'aprobar';
-        let observaciones = '';
-        let destinatario = null; // Variable nueva para guardar a quién culpar
+    const esAprobar = decision === 'aprobar';
+    let observaciones = '';
+    let destinatario = null;
 
-        if (!esAprobar) {
-            // 👇 CAMBIO 1: SweetAlert con HTML personalizado (Radios + Textarea)
-            const { value: formValues } = await Swal.fire({
-                title: 'Rechazar Solicitud',
-                html: `
-                    <p style="margin-bottom:10px; text-align:left; font-size: 0.9em; color:#555;">Indique el motivo y quién debe corregir:</p>
-                    
-                    <textarea id="swal-input1" class="swal2-textarea" placeholder="Escriba aquí las observaciones..." style="margin: 0 0 15px 0; width: 100%;"></textarea>
-                    
-                    <div style="text-align: left; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
-                        <label style="display:block; margin-bottom:8px; font-weight:bold; font-size:0.9em; color:#374151;">¿A quién notificar el error?</label>
-                        
-                        <label style="display:flex; align-items:center; margin-bottom:6px; cursor:pointer;">
-                            <input type="radio" name="destinatario" value="alumno" checked style="margin-right:8px;"> 
-                            <span style="font-size:0.9em;">Alumno (Datos personales, documentos)</span>
-                        </label>
-                        
-                        <label style="display:flex; align-items:center; margin-bottom:6px; cursor:pointer;">
-                            <input type="radio" name="destinatario" value="empresa" style="margin-right:8px;"> 
-                            <span style="font-size:0.9em;">Empresa (Datos supervisor, funciones)</span>
-                        </label>
-                        
-                        <label style="display:flex; align-items:center; cursor:pointer;">
-                            <input type="radio" name="destinatario" value="ambos" style="margin-right:8px;"> 
-                            <span style="font-size:0.9em;">Ambos (Error general)</span>
-                        </label>
-                    </div>
-                `,
-                focusConfirm: false,
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Rechazar',
-                preConfirm: () => {
-                    // Recuperamos los valores del HTML inyectado
-                    const motivo = document.getElementById('swal-input1').value;
-                    const radio = document.querySelector('input[name="destinatario"]:checked');
-                    
-                    if (!motivo) {
-                        Swal.showValidationMessage('¡Debes escribir una observación!');
-                        return false;
-                    }
-                    return { motivo: motivo, destinatario: radio.value };
-                }
-            });
+    if (!esAprobar) {
+        //  Usamos el helper nuevo
+        const { value: formValues } = await showRejectFormAlert();
+        if (!formValues) return;
 
-            if (!formValues) return; // Si cancela, no hacemos nada
-            observaciones = formValues.motivo;
-            destinatario = formValues.destinatario;
+        observaciones = formValues.motivo;
+        destinatario = formValues.destinatario;
 
-        } else {
-            // Aprobación Normal
-            const result = await Swal.fire({
-                title: '¿Aprobar Práctica?',
-                text: "El alumno pasará a estado 'En Curso'. Se enviará correo de notificación.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, Aprobar',
-                confirmButtonColor: '#3085d6'
-            });
-            if (!result.isConfirmed) return;
-        }
+    } else {
+        const result = await showConfirmAlert(
+            '¿Aprobar Práctica?',
+            "El alumno pasará a estado 'En Curso'. Se enviará correo de notificación."
+        );
 
-        // Llamada al Backend (Controller Coordinador)
-        try {
-            await instance.put(`/coordinador/evaluar/${seleccionada.id}`, { 
-                decision, 
-                observaciones,
-                destinatario // 👇 CAMBIO 2: Enviamos el destinatario al backend
-            });
-            
-            Swal.fire('¡Listo!', `Solicitud ${esAprobar ? 'aprobada' : 'rechazada'} exitosamente.`, 'success');
-            setModalOpen(false);
-            cargarDatos(); // Recargar lista
-        } catch (error) {
-            console.error(error);
-            Swal.fire('Error', 'No se pudo procesar la solicitud.', 'error');
-        }
-    };
+        if (!result.isConfirmed) return;
+    }
+
+    try {
+        await instance.put(`/coordinador/evaluar/${seleccionada.id}`, {
+            decision,
+            observaciones,
+            destinatario
+        });
+
+        showSuccessAlert(
+            '¡Listo!',
+            `Solicitud ${esAprobar ? 'aprobada' : 'rechazada'} exitosamente.`
+        );
+
+        setModalOpen(false);
+        cargarDatos();
+
+    } catch (error) {
+        console.error(error);
+        showErrorAlert('Error', 'No se pudo procesar la solicitud.');
+    }
+};
 
     if (loading) {
         return (
