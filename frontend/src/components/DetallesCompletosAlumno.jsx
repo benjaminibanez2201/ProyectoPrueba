@@ -1,8 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { X, Eye, CheckCircle, Clock, XCircle, Folder } from 'lucide-react';
 import { getDocsAlumno } from '../services/documento.service.js';
+import axios from '../services/root.service.js';
 
-const VITE_BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000/api';
+//const VITE_BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000/api';
+const HOST_URL = 'http://localhost:3000';
+
+
+        //FUNCIÓN PARA VISUALIZAR DOCUMENTO CON AUTENTICACIÓN
+        const handleViewDocument = async (urlRevision) => {
+            try {
+                const urlCompleta = `${HOST_URL}${urlRevision}`;
+
+                // Hacemos la solicitud con Axios. Axios inyecta el JWT.
+                const response = await axios.get(urlCompleta, {
+                    responseType: 'blob', // CLAVE: para manejar archivos binarios (PDF/Imagen)
+                });
+
+                // Crear una URL temporal para el blob
+                const blob = new Blob([response.data], { type: response.headers['content-type'] });
+                const fileURL = URL.createObjectURL(blob);
+
+                // Abrir el archivo en una nueva pestaña
+                window.open(fileURL, '_blank');
+
+            } catch (error) {
+                console.error("Error al visualizar el documento:", error);
+                // Mostrar un mensaje de error al usuario
+                alert("Error al cargar el documento. Acceso denegado o archivo no encontrado.");
+            }
+        };
 
 // Componente para mostrar el estado del documento
 const EstadoDocumento = ({ estado }) => {
@@ -136,14 +163,15 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                                             </td>
                                             <td className="px-4 py-2 text-center">
                                                 {doc.urlRevision ? (
-                                                    <a
-                                                        href={`${VITE_BASE_URL}${doc.urlRevision}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-blue-600 hover:text-blue-800 flex justify-center"
-                                                    >
-                                                        <Eye size={18} />
-                                                    </a>
+                                                    <div className="flex justify-center space-x-3">
+                                                        <button
+                                                            onClick={() => handleViewDocument(doc.urlRevision)}
+                                                            title="Ver Documento"
+                                                            className="text-blue-600 hover:text-blue-800"
+                                                            >
+                                                                <Eye size={18} />
+                                                        </button>
+                                                    </div>
                                                 ) : (
                                                     <span className="text-gray-400">N/A</span>
                                                 )}

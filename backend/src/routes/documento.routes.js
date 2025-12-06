@@ -17,6 +17,6 @@ router.delete("/:id", checkAuth, deleteDocumentoHandler);
 
 // GET /api/documentos/revisar/:id
 // Para que el coordinador revise un documento específico
-router.get('/documentos/revisar/:id', [checkAuth, isCoordinador(["coordinador"])], revisarDocumento);
+router.get("/revisar/:id", checkAuth, revisarDocumento);
 
 export default router;
