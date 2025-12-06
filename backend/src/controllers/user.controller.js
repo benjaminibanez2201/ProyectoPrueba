@@ -103,8 +103,9 @@ export const verDetallesAlumnos = async (req, res) => {
         //Datos básicos del alumno
         const alumnoInfo = {
             id: detalles.id,
-            nombre: detalles.nombre, 
-            email: detalles.email
+            nombre: detalles.name, 
+            email: detalles.email,
+            tipo_practica: detalles.tipo_practica || 'N/A'
         };
 
         //Datos de la Práctica 
@@ -117,6 +118,13 @@ export const verDetallesAlumnos = async (req, res) => {
             ? practicaActiva.fecha_inicio.split('T')[0] // Si es un string de fecha (ej. '2025-11-20')
             : 'Pendiente'), // Si es NULL o indefinido
         };
+
+        //Datos de la Empresa
+        const empresa = practicaActiva.empresaToken || {};
+        practicaInfo.empresa = {
+            nombre: empresa.empresaNombre || 'N/A',
+            email: empresa.empresaCorreo || 'N/A',
+        }
 
         //Documentos
         const documentosInfo = (practicaActiva.documentos || []).map(doc => ({

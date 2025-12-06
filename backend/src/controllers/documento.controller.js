@@ -87,7 +87,9 @@ export async function revisarDocumento(req, res) {
         // construir la ruta física del archivo
         const __filename = fileURLToPath(import.meta.url);
         const __dirname = path.dirname(__filename);
-        const filePath = path.resolve(__dirname, '../../uploads', documento.ruta_archivo)
+
+        let nombreArchivo = documento.ruta_archivo.replace(/^uploads\//, '');
+        const filePath = path.resolve(__dirname, '../../uploads', nombreArchivo);
 
         // configuración de encabezados para visualización/descarga
         const fileExtension = path.extname(documento.ruta_archivo).toLowerCase();

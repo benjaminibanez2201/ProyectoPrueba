@@ -6,7 +6,7 @@ import { getAlumnos } from "../services/user.service.js";
 import { showErrorAlert, showSuccessAlert, showInfoAlert, showHtmlAlert, showSelectAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { updateEstadoPractica } from "../services/practica.service.js";
-import DetallesCompletosAlumno from "./DetallesCompletosAlumno.jsx"; 
+import DetallesCompletosAlumno from "./DetallesCompletosAlumno.jsx";
 
 
 // --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---

@@ -81,6 +81,7 @@ export const getDetallesAlumnos = async (userId, rol) => {
             relations: [
                 "practicasComoAlumno",
                 "practicasComoAlumno.documentos",
+                "practicasComoAlumno.empresaToken",
             ],
         });
 

@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { X, Download, Eye, CheckCircle, Clock } from 'lucide-react';
+import { X, Eye, CheckCircle, Clock, XCircle, Folder } from 'lucide-react';
 import { getDocsAlumno } from '../services/documento.service.js';
 
-const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'; 
+const VITE_BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000/api';
 
-// componente para mostrar el estado del documento con estilos e íconos
+// Componente para mostrar el estado del documento
 const EstadoDocumento = ({ estado }) => {
-    let style = 'bg-gray-100 text-gray-800';
+    let style = 'bg-gray-100 text-gray-700';
     let Icon = Clock;
 
-    if (estado && estado.includes('Aprobado')) {
+    if (estado?.includes('Aprobado')) {
         style = 'bg-green-100 text-green-700';
         Icon = CheckCircle;
-    } else if (estado && estado.includes('Pendiente')) {
+    } else if (estado?.includes('Pendiente')) {
         style = 'bg-yellow-100 text-yellow-700';
         Icon = Clock;
-    } else if (estado && estado.includes('Rechazado')) {
+    } else if (estado?.includes('Rechazado')) {
         style = 'bg-red-100 text-red-700';
-        Icon = X;
+        Icon = XCircle;
     }
 
     return (
@@ -27,7 +27,6 @@ const EstadoDocumento = ({ estado }) => {
     );
 };
 
-// componente principal para mostrar los detalles completos del alumno en un modal
 const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
     const [expediente, setExpediente] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -38,21 +37,17 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
             setIsLoading(true);
             setError(null);
             try {
-                const data = await getDocsAlumno(alumnoId); 
-                console.log('Datos recibidos:', data); // Para debug
+                const data = await getDocsAlumno(alumnoId);
                 setExpediente(data.payload);
             } catch (error) {
-                console.error("Error al cargar documentos:", error);
                 setError(error.message);
-                setExpediente(null); 
+                setExpediente(null);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        if (alumnoId) {
-            loadDocs();
-        }
+        if (alumnoId) loadDocs();
     }, [alumnoId]);
 
     if (isLoading) {
@@ -70,7 +65,7 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
             <div className="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 flex justify-center items-center">
                 <div className="bg-white p-8 rounded-lg max-w-lg">
                     <p className="text-red-500 font-bold mb-4">
-                        {error || 'No se pudieron cargar los documentos completos o el alumno no tiene práctica activa.'}
+                        {error || 'No se pudieron cargar los documentos completos.'}
                     </p>
                     <button 
                         onClick={onClose} 
@@ -82,29 +77,17 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
             </div>
         );
     }
-    
-    const { alumno, practica, documentos } = expediente;
 
-    // Validar que existan los datos necesarios
-    if (!alumno) {
-        return (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 flex justify-center items-center">
-                <div className="bg-white p-8 rounded-lg">
-                    <p className="text-red-500">No se encontró información del alumno</p>
-                    <button onClick={onClose} className="mt-4 bg-gray-300 px-4 py-2 rounded">Cerrar</button>
-                </div>
-            </div>
-        );
-    }
+    const { alumno, practica, documentos } = expediente;
 
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 my-8">
-                
-                {/* Encabezado del Modal */}
+
+                {/* ENCABEZADO */}
                 <div className="p-6 border-b flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-800">
-                        Expediente de Alumno: {alumno.nombre || 'Sin nombre'}
+                        Expediente de Alumno
                     </h2>
                     <button 
                         onClick={onClose} 
@@ -114,86 +97,53 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                     </button>
                 </div>
 
-                <div className="p-6">
-                    {/* Sección de Datos Generales (Práctica) */}
-                    <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-indigo-50 rounded-lg">
-                        <p className="text-sm font-medium text-indigo-700">
-                            <strong>Email:</strong> {alumno.email || 'N/A'}
-                        </p>
-                        {practica && (
-                            <>
-                                <p className="text-sm font-medium text-indigo-700">
-                                    <strong>Estado Práctica:</strong> {practica.estado || 'N/A'}
-                                </p>
-                                <p className="text-sm font-medium text-indigo-700">
-                                    <strong>Fecha Inicio:</strong> {practica.fechaInicio || 'N/A'}
-                                </p>
-                                <p className="text-sm font-medium text-indigo-700">
-                                    <strong>ID Práctica:</strong> {practica.id || 'N/A'}
-                                </p>
-                            </>
-                        )}
-                    </div>
+                {/* INFORMACIÓN GENERAL */}
+                <div className="p-6 bg-indigo-50 rounded-t-lg">
+                    <p className="text-sm text-indigo-900"><strong>Nombre:</strong> {alumno?.nombre}</p>
+                    <p className="text-sm text-indigo-900"><strong>Correo Institucional:</strong> {alumno?.email}</p>
+                    <p className="text-sm text-indigo-900"><strong>Tipo de Práctica:</strong> {alumno?.tipo_practica}</p>
 
-                    {/* Sección de Documentación y Trazabilidad */}
-                    <h3 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
-                        Documentación y Trazabilidad
+                    <div className="mt-4">
+                        <p className="text-sm text-indigo-900"><strong>Empresa:</strong> {practica?.empresa?.nombre || 'N/A'}</p>
+                        <p className="text-sm text-indigo-900"><strong>Correo Empresa:</strong> {practica?.empresa?.email || 'N/A'}</p>
+                    </div>
+                </div>
+
+                {/* DOCUMENTOS */}
+                <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                        <Folder className="mr-2 text-indigo-600" /> Documentación
                     </h3>
-                    
-                    {documentos && documentos.length > 0 ? (
+
+                    {documentos?.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Documento
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Fecha Envío
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Estado
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Acciones
-                                        </th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Documento</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Fecha</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Estado</th>
+                                        <th className="px-4 py-2 text-center text-xs font-medium text-gray-600 uppercase">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {documentos.map((doc, index) => (
-                                        <tr key={doc.id || index}>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {doc.tipo || 'N/A'}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {doc.fechaEnvio || 'N/A'}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                    {documentos.map((doc) => (
+                                        <tr key={doc.id}>
+                                            <td className="px-4 py-2 text-sm">{doc.tipo}</td>
+                                            <td className="px-4 py-2 text-sm">{doc.fechaEnvio || 'N/A'}</td>
+                                            <td className="px-4 py-2">
                                                 <EstadoDocumento estado={doc.estado} />
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                            <td className="px-4 py-2 text-center">
                                                 {doc.urlRevision ? (
-                                                    <div className="flex justify-center space-x-3">
-                                                        {/* Botón de Revisar (Ojo) */}
-                                                        <a 
-                                                            href={`${VITE_API_URL}${doc.urlRevision}`}
-                                                            target="_blank" 
-                                                            rel="noopener noreferrer" 
-                                                            title="Ver/Revisar" 
-                                                            className="text-blue-600 hover:text-blue-800 transition"
-                                                        >
-                                                            <Eye size={18} /> 
-                                                        </a>
-                                                        {/* Botón de Descargar */}
-                                                        <a 
-                                                            href={`${VITE_API_URL}${doc.urlRevision}`}
-                                                            download 
-                                                            title="Descargar" 
-                                                            className="text-green-600 hover:text-green-800 transition"
-                                                        >
-                                                            <Download size={18} />
-                                                        </a>
-                                                    </div>
+                                                    <a
+                                                        href={`${VITE_BASE_URL}${doc.urlRevision}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:text-blue-800 flex justify-center"
+                                                    >
+                                                        <Eye size={18} />
+                                                    </a>
                                                 ) : (
                                                     <span className="text-gray-400">N/A</span>
                                                 )}
@@ -204,17 +154,15 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                             </table>
                         </div>
                     ) : (
-                        <p className="text-gray-500 text-center py-8">
-                            No hay documentos disponibles para esta práctica.
-                        </p>
+                        <p className="text-center text-gray-500">No hay documentos aún.</p>
                     )}
                 </div>
 
-                {/* Pie de página del Modal */}
+                {/* PIE */}
                 <div className="p-4 border-t flex justify-end">
                     <button 
                         onClick={onClose} 
-                        className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-200"
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                     >
                         Cerrar Expediente
                     </button>
