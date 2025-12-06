@@ -1,26 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Upload,
-  FileText,
-  Activity,
-  Send,
-  PlusCircle,
-  Ticket,
-  Info,
-  AlertCircle,
-  Mail,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  Flag,
-  ClipboardCheck,
-  Lock,
-  FileCheck,
-  Download,
-  BookOpen,
-  Check,
-} from "lucide-react";
+import {Upload,FileText,Activity,Send,PlusCircle,Ticket,Info,AlertCircle,Mail,Clock,AlertTriangle,CheckCircle2,Flag,ClipboardCheck,Lock,FileCheck,Download,BookOpen,Check,} from "lucide-react";
 import { getMyPractica } from "../services/practica.service.js";
 import {
   showErrorAlert,
@@ -323,7 +303,7 @@ const DashboardAlumno = ({ user }) => {
               <div className="flex gap-3 mt-4 md:mt-0">
                 {/* 1. BOTÓN: COMPLETAR BITÁCORA (El formulario en la página) */}
                 <button
-                  onClick={() => navigate("/forms/responder/bitacora")} // Ruta al formulario de bitácora. HAY QUE CAMBIAR LA RUTA A LA QUE CORRESPONDA
+                  onClick={() => navigate("/forms/responder/bitacora")} //ya agregue la ruta al main.jsx
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap"
                 >
                   <BookOpen size={18} /> Completar Bitácora

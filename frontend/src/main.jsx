@@ -18,6 +18,7 @@ import EditarFormulario from './pages/EditarFormulario';
 import SubirDocumento from  '@pages/SubirDocumento';
 
 import AprobarPracticas from '@pages/AprobarPracticas';
+import FormResponder from '@pages/ResponderBitacora';
 
 import '@styles/styles.css';
 
@@ -108,6 +109,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
           <AprobarPracticas />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/forms/responder/bitacora', 
+        element: (
+          <ProtectedRoute>
+            <FormResponder /> 
           </ProtectedRoute>
         )
       },
