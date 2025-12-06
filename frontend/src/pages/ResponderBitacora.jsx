@@ -17,7 +17,7 @@ const ResponderBitacora = () => {
     useEffect(() => {
         const cargarPlantilla = async () => {
             try {
-                // 1. Cargamos la plantilla de Bitácora (usamos el nombre que definiste: 'bitacora')
+                // 1. Cargamos la plantilla de Bitácora 
                 const plantillaData = await getPlantilla('bitacora'); 
                 setPlantilla(plantillaData);
             } catch (err) {

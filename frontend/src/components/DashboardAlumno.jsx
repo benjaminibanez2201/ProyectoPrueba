@@ -148,7 +148,12 @@ const DashboardAlumno = ({ user }) => {
     fetchMiPractica();
   }, [fetchMiPractica]);
 
-  const handleDeleteDocumento = async (id) => {
+  const handleDeleteDocumento = async (id,es_respuesta_formulario) => {
+    // Si el documento es una respuesta de formulario (una bitácora), no podemos eliminarlo con el servicio de archivos
+    if (es_respuesta_formulario) {
+        showErrorAlert("Error", "La Bitácora debe ser anulada por el Coordinador.");
+        return; 
+    }
     deleteDataAlert(async () => {
       try {
         await deleteDocumento(id);
