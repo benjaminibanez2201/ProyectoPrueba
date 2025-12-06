@@ -5,42 +5,87 @@ import { getPlantilla } from '../services/formulario.service.js'; // Servicio pa
 import FormRender from '../components/FormRender'; // El componente que dibuja el formulario
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js';
 import { Loader2, BookOpen } from 'lucide-react';
+import { postBitacora } from '../services/formulario.service';
+import { getMyPractica } from '../services/practica.service';
 
 const ResponderBitacora = () => {
     const navigate = useNavigate();
     const { user } = useAuth(); // Necesitamos el ID del usuario logueado
     
+    const [practicaId, setPracticaId] = useState(null);
     const [plantilla, setPlantilla] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Lógica para cargar la plantilla de Bitácora
+    const [procesando, setProcesando] = useState(false);
+
+    // Lógica para cargar la plantilla Y la práctica activa
     useEffect(() => {
-        const cargarPlantilla = async () => {
+        const cargarDatos = async () => {
             try {
-                // 1. Cargamos la plantilla de Bitácora 
+                // 1. CARGAR PRÁCTICA (Necesaria para obtener el ID y el estado)
+                // Asumiendo que getMyPractica() trae todo el objeto de la práctica activa
+                const practicaData = await getMyPractica(); 
+                
+                // 2. REGLA DE NEGOCIO: Solo si la práctica está "En Curso"
+                if (practicaData.estado !== 'en_curso') {
+                    showErrorAlert('Acceso denegado', 'Solo puedes crear Bitácoras si la práctica está "En Curso".');
+                    navigate('/panel');
+                    return;
+                }
+                
+                // 3. ESTABLECER EL ID Y ESTADO
+                setPracticaId(practicaData.id); // <-- ¡Aquí se establece el ID!
+                
+                // 4. CARGAR PLANTILLA
                 const plantillaData = await getPlantilla('bitacora'); 
                 setPlantilla(plantillaData);
+                
             } catch (err) {
-                showErrorAlert('Error de carga', 'No se pudo cargar la plantilla de Bitácora. Revisa si existe en el backend.');
+                // Error: No hay práctica o falla de conexión
+                showErrorAlert('Error', 'No se encontró una práctica activa para el usuario o fallo la conexión.');
+                navigate('/panel');
             } finally {
                 setLoading(false);
             }
         };
-        cargarPlantilla();
-    }, []);
+        cargarDatos();
+    }, [navigate]);
 
     const valoresIniciales = {
         nombre_alumno: user.name,
         correo_alumno: user.email,
     };
-
-    // Esta función debe existir en tu compañero's service, pero la definimos como placeholder
-    // Debería guardar la respuesta del formulario dinámico en la tabla respuestas_formulario
+    
     const handleFormSubmit = async (respuestas) => {
-        // Enviar la respuesta del formulario a un nuevo endpoint del backend
-        console.log("Enviando Bitácora de:", user.name, respuestas);
-        showSuccessAlert("Bitácora Enviada", "Los datos han sido guardados.");
-        navigate('/panel'); // Volver al dashboard
+        // Bloqueo de seguridad: No deberíamos llegar aquí si practicaId es nulo
+        if (!practicaId) { 
+            showErrorAlert('Error', 'No se puede enviar, ID de práctica no encontrado.');
+            return;
+        }
+        try {
+            setProcesando(true);
+            
+            const dataToSend = {
+                practicaId: practicaId, // Usamos el ID cargado en el useEffect
+                respuestas: respuestas
+            };
+
+            // 1. LLAMADA REAL A LA API PARA GUARDAR
+            await postBitacora(dataToSend); 
+            
+            // 2. ÉXITO: Mostramos alerta y navegamos
+            await showSuccessAlert("Bitácora Enviada", "Los datos han sido guardados y registrados.");
+            
+            // **IMPORTANTE:** Navegamos *después* del éxito para que el usuario pueda ver la alerta.
+            navigate('/panel'); 
+           
+
+        } catch (err) {
+        // En caso de error de red o backend (ej. 500, 401, 400)
+            showErrorAlert("Error al guardar", err.message || 'Error desconocido al enviar la Bitácora.');
+        } finally {
+            setProcesando(false);
+        }
     };
 
     if (loading) return (
@@ -65,8 +110,8 @@ const ResponderBitacora = () => {
                         valores={valoresIniciales}
                         // Aquí deberías pasar respuestasIniciales si la bitácora ya está guardada
                         onSubmit={handleFormSubmit}
-                        buttonText="Guardar Bitácora"
-                        userType="alumno" 
+                        buttonText={procesando ? "Enviando..." : "Guardar Bitácora"} 
+                       disabled={procesando}
                     />
                 </div>
             </main>

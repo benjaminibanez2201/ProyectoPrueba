@@ -62,3 +62,18 @@ export const eliminarPlantilla = async (id) => {
     throw error.response?.data || error;
   }
 };
+
+// --- NUEVA FUNCIÓN: Envía la Bitácora a la ruta dedicada ---
+export const postBitacora = async (data) => {
+    try {
+        // Llama al endpoint específico que creaste en el Backend (router.post('/bitacora'))
+        const response = await instance.post('/formularios/bitacora', data); 
+        
+        // Devolvemos la respuesta
+        return response.data; 
+    } catch (error) {
+        console.error("Error al guardar Bitácora:", error);
+        // Usa la misma lógica de tu archivo para propagar el error
+        throw error.response?.data || error;
+    }
+};

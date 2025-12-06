@@ -167,5 +167,24 @@ export async function findPracticaByStudentId(studentId) {
     // 👇 Agregamos las relaciones aquí también para que el alumno vea sus respuestas si quiere
     relations: ['empresaToken', 'documentos', 'formularioRespuestas', 'formularioRespuestas.plantilla'] 
   });
+  if (!practica) return null;
+  // --- 2. LÓGICA DE UNIFICACIÓN (Bitácoras + Documentos) ---
+  // a) Documentos de Archivo (Informes, CV, etc.)
+  const documentosArchivos = practica.documentos || [];
+  // b) Mapear las Respuestas de Bitácora a un formato de Documento
+  const bitacoraRespuestas = practica.formularioRespuestas
+    // Filtramos solo las respuestas que sean de tipo 'bitacora'
+    .filter(respuesta => respuesta.plantilla?.tipo === 'bitacora')
+    .map(respuesta => ({
+      id: respuesta.id, 
+      tipo: "bitacora", 
+      fecha_creacion: respuesta.fecha_envio, 
+      estado: 'enviado', 
+      // PROPIEDAD CLAVE QUE EL FRONTEND DEBE USAR PARA CONTAR
+      es_respuesta_formulario: true 
+  }));
+
+    // c) Unificar la lista
+    practica.documentos = [...documentosArchivos, ...bitacoraRespuestas]; 
   return practica; 
 }

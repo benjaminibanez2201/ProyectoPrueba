@@ -87,7 +87,7 @@ const getMensajeAyuda = (estado) => {
 //LUEGO HAY QUE MODIFICAR ESTA FUNCION PORQUE CUENTA POR D.TIPO Y TIENE QUE SER POR LOS FORM QUE HIZO EL BENJA
 // --- 2. TRACKER DE BITÁCORAS ---
 const BitacoraTracker = ({ documentos }) => {
-  const bitacoras = documentos?.filter((d) => d.tipo === "bitacora") || [];
+  const bitacoras = documentos?.filter((d) => d.tipo === "bitacora" && d.es_respuesta_formulario === true) || [];
   const count = bitacoras.length;
   const maxObligatorias = 5;
 
@@ -322,7 +322,7 @@ const DashboardAlumno = ({ user }) => {
                   }
                   className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap disabled:bg-gray-400"
                 >
-                  <Upload size={18} /> Subir Informe
+                  <Upload size={18} /> Subir Documentos
                 </button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import { AppDataSource } from "../config/configDb.js";
 import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
 import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
+import { saveBitacoraResponse } from '../services/formulario.service.js';
 
 // La llave
 const plantillaRepository = AppDataSource.getRepository(FormularioPlantilla);
@@ -115,4 +116,19 @@ export class FormularioController {
       handleErrorServer(res, 500, "Error al eliminar formulario", error.message);
     }
   }
+}
+
+export async function submitBitacora(req, res) {
+    try {
+        const userId = req.user.id; // ID del alumno logueado
+        const { practicaId, respuestas } = req.body; // Datos enviados desde el Frontend
+
+        // 1. Llama al servicio para guardar la Bitácora
+        const result = await saveBitacoraResponse(practicaId, userId, respuestas);
+        
+        handleSuccess(res, 201, 'Bitácora guardada exitosamente.', result);
+    } catch (error) {
+        console.error("Error al guardar bitácora:", error);
+        handleErrorServer(res, 500, error.message || 'Error interno al procesar la bitácora.');
+    }
 }
