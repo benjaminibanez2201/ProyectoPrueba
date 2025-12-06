@@ -4,7 +4,8 @@ import { validarTokenEmpresa, confirmarInicioPractica } from '../services/empres
 import { getPlantilla } from '../services/formulario.service.js'; // 1. Traer la plantilla
 import FormRender from '../components/FormRender'; // 2. Traer tu componente estrella
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js'; 
-import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, ClipboardList } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, ClipboardList, Clock } from 'lucide-react';
+
 
 const Access = () => {
     const { token } = useParams();
@@ -52,7 +53,7 @@ const Access = () => {
         cargarTodo();
     }, [token]);
 
-    // 👇 1. AGREGAMOS ESTA FUNCIÓN AUXILIAR
+    //  1. AGREGAMOS ESTA FUNCIÓN AUXILIAR
     // Esta función busca entre todas las respuestas de la práctica (postulación, evaluación, etc.)
     // y extrae solo la que corresponde a la 'postulacion' para mostrarla en el formulario.
     const getRespuestasAlumno = () => {
@@ -68,7 +69,7 @@ const Access = () => {
 
         const misDatos = respuestaEncontrada.datos;
 
-        // 👇 LA CORRECCIÓN MÁGICA
+        //  LA CORRECCIÓN MÁGICA
         // Si los datos están escondidos dentro de "datosFormulario", los sacamos hacia afuera.
         if (misDatos && misDatos.datosFormulario) {
             return { ...misDatos, ...misDatos.datosFormulario };
@@ -78,26 +79,37 @@ const Access = () => {
     };
 
     // Lógica para enviar el formulario completado
-    const handleFormSubmit = async (respuestas) => {
-        try {
-            setProcesando(true);
+const handleFormSubmit = async (respuestas) => {
+    try {
+        setProcesando(true);
 
-            // 1. Enviamos respuestas + confirmación (true)
-            // IMPORTANTE: Asegúrate que confirmarInicioPractica acepte un segundo argumento (respuestas)
-            // O crea una función nueva en el servicio: completarDatosEmpresa(token, respuestas)
-            const response = await confirmarInicioPractica(token, true, respuestas);
+        await confirmarInicioPractica(token, true, respuestas);
 
-            showSuccessAlert("¡Enviado!", "Los datos han sido enviados al Coordinador para su validación.");
-            
-            // 2. Actualizamos el estado local para que la UI cambie inmediatamente
-            setData(prev => ({ ...prev, estado: 'pendiente_validacion' }));
+        await showSuccessAlert(
+            '¡Enviado!',
+            'Los datos han sido enviados al Coordinador para su validación.'
+        );
 
-        } catch (err) {
-            showErrorAlert("Error", err.message || 'Error al guardar los datos.');
-        } finally {
-            setProcesando(false);
-        }
-    };
+        setData(prev => ({
+            ...prev,
+            estado: 'pendiente_validacion'
+        }));
+
+        window.scrollTo(0, 0);
+
+    } catch (err) {
+        console.error(err);
+        
+        showErrorAlert(
+            'Error',
+            err.message || 'Error al guardar los datos.'
+        );
+
+    } finally {
+        setProcesando(false);
+    }
+};
+
 
     const handleCerrarSesion = () => navigate('/auth');
 
@@ -177,7 +189,7 @@ const Access = () => {
                                 <FormRender 
                                     esquema={plantilla.esquema} 
                                     
-                                    // 👇 2. AQUÍ USAMOS LA NUEVA FUNCIÓN
+                                    //  2. AQUÍ USAMOS LA NUEVA FUNCIÓN
                                     // Antes decíamos: respuestasIniciales={data.datos || {}}
                                     respuestasIniciales={getRespuestasAlumno()} 
                                     

@@ -27,7 +27,8 @@ router.put("/:id", authMiddleware(["coordinador", "empresa"]), controller.update
 router.delete("/:id", authMiddleware(["coordinador"]), controller.delete);
 
 // Coordinador o empresa: actualizar estado (por ejemplo: en curso, finalizada)
-router.patch("/:id/estado", authMiddleware(["coordinador", "empresa"]), controller.actualizarEstado);
+router.put("/estado/:id", authMiddleware(["coordinador"]), controller.actualizarEstado);
+
 
 // Coordinador: cerrar práctica definitivamente
 router.patch("/:id/cerrar", authMiddleware(["coordinador"]), controller.cerrarPractica);

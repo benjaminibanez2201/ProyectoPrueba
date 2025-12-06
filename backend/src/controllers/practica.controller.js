@@ -7,6 +7,10 @@ import {
   findPracticaByStudentId,
   createPostulacion,
 } from "../services/practica.service.js";
+import { AppDataSource } from "../config/configDb.js";
+import { Practica } from "../entities/practica.entity.js";
+import { EmpresaToken } from "../entities/empresaToken.entity.js";
+import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
 
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 
@@ -112,31 +116,48 @@ async postularPractica(req, res) {
     }
   }
 
-  async actualizarEstado(req, res) { // permite actualizar el estado con ciertos valores
+async actualizarEstado(req, res) { 
     try {
       const { id } = req.params;
       const { nuevoEstado } = req.body;
-      const estadosPermitidos = [
-          "pendiente", 
-          "enviada_a_empresa", 
-          "pendiente_validacion", 
-          "rechazada", 
-          "en_curso", 
-          "finalizada", 
-          "evaluada", 
-          "cerrada"
-      ];
+      const estadosPermitidos = [ "pendiente", "enviada_a_empresa", "pendiente_validacion", "rechazada", "en_curso", "finalizada", "evaluada", "cerrada" ];
+      
       if (!estadosPermitidos.includes(nuevoEstado)) {
         return handleErrorClient(res, 400, "Estado no válido");
       }
 
-      const practica = await findPracticaById(id);
+      const practicaRepo = AppDataSource.getRepository(Practica);
+      const practica = await practicaRepo.findOne({ where: { id } });
+      
       if (!practica) {
         return handleErrorClient(res, 404, "Práctica no encontrada");
       }
 
+      // ---  LÓGICA DE REINICIO TOTAL (DELETE) ---
+      // Si el coordinador elige "Pendiente", ELIMINAMOS la práctica para que el alumno empiece de cero.
+      if (nuevoEstado === 'pendiente') {
+          console.log(`Eliminando práctica ID ${id} para reinicio completo...`);
+          
+          // 1. Borrar Token de Empresa
+          const tokenRepo = AppDataSource.getRepository(EmpresaToken);
+          const token = await tokenRepo.findOne({ where: { practica: { id } } });
+          if (token) await tokenRepo.remove(token);
+
+          // 2. Borrar Respuestas
+          const respuestasRepo = AppDataSource.getRepository(FormularioRespuesta);
+          const respuestas = await respuestasRepo.find({ where: { practica: { id } } });
+          if (respuestas.length > 0) await respuestasRepo.remove(respuestas);
+
+          // 3. ¡AQUÍ EL CAMBIO! Borramos la práctica completa
+          await practicaRepo.remove(practica);
+
+          return handleSuccess(res, 200, "Práctica reiniciada y eliminada. El alumno puede postular nuevamente.", null);
+      }
+      // -------------------------------------
+
+      // Si NO es pendiente, actualizamos el estado normalmente
       practica.estado = nuevoEstado;
-      const updated = await updatePractica(id, practica);
+      const updated = await practicaRepo.save(practica);
 
       handleSuccess(res, 200, "Estado de práctica actualizado correctamente", updated);
     } catch (error) {
