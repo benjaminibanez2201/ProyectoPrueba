@@ -1,35 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { X, Eye, CheckCircle, Clock, XCircle, Folder } from 'lucide-react';
+import { X, Eye, CheckCircle, Clock, XCircle, Folder, Download } from 'lucide-react';
 import { getDocsAlumno } from '../services/documento.service.js';
 import axios from '../services/root.service.js';
 
 //const VITE_BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000/api';
 const HOST_URL = 'http://localhost:3000';
 
+//SOLO PDF ES PREVISUALIZABLE EN EL NAVEGADOR
+const PREVIEW_EXTENSIONS = ['.pdf'];
 
-        //FUNCIÓN PARA VISUALIZAR DOCUMENTO CON AUTENTICACIÓN
-        const handleViewDocument = async (urlRevision) => {
-            try {
-                const urlCompleta = `${HOST_URL}${urlRevision}`;
+//FUNCIÓN DE DECISIÓN (Lógica de Click del Botón)
+    const handleDocumentAction = (doc) => {
+        const isPreviewable = PREVIEW_EXTENSIONS.includes(doc.extension?.toLowerCase());
 
-                // Hacemos la solicitud con Axios. Axios inyecta el JWT.
-                const response = await axios.get(urlCompleta, {
-                    responseType: 'blob', // CLAVE: para manejar archivos binarios (PDF/Imagen)
-                });
-
-                // Crear una URL temporal para el blob
-                const blob = new Blob([response.data], { type: response.headers['content-type'] });
-                const fileURL = URL.createObjectURL(blob);
-
-                // Abrir el archivo en una nueva pestaña
-                window.open(fileURL, '_blank');
-
-            } catch (error) {
-                console.error("Error al visualizar el documento:", error);
-                // Mostrar un mensaje de error al usuario
-                alert("Error al cargar el documento. Acceso denegado o archivo no encontrado.");
-            }
-        };
+        if (isPreviewable) {
+            // Si es PDF, ejecutar la vista previa de inmediato
+            executeFileAction(doc, 'preview'); 
+        } else {
+            // Si es DOCX/ZIP/RAR, abrir el modal de confirmación
+            setDocToProcess(doc); 
+        }
+    };
 
 // Componente para mostrar el estado del documento
 const EstadoDocumento = ({ estado }) => {
@@ -58,6 +49,56 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
     const [expediente, setExpediente] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [docToProcess, setDocToProcess] = useState(null);
+
+        // ✅ FUNCIÓN DE EJECUCIÓN (Lógica de Axios/Blob)
+    const executeFileAction = async (doc, actionType) => {
+        try {
+            const { urlRevision, extension, tipo } = doc;
+            const urlCompleta = `${HOST_URL}${urlRevision}`;
+
+            // Fetch del archivo con Axios (con JWT)
+            const response = await axios.get(urlCompleta, {
+                responseType: 'blob',
+            });
+
+            const blob = new Blob([response.data], { type: response.headers['content-type'] });
+            const fileURL = URL.createObjectURL(blob);
+
+            // Ejecutar la acción
+            if (actionType === 'preview') {
+                window.open(fileURL, '_blank');
+            } else if (actionType === 'download') {
+                const link = document.createElement('a');
+                link.href = fileURL;
+                link.download = `${doc.tipo}_${doc.documentoId}${extension}`; 
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(fileURL);
+            }
+
+            setDocToProcess(null); 
+
+        } catch (error) {
+            console.error("Error al procesar el documento:", error);
+            alert(`Error al procesar el documento ${doc.tipo}.`);
+            setDocToProcess(null);
+        }
+    };
+
+    // ✅ FUNCIÓN DE DECISIÓN (Lógica de Click del Botón)
+    const handleDocumentAction = (doc) => {
+        const isPreviewable = PREVIEW_EXTENSIONS.includes(doc.extension?.toLowerCase());
+
+        if (isPreviewable) {
+            // Si es PDF, ejecutar la vista previa de inmediato
+            executeFileAction(doc, 'preview'); 
+        } else {
+            // Si es DOCX/ZIP/RAR, abrir el modal de confirmación
+            setDocToProcess(doc); 
+        }
+    };
 
     useEffect(() => {
         const loadDocs = async () => {
@@ -106,6 +147,39 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
     }
 
     const { alumno, practica, documentos } = expediente;
+
+    if (docToProcess) {
+    return (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-70 z-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full">
+                <h3 className="text-xl font-bold mb-3 text-gray-800 flex items-center">
+                    <Download className="mr-2 text-indigo-600" size={24} /> 
+                    Descargar Archivo {docToProcess.extension?.toUpperCase() || 'N/A'}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                    El archivo **{docToProcess.tipo} ({docToProcess.extension})** no tiene una vista previa disponible en el navegador. ¿Desea continuar con la descarga?
+                </p>
+                <div className="flex justify-end space-x-3">
+                    
+                    <button
+                        onClick={() => setDocToProcess(null)}
+                        className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-100"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        // Llama a la función central con la acción 'download'
+                        onClick={() => executeFileAction(docToProcess, 'download')}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-semibold"
+                    >
+                        Descargar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
@@ -165,11 +239,12 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                                                 {doc.urlRevision ? (
                                                     <div className="flex justify-center space-x-3">
                                                         <button
-                                                            onClick={() => handleViewDocument(doc.urlRevision)}
-                                                            title="Ver Documento"
+                                                            onClick={() => handleDocumentAction(doc)}
+                                                            // ✅ Tooltip: Usar la lista de PREVIEW_EXTENSIONS estricta
+                                                            title={PREVIEW_EXTENSIONS.includes(doc.extension?.toLowerCase()) ? "Ver Documento (Vista Previa)" : `Descargar Archivo ${doc.extension}`}
                                                             className="text-blue-600 hover:text-blue-800"
-                                                            >
-                                                                <Eye size={18} />
+                                                        >
+                                                            <Eye size={18} /> 
                                                         </button>
                                                     </div>
                                                 ) : (

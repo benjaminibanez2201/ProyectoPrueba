@@ -21,7 +21,8 @@ export const DocumentosPractica = new EntitySchema({
         },
         ruta_archivo: { // para Bitácoras o Informes (archivos subidos)
             type: "varchar",
-            nullable: true, 
+            length: 255,
+            nullable: false,
         },
         datos_json: { // para Evaluaciones o Formularios (datos rellenados)
             type: "jsonb",
