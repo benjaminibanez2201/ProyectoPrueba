@@ -97,7 +97,45 @@ export const verDetallesAlumnos = async (req, res) => {
 
         const detalles = await getDetallesAlumnos(id, rol);
 
-        return handleSuccess(res, 200, "Información completa de alumnos obtenida exitosamente", detalles);
+        // se asume que el alumno solo tiene una práctica activa o se toma la primera
+        const practicaActiva = detalles.practicasComoAlumno[0] || {};
+
+        //Datos básicos del alumno
+        const alumnoInfo = {
+            id: detalles.id,
+            nombre: detalles.nombre, 
+            email: detalles.email
+        };
+
+        //Datos de la Práctica 
+        const practicaInfo = {
+            id: practicaActiva.id, 
+            estado: practicaActiva.estado || 'No Iniciada',
+            fechaInicio: (practicaActiva.fecha_inicio && practicaActiva.fecha_inicio instanceof Date) 
+        ? practicaActiva.fecha_inicio.toISOString().split('T')[0] 
+        : (typeof practicaActiva.fecha_inicio === 'string' 
+            ? practicaActiva.fecha_inicio.split('T')[0] // Si es un string de fecha (ej. '2025-11-20')
+            : 'Pendiente'), // Si es NULL o indefinido
+        };
+
+        //Documentos
+        const documentosInfo = (practicaActiva.documentos || []).map(doc => ({
+            tipo: doc.tipo,
+            fechaEnvio: doc.fecha_creacion ? doc.fecha_creacion.toISOString().split('T')[0] : 'N/A',
+            estado: doc.estado,
+            //para la visualización/revisión
+            urlRevision: doc.ruta_archivo ? `/api/documentos/revisar/${doc.id}` : null,
+            documentoId: doc.id, 
+            datosFormulario: doc.datos_json,
+        }));
+
+        const detallesCompletos = {
+            alumno: alumnoInfo,
+            practica: practicaInfo,
+            documentos: documentosInfo,
+        };
+
+        return handleSuccess(res, 200, "Información completa de alumnos obtenida exitosamente", detallesCompletos);
     } catch (error) {
 
         //Acceso denegado por rol no autorizado
@@ -111,109 +149,3 @@ export const verDetallesAlumnos = async (req, res) => {
         return handleErrorServer(res, 500, "Error interno al obtener los detalles.", error.message);
     }
 }
-
-// Obtener todas las prácticas confirmadas por empresa que esperan aprobación
-export const obtenerPracticasConfirmadasPorEmpresa = async (req, res) => {
-  try {
-    const practicaRepo = AppDataSource.getRepository(Practica);
-
-    const practicas = await practicaRepo.find({
-      where: { estado: 'confirmada_por_empresa' },
-      relations: ['student'], 
-      order: { fecha_inicio: 'DESC' }
-    });
-
-    const practicasFormateadas = practicas.map(p => {
-      return {
-        id: p.id,
-        alumnoNombre: p.student.name,
-        alumnoEmail: p.student.email,
-        empresaNombre: 'Pendiente de token',
-        empresaCorreo: 'Pendiente de token',
-        tipoPractica: p.tipoPractica,
-        fechaInicio: p.fecha_inicio,
-        estado: p.estado
-      };
-    });
-
-    return handleSuccess(res, 200, "Prácticas confirmadas obtenidas exitosamente", practicasFormateadas);
-  } catch (error) {
-    console.error("Error al obtener prácticas confirmadas:", error);
-    return handleErrorServer(res, 500, "Error al obtener prácticas confirmadas", error.message);
-  }
-};
-
-//Aprobar una práctica confirmada por empresa (cambiar a en_curso)
-export const aprobarPractica = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const practicaRepo = AppDataSource.getRepository(Practica);
-
-    const practica = await practicaRepo.findOne({
-      where: { id: parseInt(id) },
-      relations: ['student']
-    });
-
-    if (!practica) {
-      return handleErrorClient(res, 404, "Práctica no encontrada");
-    }
-
-    if (practica.estado !== 'confirmada_por_empresa') {
-      return handleErrorClient(res, 400, `La práctica no está en estado válido para aprobación. Estado actual: ${practica.estado}`);
-    }
-
-    // Cambiar estado a en_curso
-    practica.estado = 'en_curso';
-    practica.fechaInicio = new Date();
-    await practicaRepo.save(practica);
-
-    console.log(`Práctica ${id} aprobada por coordinador - Estado: en_curso`);
-
-    return handleSuccess(res, 200, "Práctica aprobada e iniciada exitosamente", {
-      practicaId: practica.id,
-      estado: practica.estado,
-      fechaInicio: practica.fechaInicio,
-      alumnoNombre: practica.student.name
-    });
-  } catch (error) {
-    console.error("Error al aprobar práctica:", error);
-    return handleErrorClient(res, 500, "Error al aprobar práctica");
-  }
-};
-
-//Rechazar una práctica confirmada por empresa (devolver a pendiente)
-export const rechazarPractica = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const practicaRepo = AppDataSource.getRepository(Practica);
-
-    const practica = await practicaRepo.findOne({
-      where: { id: parseInt(id) },
-      relations: ['student']
-    });
-
-    if (!practica) {
-      return handleErrorClient(res, 404, "Práctica no encontrada");
-    }
-
-    if (practica.estado !== 'confirmada_por_empresa') {
-      return handleErrorClient(res, 400, "La práctica no está en estado válido para rechazo");
-    }
-
-    // Devolver a estado pendiente
-    practica.estado = 'pendiente';
-    practica.fechaConfirmacionEmpresa = null; // Limpiar la fecha de confirmación
-    await practicaRepo.save(practica);
-
-    console.log(`⚠️ Práctica ${id} rechazada por coordinador - Estado: pendiente`);
-
-    return handleSuccess(res, 200, "Práctica rechazada. La empresa deberá confirmar nuevamente.", {
-      practicaId: practica.id,
-      estado: practica.estado
-    });
-  } catch (error) {
-    console.error("Error al rechazar práctica:", error);
-    return handleErrorClient(res, 500, "Error al rechazar práctica");
-  }
-};

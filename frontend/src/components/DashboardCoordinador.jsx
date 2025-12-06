@@ -6,6 +6,7 @@ import { getAlumnos } from "../services/user.service.js";
 import { showErrorAlert, showSuccessAlert, showInfoAlert, showHtmlAlert, showSelectAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { updateEstadoPractica } from "../services/practica.service.js";
+import DetallesCompletosAlumno from "./DetallesCompletosAlumno.jsx"; 
 
 
 // --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---
@@ -76,6 +77,7 @@ const DashboardCoordinador = ({ user }) => {
   const [showTable, setShowTable] = useState(false);
   const [filter, setFilter] = useState('todas');
   const [selectedStudentForDocs, setSelectedStudentForDocs] = useState(null);
+  const [alumnoDocs, setAlumnoDocs] = useState(null);
 
   // 1. FUNCIÓN NUEVA: Solo carga datos (sin cerrar la tabla)
   const refreshAlumnos = async () => {
@@ -158,18 +160,7 @@ const DashboardCoordinador = ({ user }) => {
       return;
     }
 
-    showHtmlAlert(
-      `Detalle: ${alumno.name}`,
-      `
-    <div style="text-align: left;">
-        <p><b>Empresa:</b> ${practica.empresaToken?.empresaNombre || 'No asignada'}</p>
-        <p><b>Estado Actual:</b> <span class="badge">${practica.estado}</span></p>
-        <p><b>Fecha Inicio:</b> ${practica.fecha_inicio ? new Date(practica.fecha_inicio).toLocaleDateString() : 'Pendiente'}</p>
-        <hr style="margin: 10px 0;">
-        <p><b>ID Práctica:</b> ${practica.id}</p>
-    </div>
-  `
-    );
+    setAlumnoDocs(alumno);
   };
 
   // B) Botón LÁPIZ (Forzar cambio de estado - Admin)
@@ -396,13 +387,21 @@ const { value: nuevoEstado } = await showSelectAlert(
 
       {/* MODAL DE DOCUMENTOS */}
       <DocumentsModal
-        isOpen={!!selectedStudentForDocs}
-        onClose={() => setSelectedStudentForDocs(null)}
-        studentName={selectedStudentForDocs?.name}
-        documents={selectedStudentForDocs?.practicasComoAlumno?.[0]?.documentos || []}
-      />
-    </div>
-  );
+        isOpen={!!selectedStudentForDocs}
+        onClose={() => setSelectedStudentForDocs(null)}
+        studentName={selectedStudentForDocs?.name}
+        documents={selectedStudentForDocs?.practicasComoAlumno?.[0]?.documentos || []}
+      />
+
+      {/* MODAL COMPLETO: DetallesCompletosAlumno (USADO POR EL BOTÓN 'Ojo') */}
+      {!!alumnoDocs && (
+        <DetallesCompletosAlumno 
+          alumnoId={alumnoDocs.id} // Se pasa el ID
+          onClose={() => setAlumnoDocs(null)} // Función para cerrar
+        />
+      )}
+    </div>
+  );
 };
 
 export default DashboardCoordinador;

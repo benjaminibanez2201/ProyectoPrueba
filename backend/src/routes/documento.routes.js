@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { uploadDocumento,deleteDocumentoHandler } from "../controllers/documento.controller.js";
-import {checkAuth} from "../middleware/auth.middleware.js";
+import { uploadDocumento,deleteDocumentoHandler, revisarDocumento } from "../controllers/documento.controller.js";
+import {checkAuth, isCoordinador } from "../middleware/auth.middleware.js";
 import { uploadMiddleware } from "../middleware/upload.middleware.js";
 
 const router = Router();
@@ -14,5 +14,9 @@ router.post('/upload', [checkAuth, uploadMiddleware], uploadDocumento);
 // DELETE /api/documentos/:id
 // Borra un documento por su ID
 router.delete("/:id", checkAuth, deleteDocumentoHandler);
+
+// GET /api/documentos/revisar/:id
+// Para que el coordinador revise un documento específico
+router.get('/documentos/revisar/:id', [checkAuth, isCoordinador(["coordinador"])], revisarDocumento);
 
 export default router;

@@ -39,3 +39,16 @@ export async function deleteDocumento(id) {
     return error.response?.data || { status: "Error", message: "Error de conexión" };
   }
 }
+
+export async function getDocsAlumno(alumnoId) {
+    try {
+        const response = await axios.get(`/alumnos/${alumnoId}/detalles`);
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener los documentos del alumno:', error);
+        
+        const errorMessage = error.response?.data?.message || 'Error de conexión o datos no encontrados.';
+      
+        throw new Error(errorMessage);
+    }
+}
