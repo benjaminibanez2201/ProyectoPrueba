@@ -130,6 +130,20 @@ const DashboardAlumno = ({ user }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showDocsModal, setShowDocsModal] = useState(false);
 
+ const getPostulacionRespuestaId = () => {
+    // Si 'practica' es null, regresa null
+    if (!practica) return null; 
+    
+    // Aseguramos que 'formularioRespuestas' exista antes de buscar.
+    const respuesta = practica.formularioRespuestas?.find( 
+        r => r.plantilla?.tipo === 'postulacion'
+    );
+    
+    return respuesta?.id || null; 
+  };
+
+  const postulacionId = getPostulacionRespuestaId();
+
   const fetchMiPractica = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -275,12 +289,21 @@ const DashboardAlumno = ({ user }) => {
                       : "-"}
                   </p>
                 </div>
-                <button
-                  disabled={!practica}
-                  className="w-full mt-2 border border-blue-200 text-blue-600 hover:bg-blue-50 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Download size={16} /> Descargar Comprobante
-                </button>
+                  {postulacionId ? (
+                    <button
+                        onClick={() => navigate(`/revision-formulario/${postulacionId}`)}
+                        className="w-full mt-2 border border-blue-600 text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-md"
+                    >
+                        <FileCheck size={16} /> Ver Formulario de Postulación
+                    </button>
+                  ) : (
+                    <button
+                        disabled={!practica}
+                        className="w-full mt-2 border border-blue-200 text-blue-600 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Download size={16} /> Comprobante No Disponible
+                    </button>
+                  )}
               </div>
             </div>
           </div>

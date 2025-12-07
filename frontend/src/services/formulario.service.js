@@ -77,3 +77,8 @@ export const postBitacora = async (data) => {
         throw error.response?.data || error;
     }
 };
+
+export const getRespuesta = async (id) => {
+    const response = await instance.get(`/formularios/respuesta/${id}`);
+    return response.data;
+};

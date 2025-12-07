@@ -19,6 +19,7 @@ import SubirDocumento from  '@pages/SubirDocumento';
 
 import AprobarPracticas from '@pages/AprobarPracticas';
 import FormResponder from '@pages/ResponderBitacora';
+import VistaPreviaAlumno from '@pages/VistaPreviaAlumno';
 
 import '@styles/styles.css';
 
@@ -117,6 +118,15 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <FormResponder /> 
+          </ProtectedRoute>
+        )
+      },
+
+      {
+        path: '/revision-formulario/:id',
+        element: (
+          <ProtectedRoute>
+            <VistaPreviaAlumno />
           </ProtectedRoute>
         )
       },

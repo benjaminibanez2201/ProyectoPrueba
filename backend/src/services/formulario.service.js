@@ -3,6 +3,7 @@ import { Practica } from "../entities/practica.entity.js";
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js"; 
 import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js"; 
 
+
 // Repositorios necesarios
 const practicaRepository = AppDataSource.getRepository(Practica);
 const respuestaRepository = AppDataSource.getRepository(FormularioRespuesta);
@@ -45,4 +46,18 @@ export async function getPlantilla(tipo) {
     const plantilla = await plantillaRepository.findOne({ where: { tipo } });
     if (!plantilla) throw new Error("Plantilla de formulario no encontrada.");
     return plantilla;
+}
+
+export async function getRespuestaById(id) {
+    const respuesta = await respuestaRepository.findOne({
+        where: { id },
+        // Traer la plantilla para que el Front sepa cómo dibujar el formulario
+        relations: ['plantilla', 'practica', 'practica.student'] 
+    });
+    if (!respuesta){
+        throw new Error("Respuesta de formulario no encontrada.");
+        error.status = 404;
+        throw error;
+    } 
+    return respuesta;
 }

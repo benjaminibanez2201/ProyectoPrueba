@@ -2,6 +2,7 @@ import { AppDataSource } from "../config/configDb.js";
 import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
 import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
 import { saveBitacoraResponse } from '../services/formulario.service.js';
+import { getRespuestaById } from '../services/formulario.service.js';
 
 // La llave
 const plantillaRepository = AppDataSource.getRepository(FormularioPlantilla);
@@ -132,3 +133,34 @@ export async function submitBitacora(req, res) {
         handleErrorServer(res, 500, error.message || 'Error interno al procesar la bitácora.');
     }
 }
+
+export const getRespuesta = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const usuarioLogueadoId = req.userId || req.user?.id || req.user?._id || req.user?.sub;
+        const respuesta = await getRespuestaById(parseInt(id));
+
+        // --- LOGS DE DEBUGGING (Míralos en la terminal del Backend) ---
+        //console.log("--- DEBUG DE PERMISOS ---");
+        //console.log("Objeto req.user completo:", req.user); 
+        //console.log("Práctica pertenece a Alumno ID:", respuesta.practica.student?.id);
+        //console.log("ID recuperado del Token:", usuarioLogueadoId);
+        // -------------------------------------------------------------
+
+        // Si después de esto sigue undefined, lanza error
+        if (!usuarioLogueadoId) {
+            return res.status(401).json({ message: "Error de autenticación: No se pudo identificar al usuario." });
+        }
+
+        // Validación de Seguridad
+        if (String(respuesta.practica.student.id) !== String(usuarioLogueadoId)) {
+             return res.status(403).json({ message: "Acceso denegado. No eres el dueño de esta práctica." });
+        }
+        
+        return res.status(200).json(respuesta);
+    } catch (error) {
+        console.error("Error en getRespuesta:", error);
+        const status = error.status || 500;
+        return res.status(status).json({ message: error.message });
+    }
+};
