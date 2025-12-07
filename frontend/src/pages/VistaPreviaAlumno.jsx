@@ -1,11 +1,10 @@
-// En: frontend/src/pages/FormReviewPage.jsx
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getRespuesta } from '../services/formulario.service';
 import FormRender from '../components/FormRender';
-import { Loader2, ArrowLeft, FileText } from 'lucide-react';
+import { Loader2, ArrowLeft, FileText, Download } from 'lucide-react';
 import { showErrorAlert } from '../helpers/sweetAlert';
+import html2pdf from 'html2pdf.js';
 
 const VistaPreviaAlumno = () => {
     const { id } = useParams(); // Obtenemos el ID de la URL
@@ -13,6 +12,8 @@ const VistaPreviaAlumno = () => {
 
     const [respuesta, setRespuesta] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    const contentRef = useRef();// Referencia al contenido para PDF
 
     useEffect(() => {
         const cargarRespuesta = async () => {
@@ -30,6 +31,20 @@ const VistaPreviaAlumno = () => {
         };
         cargarRespuesta();
     }, [id, navigate]);
+
+    const handleDescargarPDF = () => {
+        const element = contentRef.current; // Seleccionamos el div del formulario
+        const opt = {
+            margin:       10, // Márgenes en mm
+            filename:     `Documento_${respuesta.plantilla?.tipo || 'formulario'}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true}, // Mejor calidad (evita que se vea borroso)
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Ejecutar la conversión
+        html2pdf().set(opt).from(element).save();
+    };
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -53,30 +68,26 @@ const VistaPreviaAlumno = () => {
                     <FileText className="text-blue-600" /> 
                     Revisión de {respuesta.plantilla?.titulo || "Formulario"}
                 </h1>
+                <button 
+                    onClick={handleDescargarPDF}
+                    className="absolute right-6 flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm z-10 text-sm font-medium"
+                >
+                    <Download size={18} /> Descargar PDF
+                </button>
             </div>
 
             <main className="max-w-4xl mx-auto px-4">
-                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 pointer-events-none opacity-90"> 
-                    {/* NOTA: Usamos 'pointer-events-none' en el div padre para que 
-                        el formulario parezca de "solo lectura" y no se pueda editar.
-                    */}
-                    
-                    <FormRender 
-                        esquema={respuesta.plantilla.esquema}
-                        // Pasamos los datos guardados para que se rellenen los campos
-                        valores={respuesta.datos} 
-                        // Dependiendo de tu versión de FormRender, puede ser 'respuestasIniciales' o 'valores'
-                        // Prueba con 'valores' primero, si sale vacío, usa 'respuestasIniciales'
-                        respuestasIniciales={respuesta.datos}
 
-                        // Botón dummy (ya que está deshabilitado por el div padre)
-                        buttonText="Modo Lectura"
-                        onSubmit={() => {}} 
-                    />
-                </div>
-                
-                <div className="mt-6 text-center text-gray-500 text-sm">
-                    Este documento es una copia de solo lectura de tu envío realizado el {new Date(respuesta.fecha_envio).toLocaleDateString()}.
+                <div  ref={contentRef}> 
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 pointer-events-none opacity-100">
+                        <FormRender 
+                            esquema={respuesta.plantilla.esquema}
+                            valores={respuesta.datos} 
+                            respuestasIniciales={respuesta.datos}
+                            buttonText="" // Ocultamos el botón de guardar para el PDF
+                            onSubmit={() => {}} 
+                        />
+                    </div>
                 </div>
             </main>
         </div>

@@ -1,7 +1,11 @@
 import React from 'react';
-import { X, FileText, Download,Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, FileText, Download,Trash2, Eye } from 'lucide-react';
 
 const DocumentsModal = ({ isOpen, onClose, studentName, documents, onDelete }) => {
+
+  const navigate = useNavigate();
+
   if (!isOpen) return null;
 
   // URL Base para los links
