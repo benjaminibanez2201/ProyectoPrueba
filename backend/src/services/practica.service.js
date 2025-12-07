@@ -29,7 +29,7 @@ export async function findPracticaById(id) {
   const practica = await practicaRepository.findOne({ 
     where: { id },
     // 👇 Vital: Traer las respuestas para mostrarlas en el modal del Coordinador
-    relations: ['student', 'empresaToken', 'formularioRespuestas', 'formularioRespuestas.plantilla', 'documentos'] 
+    relations: ['student', 'empresaToken','documentos', 'formularioRespuestas', 'formularioRespuestas.plantilla'] 
   });
   if (!practica) throw new Error("Práctica no encontrada");
   // --- 2. LÓGICA DE UNIFICACIÓN (Bitácoras + Documentos) ---   
@@ -165,7 +165,7 @@ export async function findPracticaByStudentId(studentId) {
   const practica = await practicaRepository.findOne({
     where: { student: { id: studentId } },
     // 👇 Agregamos las relaciones aquí también para que el alumno vea sus respuestas si quiere
-    relations: ['empresaToken', 'documentos', 'formularioRespuestas', 'formularioRespuestas.plantilla'] 
+    relations: ['student','empresaToken', 'documentos', 'formularioRespuestas', 'formularioRespuestas.plantilla'] 
   });
   if (!practica) return null;
   // --- 2. LÓGICA DE UNIFICACIÓN (Bitácoras + Documentos) ---

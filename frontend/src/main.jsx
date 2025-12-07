@@ -125,7 +125,7 @@ const router = createBrowserRouter([
       {
         path: '/revision-formulario/:id',
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['alumno', 'coordinador']}>
             <VistaPreviaAlumno />
           </ProtectedRoute>
         )

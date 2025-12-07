@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { CSVLink } from "react-csv";
 import { useNavigate } from "react-router-dom"; // Hook para navegar
 import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock } from "lucide-react"; // Iconos
-import { getAlumnos } from "../services/user.service.js";
+import { getAlumnoDetalles } from "../services/user.service.js";
 import { showErrorAlert, showSuccessAlert, showInfoAlert, showHtmlAlert, showSelectAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { updateEstadoPractica } from "../services/practica.service.js";
@@ -82,7 +82,7 @@ const DashboardCoordinador = ({ user }) => {
     try {
       setIsLoading(true);
       setError(null);
-      const alumnosArray = await getAlumnos();
+      const alumnosArray = await getAlumnoDetalles();
       setAlumnos(alumnosArray);
     } catch (err) {
       const errorMessage = err.message || "No se pudo cargar la lista";

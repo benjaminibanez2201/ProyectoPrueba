@@ -16,5 +16,5 @@ router.put("/:id", controller.updatePlantilla); // Guardar cambios
 router.post("/", authMiddleware(["coordinador"]), controller.createPlantilla);
 router.delete("/:id", authMiddleware(["coordinador"]), controller.deletePlantilla);
 router.post("/bitacora",authMiddleware(["alumno"]), submitBitacora); // Nueva ruta para guardar Bitácora
-router.get('/respuesta/:id',authMiddleware(["alumno"]), getRespuesta);//[GET] /api/formularios/respuesta/:id (Obtener una respuesta de formulario por ID)
+router.get('/respuesta/:id',authMiddleware(["alumno", "coordinador"]), getRespuesta);//[GET] /api/formularios/respuesta/:id (Obtener una respuesta de formulario por ID)
 export default router;

@@ -14,8 +14,10 @@ export const authMiddleware = (allowedRoles = null) => (req, res, next) => {
   const token = parts[1];
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = payload; // payload debe incluir { sub/id, email, role, ... }
-
+    req.user = {
+     ...payload,
+      id: payload.sub
+    };
     // Si se pasaron roles permitidos, verificar que el rol del token esté entre ellos
     if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
       if (!payload.role || !allowedRoles.includes(payload.role)) {

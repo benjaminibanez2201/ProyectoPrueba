@@ -67,28 +67,42 @@ export async function findAlumnos() {
 }
 
 // para obtener los detalles completos de un alumno por su ID
-export const getDetallesAlumnos = async (userId, rol) => {
+export async function getDetallesAlumnos() {
+    // 1. OBTENER ALUMNOS CON TODAS LAS RELACIONES ANIDADAS
+    const alumnos = await userRepository.find({
+        relations: [
+            'practicasComoAlumno',
+            'practicasComoAlumno.documentos',
+            'practicasComoAlumno.formularioRespuestas',
+            'practicasComoAlumno.formularioRespuestas.plantilla' 
+        ],
+        where: { role: 'alumno' }
+    });
 
-    if (rol !== 'coordinador') {
-        throw new Error("Acceso denegado: Solo coordinadores pueden acceder a esta información.");
-    }
+    // 2. PROCESAR Y UNIFICAR DOCUMENTOS (Para cada alumno en la lista)
+    const alumnosConDocsUnificados = alumnos.map(alumno => {
+        const practica = alumno.practicasComoAlumno?.[0]; // Obtenemos la práctica activa
 
-    try {
-        const userRepository = AppDataSource.getRepository(User);
-
-        const detallesCompletos = await userRepository.findOne({
-            where: { id: userId },
-            relations: [
-                "practicasComoAlumno",
-                "practicasComoAlumno.documentos",
-            ],
-        });
-
-        //si no existe o si el usuario no es 'alumno'
-        if (!detallesCompletos || detallesCompletos.role !== 'alumno') {
-            throw new Error("Usuario no encontrado o no es un alumno.");
-        } return detallesCompletos;
-    } catch (error) {
-        throw new Error("Error al obtener los detalles del alumno: " + error.message);
-    }
+        if (practica) {
+            const documentosArchivos = practica.documentos || [];
+            
+            // Lógica para mapear bitácoras a documentos
+            const bitacoraRespuestas = practica.formularioRespuestas
+                // Filtramos solo las bitácoras (asumiendo que es el único formulario que debe ir al modal)
+                .filter(r => r.plantilla?.tipo === 'bitacora') 
+                .map(r => ({
+                    id: r.id, 
+                    tipo: "bitacora", 
+                    estado: 'enviado', 
+                    // Bandera clave para el Frontend
+                    es_respuesta_formulario: true 
+                }));
+            
+            // Unir Bitácoras y Archivos en el array 'documentos'
+            practica.documentos = [...documentosArchivos, ...bitacoraRespuestas];
+        }
+        return alumno; 
+    });
+    
+    return alumnosConDocsUnificados;
 }

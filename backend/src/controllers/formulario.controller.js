@@ -135,32 +135,34 @@ export async function submitBitacora(req, res) {
 }
 
 export const getRespuesta = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const usuarioLogueadoId = req.userId || req.user?.id || req.user?._id || req.user?.sub;
-        const respuesta = await getRespuestaById(parseInt(id));
+  try {
+    const { id } = req.params;
+    const user = req.user;
 
-        // --- LOGS DE DEBUGGING (Míralos en la terminal del Backend) ---
-        //console.log("--- DEBUG DE PERMISOS ---");
-        //console.log("Objeto req.user completo:", req.user); 
-        //console.log("Práctica pertenece a Alumno ID:", respuesta.practica.student?.id);
-        //console.log("ID recuperado del Token:", usuarioLogueadoId);
-        // -------------------------------------------------------------
+    const respuesta = await getRespuestaById(Number(id));
 
-        // Si después de esto sigue undefined, lanza error
-        if (!usuarioLogueadoId) {
-            return res.status(401).json({ message: "Error de autenticación: No se pudo identificar al usuario." });
-        }
-
-        // Validación de Seguridad
-        if (String(respuesta.practica.student.id) !== String(usuarioLogueadoId)) {
-             return res.status(403).json({ message: "Acceso denegado. No eres el dueño de esta práctica." });
-        }
-        
-        return res.status(200).json(respuesta);
-    } catch (error) {
-        console.error("Error en getRespuesta:", error);
-        const status = error.status || 500;
-        return res.status(status).json({ message: error.message });
+    if (!respuesta) {
+      return res.status(404).json({ message: "Respuesta no encontrada" });
     }
+
+    // COORDINADOR VE TODO
+    if (user.role === 'coordinador') {
+      return res.status(200).json(respuesta);
+    }
+
+    // ALUMNO: solo lo suyo
+    const esDueño =
+      String(respuesta.practica.student.id) === String(user.id);
+
+    if (!esDueño) {
+      return res.status(403).json({ message: "Acceso denegado." });
+    }
+
+    return res.status(200).json(respuesta);
+
+  } catch (error) {
+    console.error("Error en getRespuesta:", error);
+    return res.status(500).json({ message: "Error interno" });
+  }
 };
+
