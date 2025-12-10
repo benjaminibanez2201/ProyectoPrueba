@@ -128,35 +128,22 @@ export const verDetallesAlumnos = async (req, res) => {
         }
 
         //Documentos
-        //const documentosInfo = (practicaActiva.documentos || []).map(doc => ({
-        //    tipo: doc.tipo,
-        //    fechaEnvio: (doc.fecha_creacion && doc.fecha_creacion instanceof Date) 
-        //    ? doc.fecha_creacion.toISOString().split('T')[0] : 'N/A',
-        //    estado: doc.estado,
-        //    extension: doc.extension || '.N/A', // Ej: '.pdf'
-        //    nombre_archivo: doc.nombre_archivo || doc.tipo, // Ej: 'Bitacora_1.pdf'
-        //    //para la visualización/revisión
-        //    urlRevision: doc.ruta_archivo ? `/api/documentos/revisar/${doc.id}` : null,
-        //    documentoId: doc.id, 
-        //    datosFormulario: doc.datos_json,
-        //}));
-
         const documentosInfo = (practicaActiva.documentos || []).map(doc => {
                   
-              // CRÍTICO: Derivar la extensión y el nombre del archivo desde ruta_archivo
+              //OBTENER EXTENSIÓN Y NOMBRE BASE DEL ARCHIVO
               const ruta = doc.ruta_archivo;
               const extension = ruta ? path.extname(ruta).toLowerCase() : '.N/A'; // Ej: .pdf
               // Opcional: Obtener el nombre base del archivo sin la ruta de servidor
               const nombreBase = ruta ? path.basename(ruta) : doc.tipo; 
                   
               return ({
-                  tipo: doc.tipo,
-                  fechaEnvio: (doc.fecha_creacion && doc.fecha_creacion instanceof Date) 
+                  tipo: doc.tipo, // Ej: 'Informe de Práctica'
+                  fechaEnvio: (doc.fecha_creacion && doc.fecha_creacion instanceof Date)  
                       ? doc.fecha_creacion.toISOString().split('T')[0] 
                       : 'N/A', 
-                  estado: doc.estado,
+                  estado: doc.estado, // Ej: 'Pendiente', 'Revisado', etc.
               
-                  // ✅ CAMPOS DERIVADOS: ESTO SOLUCIONA EL ERROR 'UNDEFINED'
+                  //CAMPOS DERIVADOS: ESTO SOLUCIONA EL ERROR 'UNDEFINED'
                   extension: extension, 
                   nombre_archivo: nombreBase,
               

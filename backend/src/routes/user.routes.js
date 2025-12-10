@@ -6,9 +6,11 @@ import { checkAuth, isCoordinador } from "../middleware/auth.middleware.js";
 const router = Router();
 
 //ruta para obtener el listado de alumnos (solo coordinador de practica)
+// GET api/user/alumnos
 router.get("/alumnos", [checkAuth, isCoordinador(["coordinador"])], getAlumnos);
 
 //ruta para que el coordinador consulte la información completa de un alumno específico
+// GET api/user/alumnos/:id/detalles
 router.get("/alumnos/:id/detalles", [checkAuth, isCoordinador(["coordinador"])], verDetallesAlumnos);
 
 export default router;

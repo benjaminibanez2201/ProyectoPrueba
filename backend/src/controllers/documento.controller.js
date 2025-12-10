@@ -76,11 +76,12 @@ export async function deleteDocumentoHandler(req, res) {
 // para que el coordinador revise un documento específico
 export async function revisarDocumento(req, res) {
     try {
-        const documentoId = req.params.id;
+        const documentoId = req.params.id; // id del documento a revisar
 
+        // buscar el documento en la bdd
         const documento = await DocumentoRepository.findOne({ where: { id: documentoId } });
 
-        if (!documento || !documento.ruta_archivo) {
+        if (!documento || !documento.ruta_archivo) { // si no existe o no tiene ruta de archivo
             return handleErrorClient(res, 404, "Documento o ruta de archivo no encontrada.");
         }
 
@@ -88,6 +89,7 @@ export async function revisarDocumento(req, res) {
         const __filename = fileURLToPath(import.meta.url);
         const __dirname = path.dirname(__filename);
 
+        // eliminar el prefijo 'uploads/' si existe
         let nombreArchivo = documento.ruta_archivo.replace(/^uploads\//, '');
         const filePath = path.resolve(__dirname, '../../uploads', nombreArchivo);
 
@@ -95,32 +97,30 @@ export async function revisarDocumento(req, res) {
         const fileExtension = path.extname(documento.ruta_archivo).toLowerCase();
         let contentType = 'application/octet-stream'; // Tipo genérico
         
-        if (fileExtension === '.pdf') {
+        if (fileExtension === '.pdf') { // PDF
             contentType = 'application/pdf';
-        } else if (fileExtension === '.docx' || fileExtension === '.doc') {
+        } else if (fileExtension === '.docx' || fileExtension === '.doc') { // DOCX/DOC
             contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; 
-        } else if (fileExtension === '.zip') {
+        } else if (fileExtension === '.zip') { // ZIP
             contentType = 'application/zip'; 
-        } else if (fileExtension === '.jpg' || fileExtension === '.jpeg' || fileExtension === '.png') {
-            contentType = `image/${fileExtension.substring(1)}`;
         }
         
-        // 1. Establecer el Content-Type (MIME)
+        //establecer los encabezados 
         res.setHeader('Content-Type', contentType);
 
-        // 2. Establecer el Content-Disposition (Visualización vs. Descarga)
+        //establecer Content-Disposition según el tipo de archivo
         if (fileExtension === '.zip') {
-            // ZIP: Forzar la DESCARGA (attachment).
+            //ZIP, DOCX: Forzar DESCARGA.
             res.setHeader('Content-Disposition', `attachment; filename="${path.basename(documento.ruta_archivo)}"`);
         } else {
-            // PDF, DOCX, Imágenes: Intentar VISUALIZARSE (inline).
+            //PDF: Visualización INLINE.
             res.setHeader('Content-Disposition', `inline; filename="${path.basename(documento.ruta_archivo)}"`);
         }
-        // servir el archivo
+        //servir el archivo
         res.sendFile(filePath, (err) => {
             if (err) {
                 console.error("Error al servir el archivo:", err);
-                if (err.code === 'ENOENT') {
+                if (err.code === 'ENOENT') { // archivo no encontrado
                     return handleErrorServer(res, 404, "Archivo físico no encontrado en el servidor.", err.code);
                 }
                 return handleErrorServer(res, 500, "Error desconocido al servir el archivo.", err.message);

@@ -60,7 +60,7 @@ export const enviarEvaluacion = async (req, res) => {
   }
 };
 
-// --- Validar Token (empresa) ---
+//Validar Token (empresa)
 export const validarToken = async (req, res) => {
   try {
     const { token } = req.params;
@@ -82,20 +82,19 @@ export const validarToken = async (req, res) => {
   }
 };
 
-// confirmar inicio de práctica
-// CONFIRMAR INICIO (Versión Arreglada)
+//confirmar inicio de práctica
 export const confirmarInicioPractica = async (req, res) => {
   try {
     // El frontend envía: { token: '...', confirmacion: true, respuestas: { ... } }
     const { token, confirmacion, respuestas } = req.body; 
 
-    console.log("📦 DATOS RECIBIDOS DESDE FRONTEND (EMPRESA):", respuestas);
+    console.log("DATOS RECIBIDOS DESDE FRONTEND (EMPRESA):", respuestas);
 
     if (!token) {
         return handleErrorClient(res, 400, "Falta el token de acceso.");
     }
 
-    // Llamamos al servicio nuevo
+    // Llamamos al servicio que maneja la confirmación
     const resultado = await confirmarInicioPracticaService(token, confirmacion, respuestas);
 
     return handleSuccess(res, 200, "Confirmación exitosa.", resultado);

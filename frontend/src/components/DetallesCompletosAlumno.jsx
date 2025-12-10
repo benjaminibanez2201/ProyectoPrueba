@@ -3,7 +3,6 @@ import { X, Eye, CheckCircle, Clock, XCircle, Folder, Download } from 'lucide-re
 import { getDocsAlumno } from '../services/documento.service.js';
 import axios from '../services/root.service.js';
 
-//const VITE_BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000/api';
 const HOST_URL = 'http://localhost:3000';
 
 //SOLO PDF ES PREVISUALIZABLE EN EL NAVEGADOR
@@ -27,7 +26,7 @@ const EstadoDocumento = ({ estado }) => {
     let style = 'bg-gray-100 text-gray-700';
     let Icon = Clock;
 
-    if (estado?.includes('Aprobado')) {
+    if (estado?.includes('Aprobado')) { // Usa includes para mayor flexibilidad
         style = 'bg-green-100 text-green-700';
         Icon = CheckCircle;
     } else if (estado?.includes('Pendiente')) {
@@ -39,29 +38,30 @@ const EstadoDocumento = ({ estado }) => {
     }
 
     return (
-        <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${style}`}>
+        <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${style}`}> 
             <Icon size={14} className="mr-1" /> {estado}
         </span>
     );
 };
 
 const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
-    const [expediente, setExpediente] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [docToProcess, setDocToProcess] = useState(null);
+    const [expediente, setExpediente] = useState(null); // Estado para almacenar los datos del expediente
+    const [isLoading, setIsLoading] = useState(true); // Estado de carga
+    const [error, setError] = useState(null); // Estado de error
+    const [docToProcess, setDocToProcess] = useState(null); // Documento a procesar (descargar)
 
-        // ✅ FUNCIÓN DE EJECUCIÓN (Lógica de Axios/Blob)
+        //FUNCIÓN DE EJECUCIÓN (Vista Previa o Descarga)
     const executeFileAction = async (doc, actionType) => {
         try {
-            const { urlRevision, extension, tipo } = doc;
-            const urlCompleta = `${HOST_URL}${urlRevision}`;
+            const { urlRevision, extension, tipo } = doc; // Desestructuramos para mayor claridad
+            const urlCompleta = `${HOST_URL}${urlRevision}`; // Construimos la URL completa
 
-            // Fetch del archivo con Axios (con JWT)
+            // Realizamos la solicitud para obtener el archivo
             const response = await axios.get(urlCompleta, {
                 responseType: 'blob',
             });
 
+            // Creamos un Blob a partir de la respuesta
             const blob = new Blob([response.data], { type: response.headers['content-type'] });
             const fileURL = URL.createObjectURL(blob);
 
@@ -78,7 +78,7 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                 URL.revokeObjectURL(fileURL);
             }
 
-            setDocToProcess(null); 
+            setDocToProcess(null);  // Cerramos el modal después de la acción
 
         } catch (error) {
             console.error("Error al procesar el documento:", error);
@@ -87,7 +87,7 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
         }
     };
 
-    // ✅ FUNCIÓN DE DECISIÓN (Lógica de Click del Botón)
+    //FUNCIÓN DE DECISIÓN (Lógica de Click del Botón)
     const handleDocumentAction = (doc) => {
         const isPreviewable = PREVIEW_EXTENSIONS.includes(doc.extension?.toLowerCase());
 
@@ -157,7 +157,7 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                     Descargar Archivo {docToProcess.extension?.toUpperCase() || 'N/A'}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                    El archivo **{docToProcess.tipo} ({docToProcess.extension})** no tiene una vista previa disponible en el navegador. ¿Desea continuar con la descarga?
+                    El archivo {docToProcess.tipo} ({docToProcess.extension}) no tiene una vista previa disponible en el navegador. ¿Desea continuar con la descarga?
                 </p>
                 <div className="flex justify-end space-x-3">
                     

@@ -20,7 +20,9 @@ router.get("/ver-formulario", validarTokenEmpresa, verFormulario);
 router.post("/enviar-evaluacion", validarTokenEmpresa, enviarEvaluacion);
 
 // Validar token (empresa verifica su token)
+// GET api/empresa/validar-acceso/:token
 router.get("/validar-acceso/:token", validarToken);
+// POST api/empresa/confirmar-inicio-practica
 router.post("/confirmar-inicio-practica", confirmarInicioPractica)
 
 export default router;
