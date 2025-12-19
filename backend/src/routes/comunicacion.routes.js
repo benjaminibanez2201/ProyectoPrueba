@@ -1,13 +1,32 @@
 import { Router } from "express";
-import { enviarMensaje, getHistorial } from "../controllers/comunicacion.controller.js";
+import { 
+    enviarMensaje, 
+    getConversacion,
+    getBandejaEntrada,
+    getMensajesEnviados,
+    marcarLeido,
+    getNoLeidos
+} from "../controllers/comunicacion.controller.js";
 import { checkAuth } from "../middleware/auth.middleware.js"; 
 
 const router = Router();
 
-// Ruta para enviar mensaje (Abierta para empresa con token o coordinador con auth)
+// Enviar mensaje (abierta para empresa con token o coordinador con auth)
 router.post("/enviar", enviarMensaje);
 
-// Ruta para ver el historial (Protegida para el coordinador)
-router.get("/historial/:id", getHistorial);
+// Obtener conversación de una práctica (requiere autenticación)
+router.get("/practica/:practicaId", checkAuth, getConversacion);
+
+// Bandeja de entrada (requiere autenticación)
+router.get("/bandeja", checkAuth, getBandejaEntrada);
+
+// Mensajes enviados (requiere autenticación)
+router.get("/enviados", checkAuth, getMensajesEnviados);
+
+// Marcar como leído (requiere autenticación)
+router.patch("/:id/leido", checkAuth, marcarLeido);
+
+// Cantidad de no leídos (requiere autenticación)
+router.get("/no-leidos", checkAuth, getNoLeidos);
 
 export default router;
