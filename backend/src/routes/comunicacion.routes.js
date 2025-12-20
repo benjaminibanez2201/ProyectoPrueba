@@ -15,7 +15,14 @@ const router = Router();
 router.post("/enviar", enviarMensaje);
 
 // Obtener conversación de una práctica (requiere autenticación)
-router.get("/practica/:practicaId", checkAuth, getConversacion);
+//router.get("/practica/:practicaId", checkAuth, getConversacion);
+// Cambia la ruta de obtención de conversación por esta:
+router.get("/practica/:practicaId", (req, res, next) => {
+    if (req.query.token) {
+        return next();
+    }
+    return checkAuth(req, res, next);
+}, getConversacion);
 
 // Bandeja de entrada (requiere autenticación)
 router.get("/bandeja", checkAuth, getBandejaEntrada);

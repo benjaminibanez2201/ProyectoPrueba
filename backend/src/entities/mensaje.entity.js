@@ -1,3 +1,4 @@
+// mensaje.entity.js
 import { EntitySchema } from "typeorm";
 
 export const Mensaje = new EntitySchema({
@@ -30,6 +31,27 @@ export const Mensaje = new EntitySchema({
             nullable: false,
             comment: "coordinador o empresa"
         },
+        // 👇 NUEVO: Guardamos el nombre del remitente/destinatario
+        remitente_nombre: {
+            type: "varchar",
+            length: 255,
+            nullable: false
+        },
+        remitente_email: {
+            type: "varchar",
+            length: 255,
+            nullable: false
+        },
+        destinatario_nombre: {
+            type: "varchar",
+            length: 255,
+            nullable: false
+        },
+        destinatario_email: {
+            type: "varchar",
+            length: 255,
+            nullable: false
+        },
         leido: {
             type: "boolean",
             default: false,
@@ -59,17 +81,12 @@ export const Mensaje = new EntitySchema({
             nullable: false,
             onDelete: "CASCADE",
         },
-        remitente: {
+        // 👇 Solo guardamos referencia al coordinador (User)
+        coordinador: {
             target: "User",
             type: "many-to-one",
-            joinColumn: { name: "remitenteId" },
-            nullable: false,
-        },
-        destinatario: {
-            target: "User",
-            type: "many-to-one",
-            joinColumn: { name: "destinatarioId" },
-            nullable: false,
-        },
+            joinColumn: { name: "coordinadorId" },
+            nullable: true, // Puede ser null si el remitente es empresa
+        }
     },
 });

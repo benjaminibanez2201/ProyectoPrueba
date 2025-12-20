@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from "react";
 import { CSVLink } from "react-csv";
 import { useNavigate } from "react-router-dom"; // Hook para navegar
-import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock } from "lucide-react"; // Iconos
+import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock, MessageCircle } from "lucide-react"; // Iconos
 import { getAlumnos } from "../services/user.service.js";
 import { showErrorAlert, showSuccessAlert, showInfoAlert, showHtmlAlert, showSelectAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { updateEstadoPractica } from "../services/practica.service.js";
 import DetallesCompletosAlumno from "./DetallesCompletosAlumno.jsx";
+import BandejaMensajes from "./BandejaMensajes.jsx";
 
 
 // --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---
@@ -78,6 +79,7 @@ const DashboardCoordinador = ({ user }) => {
   const [filter, setFilter] = useState('todas');
   const [selectedStudentForDocs, setSelectedStudentForDocs] = useState(null);
   const [alumnoDocs, setAlumnoDocs] = useState(null);
+  const [showBandeja, setShowBandeja] = useState(false);
 
   // 1. FUNCIÓN NUEVA: Solo carga datos (sin cerrar la tabla)
   const refreshAlumnos = async () => {
@@ -218,6 +220,15 @@ const { value: nuevoEstado } = await showSelectAlert(
         <p className="text-gray-600 mb-6">
           Bienvenido, <span className="font-semibold">{user.name}</span>.
         </p>
+        {/* BOTÓN FIJO: Bandeja de Mensajes */}
+        <button 
+          onClick={() => setShowBandeja(true)}
+          className="fixed bottom-8 right-8 bg-indigo-600 text-white p-4 rounded-full shadow-2xl hover:bg-indigo-700 transition-all flex items-center gap-2 z-40"
+        >
+          <MessageCircle size={24} />
+          <span className="font-bold">Mensajes</span>
+        </button>
+        {showBandeja && <BandejaMensajes user={user} onClose={() => setShowBandeja(false)} />}
 
         {/* GRID DE TARJETAS */}
 

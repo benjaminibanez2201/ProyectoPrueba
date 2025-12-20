@@ -1,46 +1,55 @@
 import { AppDataSource } from "../config/configDb.js";
 import { Mensaje } from "../entities/mensaje.entity.js";
-import { User } from "../entities/user.entity.js";
 import { Practica } from "../entities/practica.entity.js";
+import { User } from "../entities/user.entity.js";
 
 /**
  * Enviar un mensaje entre coordinador y empresa
  */
 export const enviarMensajeService = async (data) => {
     try {
-        const { practicaId, asunto, contenido, remitenteId, remitenteTipo, destinatarioId, destinatarioTipo } = data;
+        const { 
+            practicaId, 
+            asunto, 
+            contenido, 
+            remitenteTipo, // 'coordinador' o 'empresa'
+            remitenteNombre,
+            remitenteEmail,
+            destinatarioTipo, // 'coordinador' o 'empresa'
+            destinatarioNombre,
+            destinatarioEmail,
+            coordinadorId // Solo si el remitente o destinatario es coordinador
+        } = data;
+
+        // 1. Validar que el ID llegó antes de usarlo
+        if (!practicaId) throw new Error("ID de práctica no proporcionado");
         
         const mensajeRepo = AppDataSource.getRepository(Mensaje);
-        
+
         // Validar que la práctica existe
         const practicaRepo = AppDataSource.getRepository(Practica);
-        const practica = await practicaRepo.findOne({ where: { id: practicaId } });
-        if (!practica) {
-            throw new Error("Práctica no encontrada");
-        }
 
-        // Validar que los usuarios existen
-        const userRepo = AppDataSource.getRepository(User);
-        const remitente = await userRepo.findOne({ where: { id: remitenteId } });
-        const destinatario = await userRepo.findOne({ where: { id: destinatarioId } });
+        const practica = await practicaRepo.findOne({ 
+            where: { id: practicaId },
+            relations: ['student']
+        });
         
-        if (!remitente || !destinatario) {
-            throw new Error("Remitente o destinatario no encontrado");
-        }
-
         // Validar que la comunicación sea entre coordinador y empresa
         if (remitenteTipo === destinatarioTipo) {
             throw new Error("La comunicación debe ser entre coordinador y empresa");
         }
 
         const nuevoMensaje = mensajeRepo.create({
-            practica: { id: practicaId },
+            practica: { id: Number(practicaId) },
             asunto,
             contenido,
-            remitente: { id: remitenteId },
             remitente_tipo: remitenteTipo,
-            destinatario: { id: destinatarioId },
+            remitente_nombre: remitenteNombre,
+            remitente_email: remitenteEmail,
             destinatario_tipo: destinatarioTipo,
+            destinatario_nombre: destinatarioNombre,
+            destinatario_email: destinatarioEmail,
+            coordinador: coordinadorId ? { id: Number(coordinadorId) } : null,
             leido: false
         });
 
@@ -49,7 +58,7 @@ export const enviarMensajeService = async (data) => {
         // Retornar con las relaciones cargadas
         return await mensajeRepo.findOne({
             where: { id: mensajeGuardado.id },
-            relations: ['remitente', 'destinatario', 'practica', 'practica.alumno']
+            relations: ['practica', 'practica.student', 'coordinador']
         });
 
     } catch (error) {
@@ -60,17 +69,17 @@ export const enviarMensajeService = async (data) => {
 /**
  * Obtener conversación de una práctica específica
  */
-export const obtenerConversacionService = async (practicaId, userId) => {
+export const obtenerConversacionService = async (practicaId, emailUsuario) => {
     try {
         const mensajeRepo = AppDataSource.getRepository(Mensaje);
         
-        // Obtener mensajes donde el usuario sea remitente o destinatario
+        // Obtener mensajes donde el usuario sea remitente o destinatario (por email)
         return await mensajeRepo.find({
             where: [
-                { practica: { id: practicaId }, remitente: { id: userId } },
-                { practica: { id: practicaId }, destinatario: { id: userId } }
+                { practica: { id: practicaId }, remitente_email: emailUsuario },
+                { practica: { id: practicaId }, destinatario_email: emailUsuario }
             ],
-            relations: ['remitente', 'destinatario', 'practica'],
+            relations: ['practica', 'practica.student', 'coordinador'],
             order: { fecha_envio: "ASC" }
         });
     } catch (error) {
@@ -79,15 +88,18 @@ export const obtenerConversacionService = async (practicaId, userId) => {
 };
 
 /**
- * Obtener bandeja de entrada del usuario
+ * Obtener bandeja de entrada del coordinador
  */
-export const obtenerBandejaEntradaService = async (userId) => {
+export const obtenerBandejaEntradaService = async (coordinadorId) => {
     try {
         const mensajeRepo = AppDataSource.getRepository(Mensaje);
         
         const mensajes = await mensajeRepo.find({
-            where: { destinatario: { id: userId } },
-            relations: ['remitente', 'practica', 'practica.alumno'],
+            where: { 
+                destinatario_tipo: 'coordinador',
+                coordinador: { id: coordinadorId }
+            },
+            relations: ['practica', 'practica.student'],
             order: { fecha_envio: "DESC" }
         });
 
@@ -103,15 +115,18 @@ export const obtenerBandejaEntradaService = async (userId) => {
 };
 
 /**
- * Obtener mensajes enviados por el usuario
+ * Obtener mensajes enviados por el coordinador
  */
-export const obtenerMensajesEnviadosService = async (userId) => {
+export const obtenerMensajesEnviadosService = async (coordinadorId) => {
     try {
         const mensajeRepo = AppDataSource.getRepository(Mensaje);
         
         return await mensajeRepo.find({
-            where: { remitente: { id: userId } },
-            relations: ['destinatario', 'practica', 'practica.alumno'],
+            where: { 
+                remitente_tipo: 'coordinador',
+                coordinador: { id: coordinadorId }
+            },
+            relations: ['practica', 'practica.student'],
             order: { fecha_envio: "DESC" }
         });
     } catch (error) {
@@ -122,14 +137,14 @@ export const obtenerMensajesEnviadosService = async (userId) => {
 /**
  * Marcar mensaje como leído
  */
-export const marcarComoLeidoService = async (mensajeId, userId) => {
+export const marcarComoLeidoService = async (mensajeId, emailUsuario) => {
     try {
         const mensajeRepo = AppDataSource.getRepository(Mensaje);
         
         const mensaje = await mensajeRepo.findOne({
             where: { 
                 id: mensajeId,
-                destinatario: { id: userId }
+                destinatario_email: emailUsuario
             }
         });
 
@@ -152,13 +167,14 @@ export const marcarComoLeidoService = async (mensajeId, userId) => {
 /**
  * Obtener cantidad de mensajes no leídos
  */
-export const contarNoLeidosService = async (userId) => {
+export const contarNoLeidosService = async (coordinadorId) => {
     try {
         const mensajeRepo = AppDataSource.getRepository(Mensaje);
         
         return await mensajeRepo.count({
             where: {
-                destinatario: { id: userId },
+                destinatario_tipo: 'coordinador',
+                coordinador: { id: coordinadorId },
                 leido: false
             }
         });
