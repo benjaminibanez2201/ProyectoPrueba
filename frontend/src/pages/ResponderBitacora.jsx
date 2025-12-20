@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getPlantilla } from '../services/formulario.service.js'; // Servicio para traer la plantilla
 import FormRender from '../components/FormRender'; // El componente que dibuja el formulario
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js';
-import { Loader2, BookOpen } from 'lucide-react';
+import { Loader2, BookOpen, ArrowLeft } from 'lucide-react';
 import { postBitacora } from '../services/formulario.service';
 import { getMyPractica } from '../services/practica.service';
 
@@ -98,20 +98,35 @@ const ResponderBitacora = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 pb-12 pt-8">
-            <main className="max-w-4xl mx-auto px-4">
-                <h2 className="text-3xl font-bold text-green-700 mb-6 flex items-center gap-3">
-                    <BookOpen size={28} /> Completar Bitácora
-                </h2>
-                
+            <main className="max-w-4xl mx-auto px-4">               
+                <div className="flex items-center justify-between mb-6">
+                    {/* 1. Botón Izquierda */}
+                    <button 
+                        onClick={() => navigate(-1)} // O la ruta específica: navigate("/dashboard/alumno")
+                        className="flex items-center gap-2 text-gray-600 hover:text-green-700 transition-colors font-medium"
+                    >
+                        <ArrowLeft size={24} />
+                        <span className="hidden sm:inline">Volver</span>
+                    </button>
+
+                    {/* 2. Título Centro */}
+                    <h2 className="text-3xl font-bold text-green-700 flex items-center justify-center gap-3">
+                        <BookOpen size={28} /> 
+                        Completar Bitácora
+                    </h2>
+
+                    {/* 3. Espaciador Derecho (Invisible) para mantener el centro perfecto */}
+                    <div className="w-[88px] hidden sm:block"></div> 
+                </div>
+                {/* ------------------------------------------------ */}
+
                 <div className="bg-white rounded-xl shadow-lg border border-green-100 p-8">
-                    {/* Renderizamos el formulario dinámico */}
                     <FormRender 
                         esquema={plantilla.esquema} 
                         valores={valoresIniciales}
-                        // Aquí deberías pasar respuestasIniciales si la bitácora ya está guardada
                         onSubmit={handleFormSubmit}
                         buttonText={procesando ? "Enviando..." : "Guardar Bitácora"} 
-                       disabled={procesando}
+                        disabled={procesando}
                     />
                 </div>
             </main>

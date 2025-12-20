@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Upload, FileText } from "lucide-react";
+import { Upload, FileText, ArrowLeft } from "lucide-react";
 import { uploadDocumento } from "../services/documento.service";
 import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert";
 import { useLocation, useNavigate } from 'react-router-dom'; 
@@ -61,6 +61,17 @@ const SubirDocumento = () => {
           
           {/* Columna Izquierda: Título e Instrucciones */}
           <div className="md:col-span-1 border-r border-gray-100 pr-4">
+
+            {/*boton de volver*/}
+            <div className="mb-4">
+               <button 
+                 onClick={() => navigate(-1)} // Vuelve atrás
+                 className="flex items-center gap-2 text-gray-500 hover:text-green-700 transition-colors text-sm font-medium">
+                 <ArrowLeft size={20} />
+                 <span>Volver</span>
+               </button>
+            </div>
+            
             <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
               <Upload className="text-green-600" size={32} />
             </div>
