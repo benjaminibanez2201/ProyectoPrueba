@@ -324,7 +324,7 @@ const DashboardAlumno = ({ user }) => {
                 </p>
 
                 {/* Usamos practica?.documentos para evitar el crash */}
-                <BitacoraTracker documentos={practica?.documentos} />
+                <BitacoraTracker documentos={practica?.documentos?.filter(doc => doc.tipo === 'bitacora')} />
                 {/*DESPUES HAY QUE CAMBIAR ESTO PORQUE CUENTA LOS DOCS CON NOMBRE BITACORA */}
               </div>
               {/* Contenedor de ACCIONES (Derecha) */}

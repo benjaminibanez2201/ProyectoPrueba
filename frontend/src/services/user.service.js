@@ -37,9 +37,11 @@ export const getAlumnos = async () => {
  * Llama al endpoint GET /users/alumnos/:id/detalles
  * (Cumple con el RF5)
  */
-export const getAlumnoDetalles = async (id) => {
+export const getAlumnoDetalles = async (id = null) => {
   try {
-    const response = await instance.get(`/users/alumnos/${id}/detalles`);
+    // Si hay ID, va a la ruta de detalle. Si no, a la de lista general.
+    const url = id ? `/users/alumnos/${id}/detalles` : `/users/alumnos/detalles`;
+    const response = await instance.get(url);
     return response.data.data;
   } catch (error) {
     console.error(`Error al obtener detalles del alumno ${id}:`, error);

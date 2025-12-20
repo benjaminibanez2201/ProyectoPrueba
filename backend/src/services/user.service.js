@@ -67,7 +67,7 @@ export async function findAlumnos() {
 }
 
 // para obtener los detalles completos de un alumno por su ID
-export async function getDetallesAlumnos() {
+export async function getDetallesAlumnos(id = null, rol=null) {
     // 1. OBTENER ALUMNOS CON TODAS LAS RELACIONES ANIDADAS
     const alumnos = await userRepository.find({
         relations: [
@@ -76,7 +76,7 @@ export async function getDetallesAlumnos() {
             'practicasComoAlumno.formularioRespuestas',
             'practicasComoAlumno.formularioRespuestas.plantilla' 
         ],
-        where: { role: 'alumno' }
+        where: id ? { id: parseInt(id), role: 'alumno' } : { role: 'alumno' }
     });
 
     // 2. PROCESAR Y UNIFICAR DOCUMENTOS (Para cada alumno en la lista)
@@ -87,7 +87,7 @@ export async function getDetallesAlumnos() {
             const documentosArchivos = practica.documentos || [];
             
             // Lógica para mapear bitácoras a documentos
-            const bitacoraRespuestas = practica.formularioRespuestas
+            const todasLasBitacoras = practica.formularioRespuestas
                 // Filtramos solo las bitácoras (asumiendo que es el único formulario que debe ir al modal)
                 .filter(r => r.plantilla?.tipo === 'bitacora') 
                 .map(r => ({
@@ -98,11 +98,13 @@ export async function getDetallesAlumnos() {
                     es_respuesta_formulario: true 
                 }));
             
+            //si es coordinador, limitar a 5 bitacoras. Si es alumno, mostrar todas
+            const bitacorasParaMostrar = (rol === 'coordinador') ? todasLasBitacoras.slice(0, 5) : todasLasBitacoras;
             // Unir Bitácoras y Archivos en el array 'documentos'
-            practica.documentos = [...documentosArchivos, ...bitacoraRespuestas];
+            practica.documentos = [...documentosArchivos, ...bitacorasParaMostrar];
         }
         return alumno; 
     });
-    
-    return alumnosConDocsUnificados;
+    //si se pidio un id especìfico, devolver solo ese alumno, si no el array completo
+    return id ? alumnosConDocsUnificados[0] : alumnosConDocsUnificados;
 }

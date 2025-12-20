@@ -14,6 +14,8 @@ router.get("/practicas/confirmadas-por-empresa", [checkAuth, isCoordinador(["coo
 //ruta para obtener el listado de alumnos (solo coordinador de practica)
 router.get("/alumnos", [checkAuth, isCoordinador(["coordinador"])], getAlumnos);
 
+router.get("/alumnos/detalles", [checkAuth, isCoordinador(["coordinador"])], verDetallesAlumnos);
+
 //ruta para que el coordinador consulte la información completa de un alumno específico
 router.get("/alumnos/:id/detalles", [checkAuth, isCoordinador(["coordinador"])], verDetallesAlumnos);
 
