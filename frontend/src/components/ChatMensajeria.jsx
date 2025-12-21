@@ -76,19 +76,38 @@ const ChatMensajeria = ({ practicaId, token, destinatarioId, usuarioActual, onCl
 
         try {
             setEnviando(true);
-            console.log('📤 Enviando mensaje...', { practicaId, destinatarioId, tieneToken: !!token });
+            console.log('📤 Enviando mensaje...', { 
+            practicaId,           // ← Debe existir
+            destinatarioId,       // ← Debe existir
+            tieneToken: !!token   // ← Ver si hay token
+            });
+
+            // Obtenemos el destinatario de la conversación cargada si no viene por props
+            const ultimoMensajeRecibido = [...mensajes].reverse().find(m => m.remitente_email !== usuarioActual.email);
 
             const data = {
                 asunto: nuevoMensaje.asunto,
                 contenido: nuevoMensaje.contenido,
-                practicaId,
-                destinatarioId
+                practicaId: Number(practicaId),
+                // SEGURO: Si no hay mensajes previos (chat vacío), necesitamos un plan C
+                destinatarioId: destinatarioId || ultimoMensajeRecibido?.remitente_email || "empresa@correo.com" 
             };
+
+            // Validamos que realmente tengamos un destinatario antes de disparar la petición
+            if (!data.destinatarioId) {
+                // Si sigue siendo undefined, el backend lanzará el error 400 que viste
+                console.error("Falta el destinatarioId. Revisa las props del chat.");
+            }
 
             // Si es empresa, incluir el token
             if (token) {
-                data.token = token;
+            data.token = token;
+            console.log('👔 Enviando como empresa con token');
+            } else {
+                console.log('👨‍💼 Enviando como coordinador');
             }
+
+            console.log('📦 Data a enviar:', data);
 
             const response = await enviarMensaje(data);
             console.log('✅ Mensaje enviado:', response);
@@ -170,16 +189,16 @@ const ChatMensajeria = ({ practicaId, token, destinatarioId, usuarioActual, onCl
                         </div>
                     ) : (
                         mensajes.map((msg) => {
-                            const esMio = msg.remitente?.id === usuarioActual.id;
+                            const esMio = msg.remitente_email === usuarioActual.email;
+                            //const esMio = msg.remitente_email === usuarioActual.email || 
+                            //(msg.remitente?.id && msg.remitente.id === usuarioActual.id);
                             
                             return (
-                                <div 
-                                    key={msg.id} 
-                                    className={`flex ${esMio ? 'justify-end' : 'justify-start'}`}
-                                >
+                                <div key={msg.id} className={`flex ${esMio ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[70%] ${esMio ? 'order-2' : 'order-1'}`}>
                                         <p className={`text-xs font-semibold mb-1 ${esMio ? 'text-right text-blue-600' : 'text-gray-600'}`}>
-                                            {esMio ? 'Tú' : msg.remitente?.name || 'Desconocido'}
+                                            {/* Usamos el nombre plano de la base de datos para trazabilidad */}
+                                            {esMio ? 'Tú' : (msg.remitente_nombre || 'Empresa')}
                                         </p>
                                         
                                         <div 

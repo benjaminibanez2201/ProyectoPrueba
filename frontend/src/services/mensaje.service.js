@@ -35,7 +35,16 @@ export async function getConversacionPractica(practicaId) {
  */
 export async function enviarMensaje(data) {
     try {
-        const response = await axios.post('/comunicacion/enviar', data);
+        const response = await axios.post(
+            "/comunicacion/enviar",
+            data,
+            {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+                }
+            }
+            );
+
         return response.data;
     } catch (error) {
         console.error('Error al enviar mensaje:', error);

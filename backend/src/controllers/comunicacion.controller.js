@@ -30,6 +30,11 @@ export const enviarMensaje = async (req, res) => {
         // Como no está en la práctica, buscamos al usuario con rol 'coordinador'
         const coordinador = await userRepo.findOne({ where: { role: 'coordinador' } });
 
+        console.log("🧪 DEBUG enviarMensaje");
+        console.log("req.user:", req.user);
+        console.log("req.body:", req.body);
+
+
         if (token) {
             const tokenData = await validarTokenEmpresa(token);
 
@@ -59,24 +64,40 @@ export const enviarMensaje = async (req, res) => {
             destinatarioEmail = coordinador?.email || "coordinador@u.cl";
             coordinadorId = coordinador?.id; 
         } 
-        else if (req.user && req.user.role === 'coordinador') {
+        // --- CASO 2: ENVÍA EL COORDINADOR (Autenticado) ---
+        else {
             practicaIdFinal = practicaId;
-            const practica = await practicaRepo.findOne({ 
-                where: { id: practicaIdFinal },
+                
+            console.log("🧪 practicaId recibido:", practicaIdFinal);
+            console.log("🧪 req.user:", req.user);
+                
+            if (!practicaIdFinal) {
+                return handleErrorClient(res, 400, "No se pudo determinar el ID de la práctica.");
+            }
+        
+            const practica = await practicaRepo.findOne({
+                where: { id: Number(practicaIdFinal) },
                 relations: ['empresa', 'empresaToken']
             });
-
+        
             if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
-
+        
             remitenteTipo = "coordinador";
-            remitenteNombre = req.user.name;
-            remitenteEmail = req.user.email;
-            coordinadorId = req.user.id;
-            
+            remitenteNombre = req.user?.name || "Coordinador";
+            remitenteEmail = req.user?.email || "coordinador@u.cl";
+            coordinadorId = req.user?.id || null;
+        
             destinatarioTipo = "empresa";
-            destinatarioNombre = practica.empresaToken?.empresaNombre || practica.empresa?.name || "Empresa";
-            destinatarioEmail = practica.empresaToken?.empresaCorreo || practica.empresa?.email;
-        } 
+            destinatarioNombre =
+                practica.empresaToken?.empresaNombre ||
+                practica.empresa?.name ||
+                "Empresa";
+        
+            destinatarioEmail =
+                practica.empresa?.email ||
+                practica.empresaToken?.empresaCorreo;
+        }
+
 
         // Antes de llamar al servicio, nos aseguramos de que practicaIdFinal tenga valor
         if (!practicaIdFinal) {
