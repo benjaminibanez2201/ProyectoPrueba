@@ -166,3 +166,20 @@ export const getRespuesta = async (req, res) => {
   }
 };
 
+export const getTodasLasPlantillas = async (req, res) => {
+    try {
+        // 2. Usamos el repositorio de 'FormularioPlantilla'
+        const plantillaRepo = AppDataSource.getRepository(FormularioPlantilla);
+        
+        // 3. Buscamos todas las plantillas
+        const plantillas = await plantillaRepo.find({
+            order: {
+                id: 'ASC' 
+            }
+        });
+
+        handleSuccess(res, 200, "Lista de plantillas obtenida", plantillas);
+    } catch (error) {
+        handleErrorServer(res, 500, "Error al obtener plantillas", error.message);
+    }
+};
