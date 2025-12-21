@@ -252,10 +252,14 @@ const handleFormSubmit = async (respuestas) => {
                     {/* ← NUEVO: Modal de Chat */}
                 {chatAbierto && data && (
                     <ChatMensajeria
-                        practicaId={data.practicaId}
+                        practicaId={data.practica?.id}
                         token={token}
                         destinatarioId={data.coordinadorId} // Asume que el backend devuelve el ID del coordinador
-                        usuarioActual={{ id: data.empresaId, name: empresaNombre }} // Datos de la empresa actual
+                        usuarioActual={{ 
+                            id: data.empresaId || 'empresa', 
+                            name: empresaNombre,
+                            email: data.practica?.empresa_email || data.empresaCorreo // ← Agregar email
+                        }}
                         onClose={() => setChatAbierto(false)}
                     />
                 )}

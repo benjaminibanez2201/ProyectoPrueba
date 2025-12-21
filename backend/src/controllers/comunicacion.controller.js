@@ -13,35 +13,26 @@ import { Mensaje } from "../entities/mensaje.entity.js";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 import { User } from "../entities/user.entity.js";
 
-/**
- * Enviar mensaje (Empresa o Coordinador)
- */
+//Enviar mensaje (Empresa o Coordinador)
 export const enviarMensaje = async (req, res) => {
     try {
         const { asunto, contenido, practicaId, token } = req.body;
         const practicaRepo = AppDataSource.getRepository(Practica);
         const userRepo = AppDataSource.getRepository(User);
 
-        let remitenteTipo, remitenteNombre, remitenteEmail, coordinadorId;
+        // Variables para el remitente y destinatario
+        let remitenteTipo, remitenteNombre, remitenteEmail, coordinadorId; 
         let destinatarioTipo, destinatarioNombre, destinatarioEmail;
         let practicaIdFinal;
 
-        // --- BUSCAR COORDINADOR ---
-        // Como no está en la práctica, buscamos al usuario con rol 'coordinador'
+        // Buscar coordinador con rol 'coordinador'
         const coordinador = await userRepo.findOne({ where: { role: 'coordinador' } });
 
-        console.log("🧪 DEBUG enviarMensaje");
-        console.log("req.user:", req.user);
-        console.log("req.body:", req.body);
-
-
+        // Caso 1: Envía la empresa (con token)
         if (token) {
             const tokenData = await validarTokenEmpresa(token);
 
-            // Intentamos obtener el ID de la práctica de todas las fuentes posibles
-            // 1. Del objeto practica dentro del token
-            // 2. Del campo practicaId que podría venir directamente en tokenData
-            // 3. Del practicaId que viene en el req.body (desde el frontend)
+            // Determinar el practicaIdFinal
             practicaIdFinal = tokenData.practica?.id || tokenData.practicaId || practicaId;
 
             if (!practicaIdFinal) {
@@ -55,10 +46,12 @@ export const enviarMensaje = async (req, res) => {
 
             if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
 
-            remitenteTipo = "empresa";
+            remitenteTipo = "empresa"; // La empresa envía el mensaje
+            // Prioridad para nombre y email del remitente
             remitenteNombre = practica.empresaToken?.empresaNombre || practica.empresa?.name || "Representante Empresa";
             remitenteEmail = practica.empresaToken?.empresaCorreo || practica.empresa?.email || "empresa@correo.com";
 
+            // Destinatario es el coordinador
             destinatarioTipo = "coordinador";
             destinatarioNombre = coordinador?.name || "Coordinador de Prácticas";
             destinatarioEmail = coordinador?.email || "coordinador@u.cl";
