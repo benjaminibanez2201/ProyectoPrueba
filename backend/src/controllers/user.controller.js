@@ -90,18 +90,42 @@ export async function getAlumnos(req, res) {
   }
 }
 
-//para ver los detalles completos de un alumno en particular
+//✅ CONTROLADOR ACTUALIZADO para manejar lista completa Y alumno individual
 export const verDetallesAlumnos = async (req, res) => {
     try {
-        const id = req.params.id;
+        const id = req.params.id; // Puede ser undefined
         const rol = req.user?.role;
 
-        const detalles = await getDetallesAlumnos(id, rol);
+        const detalles = await getDetallesAlumnos(id || null, rol);
 
-        // se asume que el alumno solo tiene una práctica activa o se toma la primera
+        // --- CASO 1: Lista completa de alumnos (sin ID) ---
+        if (!id) {
+            // detalles es un ARRAY de alumnos
+            const listaAlumnos = detalles.map(alumno => {
+                const practicaActiva = alumno.practicasComoAlumno?.[0] || {};
+                
+                return {
+                    id: alumno.id,
+                    nombre: alumno.name,
+                    email: alumno.email,
+                    tipo_practica: alumno.tipo_practica || 'N/A',
+                    estado_practica: practicaActiva.estado || 'pendiente',
+                    practicasComoAlumno: alumno.practicasComoAlumno || [] // Para compatibilidad con tu frontend
+                };
+            });
+
+            return handleSuccess(res, 200, "Lista de alumnos obtenida exitosamente", listaAlumnos);
+        }
+
+        // --- CASO 2: Alumno específico (con ID) ---
+        if (!detalles) {
+            return handleErrorClient(res, 404, "Alumno no encontrado");
+        }
+
+        // detalles es un OBJETO (un solo alumno)
         const practicaActiva = detalles.practicasComoAlumno[0] || {};
 
-        //Datos básicos del alumno
+        // Datos básicos del alumno
         const alumnoInfo = {
             id: detalles.id,
             nombre: detalles.name, 
@@ -109,49 +133,43 @@ export const verDetallesAlumnos = async (req, res) => {
             tipo_practica: detalles.tipo_practica || 'N/A'
         };
 
-        //Datos de la Práctica 
+        // Datos de la Práctica 
         const practicaInfo = {
             id: practicaActiva.id, 
             estado: practicaActiva.estado || 'No Iniciada',
             fechaInicio: (practicaActiva.fecha_inicio && practicaActiva.fecha_inicio instanceof Date) 
-        ? practicaActiva.fecha_inicio.toISOString().split('T')[0] 
-        : (typeof practicaActiva.fecha_inicio === 'string' 
-            ? practicaActiva.fecha_inicio.split('T')[0] // Si es un string de fecha (ej. '2025-11-20')
-            : 'Pendiente'), // Si es NULL o indefinido
+                ? practicaActiva.fecha_inicio.toISOString().split('T')[0] 
+                : (typeof practicaActiva.fecha_inicio === 'string' 
+                    ? practicaActiva.fecha_inicio.split('T')[0]
+                    : 'Pendiente'),
         };
 
-        //Datos de la Empresa
+        // Datos de la Empresa
         const empresa = practicaActiva.empresaToken || {};
         practicaInfo.empresa = {
             nombre: empresa.empresaNombre || 'N/A',
             email: empresa.empresaCorreo || 'N/A',
-        }
+        };
 
-        //Documentos
+        // Documentos
         const documentosInfo = (practicaActiva.documentos || []).map(doc => {
-                  
-              //OBTENER EXTENSIÓN Y NOMBRE BASE DEL ARCHIVO
-              const ruta = doc.ruta_archivo;
-              const extension = ruta ? path.extname(ruta).toLowerCase() : '.N/A'; // Ej: .pdf
-              // Opcional: Obtener el nombre base del archivo sin la ruta de servidor
-              const nombreBase = ruta ? path.basename(ruta) : doc.tipo; 
-                  
-              return ({
-                  tipo: doc.tipo, // Ej: 'Informe de Práctica'
-                  fechaEnvio: (doc.fecha_creacion && doc.fecha_creacion instanceof Date)  
-                      ? doc.fecha_creacion.toISOString().split('T')[0] 
-                      : 'N/A', 
-                  estado: doc.estado, // Ej: 'Pendiente', 'Revisado', etc.
-              
-                  //CAMPOS DERIVADOS: ESTO SOLUCIONA EL ERROR 'UNDEFINED'
-                  extension: extension, 
-                  nombre_archivo: nombreBase,
-              
-                  urlRevision: doc.ruta_archivo ? `/api/documentos/revisar/${doc.id}` : null,
-                  documentoId: doc.id, 
-                  datosFormulario: doc.datos_json,
-              });
-          });
+            const ruta = doc.ruta_archivo;
+            const extension = ruta ? path.extname(ruta).toLowerCase() : '.N/A';
+            const nombreBase = ruta ? path.basename(ruta) : doc.tipo; 
+                
+            return {
+                tipo: doc.tipo,
+                fechaEnvio: (doc.fecha_creacion && doc.fecha_creacion instanceof Date)  
+                    ? doc.fecha_creacion.toISOString().split('T')[0] 
+                    : 'N/A', 
+                estado: doc.estado,
+                extension: extension, 
+                nombre_archivo: nombreBase,
+                urlRevision: doc.ruta_archivo ? `/api/documentos/revisar/${doc.id}` : null,
+                documentoId: doc.id, 
+                datosFormulario: doc.datos_json,
+            };
+        });
 
         const detallesCompletos = {
             alumno: alumnoInfo,
@@ -159,10 +177,10 @@ export const verDetallesAlumnos = async (req, res) => {
             documentos: documentosInfo,
         };
 
-        return handleSuccess(res, 200, "Información completa de alumnos obtenida exitosamente", detallesCompletos);
-    } catch (error) {
+        return handleSuccess(res, 200, "Información completa de alumno obtenida exitosamente", detallesCompletos);
 
-        //Acceso denegado por rol no autorizado
+    } catch (error) {
+        // Manejo de errores
         if (error.message.includes("Acceso denegado")) {
             return handleErrorClient(res, 403, error.message);
         }
@@ -170,6 +188,7 @@ export const verDetallesAlumnos = async (req, res) => {
         if (error.message.includes("No encontrado") || error.message.includes("No es un alumno")) {
             return handleErrorClient(res, 404, error.message);
         }
+
         return handleErrorServer(res, 500, "Error interno al obtener los detalles.", error.message);
     }
-}
+};
