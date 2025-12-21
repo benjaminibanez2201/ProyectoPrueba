@@ -9,7 +9,7 @@ import {
 } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { deleteDocumento } from "../services/documento.service.js";
-
+import instance from "../services/root.service.js";
 // --- 1. BADGE ---
 const EstadoBadge = ({ estado }) => {
   // Si no hay estado (ej. no tiene práctica), mostramos "Sin Inscripción"
@@ -129,7 +129,7 @@ const DashboardAlumno = ({ user }) => {
   const [practica, setPractica] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showDocsModal, setShowDocsModal] = useState(false);
-
+  const [recursosGlobales, setRecursosGlobales] = useState([]);
  const getPostulacionRespuestaId = () => {
     // Si 'practica' es null, regresa null
     if (!practica) return null; 
@@ -158,8 +158,41 @@ const DashboardAlumno = ({ user }) => {
     }
   }, []);
 
+  //caragar recursos publicos globales
+  const fetchRecursosGlobales = async () => {
+    try {
+      const response = await instance.get('/recursos');
+      //prueba
+      console.log("🔍 DATOS DEL BACKEND:", response.data.data);
+      setRecursosGlobales(response.data.data);
+    } catch (error) {
+      console.error("Error al cargar pautas:", error);
+    }
+  };
+
+  // --- NUEVA FUNCIÓN: DESCARGAR ARCHIVO ---
+  const handleDownloadRecurso = (urlRecurso) => {
+    //1 se obtiene variable actual (http://localhost:3000/api)
+    const apiAddress = import.meta.env.VITE_BASE_URL || 'http://localhost:3000';
+    // 2 se crea un objeto URL
+    const urlObj = new URL(apiAddress);
+  
+    // 3 extraemos solo el "origin" (protocolo + dominio + puerto)
+    // De "http://localhost:3000/api" -> obtiene automáticamente "http://localhost:3000"
+    const raizServidor = urlObj.origin;
+
+    // 4 construye la ruta final limpia
+    const finalUrl = `${raizServidor}${urlRecurso}`;
+    window.open(finalUrl, '_blank');
+  };
+
   useEffect(() => {
-    fetchMiPractica();
+    const init = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchMiPractica(), fetchRecursosGlobales()]);
+      setIsLoading(false);
+    };
+    init();
   }, [fetchMiPractica]);
 
   const handleDeleteDocumento = async (id,es_respuesta_formulario) => {
@@ -354,17 +387,29 @@ const DashboardAlumno = ({ user }) => {
           {/* --- FILA 3: RECURSOS Y REPOSITORIO --- */}
           <div className="grid md:grid-cols-2 gap-6">
             {/* Recursos (Pautas) */}
-            <div className="bg-purple-50 p-6 rounded-xl shadow-sm border border-purple-100">
+            <div className="bg-purple-50 p-6 rounded-xl shadow-sm border border-purple-100 flex flex-col h-full">
               <h3 className="text-lg font-bold text-purple-800 mb-4 flex items-center gap-2">
                 <FileText size={20} /> Recursos y Pautas
               </h3>
-              <div className="space-y-2">
-                <button className="w-full flex items-center gap-2 text-left text-sm p-2 rounded hover:bg-purple-50 text-purple-700 transition">
-                  <Download size={16} /> Pauta de Evaluación.pdf
-                </button>
-                <button className="w-full flex items-center gap-2 text-left text-sm p-2 rounded hover:bg-purple-50 text-purple-700 transition">
-                  <Download size={16} /> Formato Informe Final.pdf
-                </button>
+              
+              <div className="space-y-2 grow">
+                {recursosGlobales.length > 0 ? (
+                  recursosGlobales.map((recurso) => (
+                    <button 
+                      key={recurso.id}
+                      onClick={() => handleDownloadRecurso(recurso.url)}
+                      className="w-full flex items-center gap-2 text-left text-sm p-3 bg-white border border-purple-100 rounded-lg hover:bg-purple-100 hover:border-purple-300 text-purple-800 transition shadow-sm group"
+                    >
+                      <Download size={18} className="text-purple-400 group-hover:text-purple-700 shrink-0"/> 
+                      <span className="truncate font-medium">{recurso.nombre}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center bg-white/50 rounded-lg border border-purple-100 border-dashed">
+                    <FileText size={24} className="text-purple-200 mb-2"/>
+                    <p className="text-sm text-gray-500 italic">No hay documentos disponibles aún.</p>
+                  </div>
+                )}
               </div>
             </div>
 
