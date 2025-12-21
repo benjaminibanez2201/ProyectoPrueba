@@ -2,13 +2,13 @@ import React, { useState, useMemo } from "react";
 import { CSVLink } from "react-csv";
 import { useNavigate } from "react-router-dom"; // Hook para navegar
 import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock, MessageCircle } from "lucide-react"; // Iconos
-import { getAlumnos } from "../services/user.service.js";
+import { getAlumnoDetalles } from "../services/user.service.js";
 import { showErrorAlert, showSuccessAlert, showInfoAlert, showHtmlAlert, showSelectAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { updateEstadoPractica } from "../services/practica.service.js";
+import GestionRecursosModal from "./GestionRecursosModal";
 import DetallesCompletosAlumno from "./DetallesCompletosAlumno.jsx";
 import BandejaMensajes from "./BandejaMensajes.jsx";
-
 
 // --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---
 const EstadoBadge = ({ practica }) => {
@@ -80,13 +80,14 @@ const DashboardCoordinador = ({ user }) => {
   const [selectedStudentForDocs, setSelectedStudentForDocs] = useState(null);
   const [alumnoDocs, setAlumnoDocs] = useState(null);
   const [showBandeja, setShowBandeja] = useState(false);
-
+  const [isRecursosModalOpen, setIsRecursosModalOpen] = useState(false);
+  
   // 1. FUNCIÓN NUEVA: Solo carga datos (sin cerrar la tabla)
   const refreshAlumnos = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const alumnosArray = await getAlumnos();
+      const alumnosArray = await getAlumnoDetalles();
       setAlumnos(alumnosArray);
     } catch (err) {
       const errorMessage = err.message || "No se pudo cargar la lista";
@@ -237,7 +238,7 @@ const { value: nuevoEstado } = await showSelectAlert(
           <div className="bg-blue-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <Users className="text-blue-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-blue-800">Ver Alumnos</h3>
-            <p className="text-gray-600 text-sm mt-1">Revisa alumnos inscritos (RF2)</p>
+            <p className="text-gray-600 text-sm mt-1">Revisa alumnos inscritos</p>
             <button
               onClick={handleLoadAlumnos}
               className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg w-full"
@@ -259,10 +260,11 @@ const { value: nuevoEstado } = await showSelectAlert(
           {/* Tarjeta 3: Reportes */}
           <div className="bg-purple-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <ClipboardList className="text-purple-600 mb-3" size={32} />
-            <h3 className="text-lg font-bold text-purple-800">Reportes</h3>
-            <p className="text-gray-600 text-sm mt-1">Genera reportes (RF4)</p>
-            <button className="mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg w-full">
-              Ver Reportes
+            <h3 className="text-lg font-bold text-purple-800">Documentos</h3>
+            <p className="text-gray-600 text-sm mt-1">Revisa tus formularios y sube documentos</p>
+            <button onClick={() => setIsRecursosModalOpen(true)}
+            className="mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg w-full">
+              Ver Biblioteca
             </button>
           </div>
 
@@ -270,7 +272,7 @@ const { value: nuevoEstado } = await showSelectAlert(
           <div className="bg-orange-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <FileCog className="text-orange-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-orange-800">Formularios</h3>
-            <p className="text-gray-600 text-sm mt-1">Edita las plantillas (RF12)</p>
+            <p className="text-gray-600 text-sm mt-1">Edita las plantillas</p>
             <button
               onClick={() => navigate("/admin/formularios")}
               className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg w-full"
@@ -283,7 +285,7 @@ const { value: nuevoEstado } = await showSelectAlert(
           <div className="bg-red-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <FileText className="text-red-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-red-800">Gestionar Prácticas</h3>
-            <p className="text-gray-600 text-sm mt-1">Revisa confirmaciones de empresas (RF1)</p>
+            <p className="text-gray-600 text-sm mt-1">Revisa confirmaciones de empresas</p>
             <button
               // Redirección directa a la ruta /coordinador/aprobar-practicas
               onClick={() => navigate("/coordinador/aprobar-practicas")}
@@ -411,6 +413,12 @@ const { value: nuevoEstado } = await showSelectAlert(
           onClose={() => setAlumnoDocs(null)} // Función para cerrar
         />
       )}
+      
+      {/* MODAL DE RECURSOS */}
+      <GestionRecursosModal 
+        isOpen={isRecursosModalOpen} 
+        onClose={() => setIsRecursosModalOpen(false)} 
+      />
     </div>
   );
 };

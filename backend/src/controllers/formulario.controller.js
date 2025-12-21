@@ -1,6 +1,8 @@
 import { AppDataSource } from "../config/configDb.js";
 import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
 import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
+import { saveBitacoraResponse } from '../services/formulario.service.js';
+import { getRespuestaById } from '../services/formulario.service.js';
 
 // La llave
 const plantillaRepository = AppDataSource.getRepository(FormularioPlantilla);
@@ -116,3 +118,68 @@ export class FormularioController {
     }
   }
 }
+
+export async function submitBitacora(req, res) {
+    try {
+        const userId = req.user.id; // ID del alumno logueado
+        const { practicaId, respuestas } = req.body; // Datos enviados desde el Frontend
+
+        // 1. Llama al servicio para guardar la Bitácora
+        const result = await saveBitacoraResponse(practicaId, userId, respuestas);
+        
+        handleSuccess(res, 201, 'Bitácora guardada exitosamente.', result);
+    } catch (error) {
+        console.error("Error al guardar bitácora:", error);
+        handleErrorServer(res, 500, error.message || 'Error interno al procesar la bitácora.');
+    }
+}
+
+export const getRespuesta = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+
+    const respuesta = await getRespuestaById(Number(id));
+
+    if (!respuesta) {
+      return res.status(404).json({ message: "Respuesta no encontrada" });
+    }
+
+    // COORDINADOR VE TODO
+    if (user.role === 'coordinador') {
+      return res.status(200).json(respuesta);
+    }
+
+    // ALUMNO: solo lo suyo
+    const esDueño =
+      String(respuesta.practica.student.id) === String(user.id);
+
+    if (!esDueño) {
+      return res.status(403).json({ message: "Acceso denegado." });
+    }
+
+    return res.status(200).json(respuesta);
+
+  } catch (error) {
+    console.error("Error en getRespuesta:", error);
+    return res.status(500).json({ message: "Error interno" });
+  }
+};
+
+export const getTodasLasPlantillas = async (req, res) => {
+    try {
+        // 2. Usamos el repositorio de 'FormularioPlantilla'
+        const plantillaRepo = AppDataSource.getRepository(FormularioPlantilla);
+        
+        // 3. Buscamos todas las plantillas
+        const plantillas = await plantillaRepo.find({
+            order: {
+                id: 'ASC' 
+            }
+        });
+
+        handleSuccess(res, 200, "Lista de plantillas obtenida", plantillas);
+    } catch (error) {
+        handleErrorServer(res, 500, "Error al obtener plantillas", error.message);
+    }
+};

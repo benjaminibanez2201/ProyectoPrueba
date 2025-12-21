@@ -9,6 +9,8 @@ const router = Router();
 // GET api/user/alumnos
 router.get("/alumnos", [checkAuth, isCoordinador(["coordinador"])], getAlumnos);
 
+router.get("/alumnos/detalles", [checkAuth, isCoordinador(["coordinador"])], verDetallesAlumnos);
+
 //ruta para que el coordinador consulte la información completa de un alumno específico
 // GET api/user/alumnos/:id/detalles
 router.get("/alumnos/:id/detalles", [checkAuth, isCoordinador(["coordinador"])], verDetallesAlumnos);

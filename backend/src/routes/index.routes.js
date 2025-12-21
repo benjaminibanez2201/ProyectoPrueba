@@ -8,6 +8,7 @@ import coordinadorRoutes from "./coordinador.routes.js";
 import formularioRoutes from "./formulario.routes.js";
 import documentoRoutes from "./documento.routes.js";
 import comunicacionRoutes from "./comunicacion.routes.js";
+import recursoRoutes from "./recurso.routes.js";
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use("/documentos", documentoRoutes);
 router.use("/coordinador", coordinadorRoutes);
 router.use("/comunicacion", comunicacionRoutes);
 
+router.use("/recursos", recursoRoutes);
 // Exportamos el router para que index.js lo use
 export default router;
