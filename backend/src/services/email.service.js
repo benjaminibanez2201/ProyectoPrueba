@@ -23,10 +23,10 @@ export const sendEmail = async (destinatario, asunto, htmlContent) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('📧 Correo enviado: ' + info.response);
+    console.log('Correo enviado: ' + info.response);
     return true;
   } catch (error) {
-    console.error('❌ Error al enviar correo:', error);
+    console.error('Error al enviar correo:', error);
     return false;
   }
 };
@@ -85,7 +85,7 @@ export const enviarNotificacionEvaluacion = async (practica, decision, observaci
 
     // --- CASO A: APROBADO ---
     if (decision === 'aprobar') {
-        asunto = "✅ Práctica Profesional Aprobada - UBB";
+        asunto = "[UBB] Práctica Profesional Aprobada Exitosamente";
         // En caso de aprobación, notificamos a AMBOS por defecto
         destinatarios = [emailAlumno, emailEmpresa]; 
         
@@ -109,7 +109,7 @@ export const enviarNotificacionEvaluacion = async (practica, decision, observaci
     
     // --- CASO B: RECHAZADO / OBSERVADO ---
     else if (decision === 'rechazar') {
-        asunto = "⚠️ Corrección Requerida - Práctica Profesional UBB";
+        asunto = "[CORRECCIÓN REQUERIDA] - Práctica Profesional UBB";
         
         // Lógica de a quién culpar (quién recibe el correo)
         if (destinatarioError === 'alumno') destinatarios = [emailAlumno];
