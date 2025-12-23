@@ -17,7 +17,8 @@ router.post("/generar-token", generarTokenEmpresa);
 router.get("/ver-formulario", validarTokenEmpresa, verFormulario);
 
 // Enviar evaluación (empresa envía datos)
-router.post("/enviar-evaluacion", validarTokenEmpresa, enviarEvaluacion);
+// La evaluación final se envía con token en el body (sin middleware legado)
+router.post("/enviar-evaluacion", enviarEvaluacion);
 
 // Validar token (empresa verifica su token)
 // GET api/empresa/validar-acceso/:token

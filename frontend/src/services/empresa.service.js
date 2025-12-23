@@ -33,3 +33,14 @@ export const confirmarInicioPractica = async (token, confirmacion, respuestas) =
     }
 }
 
+// Empresa envía evaluación final con su token y respuestas
+export const enviarEvaluacionEmpresa = async (token, respuestas) => {
+    try {
+        const response = await instance.post('/empresa/enviar-evaluacion', { token, respuestas });
+        return response.data;
+    } catch (error) {
+        console.error('Error al enviar evaluación:', error);
+        throw error.response?.data || error.message;
+    }
+}
+

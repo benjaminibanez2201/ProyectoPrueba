@@ -1,5 +1,6 @@
 import { AppDataSource } from "../config/configDb.js";
 import { DocumentosPractica } from '../entities/documentos.entity.js';
+import { Practica } from "../entities/practica.entity.js";
 import { createDocumentoArchivo } from "../services/documento.service.js";
 import {handleSuccess, handleErrorClient, handleErrorServer} from '../Handlers/responseHandlers.js';
 import {getPublicUrl} from '../helpers/file.helper.js';
@@ -80,13 +81,23 @@ export async function revisarDocumento(req, res) {
 
         // buscar el documento en la bdd
         const documento = await DocumentoRepository.findOne({ where: { id: documentoId } });
-
+        const{tipo, practicaId} = req.body;
         if (!documento || !documento.ruta_archivo) { // si no existe o no tiene ruta de archivo
             return handleErrorClient(res, 404, "Documento o ruta de archivo no encontrada.");
         }
 
         // construir la ruta física del archivo
         const __filename = fileURLToPath(import.meta.url);
+
+        // Validación: no permitir subir si la práctica está cerrada
+        const PracticaRepository = AppDataSource.getRepository(Practica);
+        const practica = await PracticaRepository.findOne({ where: { id: parseInt(practicaId) } });
+        if (!practica) {
+            return handleErrorClient(res, 404, 'La práctica especificada no existe.');
+        }
+        if (practica.estado === 'cerrada') {
+            return handleErrorClient(res, 403, 'La práctica está cerrada. No se pueden subir documentos.');
+        }
         const __dirname = path.dirname(__filename);
 
         // eliminar el prefijo 'uploads/' si existe

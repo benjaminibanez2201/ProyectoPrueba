@@ -2,6 +2,7 @@ import { AppDataSource } from "../config/configDb.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { Practica } from "../entities/practica.entity.js";
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
+import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
 
 export const validarTokenEmpresa = async (tokenAcceso) => {
     console.log("🔍 Validando token:", tokenAcceso);
@@ -63,7 +64,10 @@ export const validarTokenEmpresa = async (tokenAcceso) => {
         alumnoNombre: practicaCompleta.student.name,
         empresaNombre: tokenData.empresaNombre,
         estado: practicaCompleta.estado,
-        formularioRespuestas: practicaCompleta.formularioRespuestas ?? []
+        formularioRespuestas: practicaCompleta.formularioRespuestas ?? [],
+        evaluacionPendiente: !!practicaCompleta.evaluacion_pendiente,
+        evaluacionCompletada: !!practicaCompleta.evaluacion_completada,
+        nivel: practicaCompleta.nivel || null,
     };
 };
 
@@ -161,4 +165,64 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
         message: "Datos guardados y práctica enviada a validación.", 
         practicaId: practica.id 
     };
+};
+
+// Empresa envía evaluación final (PR1/PR2)
+export const guardarEvaluacionEmpresa = async (tokenAcceso, respuestas) => {
+    const tokenRepo = AppDataSource.getRepository(EmpresaToken);
+    const practicaRepo = AppDataSource.getRepository(Practica);
+    const respuestaRepo = AppDataSource.getRepository(FormularioRespuesta);
+    const plantillaRepo = AppDataSource.getRepository(FormularioPlantilla);
+
+    const tokenData = await tokenRepo.findOne({ where: { token: tokenAcceso }, relations: ["practica"] });
+    if (!tokenData || !tokenData.practica) throw new Error("Token inválido o práctica no encontrada.");
+
+    const practica = await practicaRepo.findOne({ where: { id: tokenData.practica.id }, relations: ["formularioRespuestas"] });
+    if (!practica) throw new Error("Práctica no existe.");
+
+    if (!practica.evaluacion_pendiente) {
+        // Idempotente: si ya está evaluada, retornamos ok
+        if (practica.evaluacion_completada || practica.estado === 'evaluada') {
+            return { message: "Evaluación ya registrada.", practicaId: practica.id };
+        }
+        throw new Error("No hay evaluación pendiente para esta práctica.");
+    }
+
+    const tipoPlantilla = practica.nivel === 'pr2' ? 'evaluacion_pr2' : 'evaluacion_pr1';
+    const plantillaEval = await plantillaRepo.findOne({ where: { tipo: tipoPlantilla } });
+    if (!plantillaEval) throw new Error(`No existe plantilla de ${tipoPlantilla}.`);
+
+    if (!practica.id) throw new Error("Práctica inválida (sin ID).");
+    if (!plantillaEval.id) throw new Error("Plantilla inválida (sin ID).");
+
+    console.log('➡️ Guardar evaluación: practica.id =', practica.id, 'plantilla.id =', plantillaEval.id);
+
+    // Inserción explícita con SQL crudo para fijar columnas join correctamente
+    const insertSql = `
+        INSERT INTO formulario_respuestas (datos, estado, fecha_envio, plantilla_id, practica_id)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+    `;
+    const insertParams = [
+        JSON.stringify(respuestas || {}),
+        'enviado',
+        new Date(),
+        plantillaEval.id,
+        practica.id,
+    ];
+    const insertResult = await AppDataSource.query(insertSql, insertParams);
+    console.log('✔️ Evaluación insertada, id =', insertResult?.[0]?.id);
+
+        // Actualizar práctica con UPDATE directo para evitar side-effects en relaciones
+        await practicaRepo.createQueryBuilder()
+                .update(Practica)
+                .set({
+                    evaluacion_pendiente: false,
+                    evaluacion_completada: true,
+                    estado: 'evaluada'
+                })
+                .where("id = :id", { id: practica.id })
+                .execute();
+
+    return { message: "Evaluación registrada.", practicaId: practica.id };
 };

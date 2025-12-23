@@ -52,7 +52,19 @@ export async function findPracticaById(id) {
       }));
 
   // c) Unificar la lista para el Frontend
-  practica.documentos = [...documentosArchivos, ...bitacoraRespuestas]; 
+  // d) Mapear Evaluaciones para mostrarlas junto a documentos
+  const evaluacionRespuestas = practica.formularioRespuestas
+      .filter(respuesta => respuesta.plantilla?.tipo === 'evaluacion_pr1' || respuesta.plantilla?.tipo === 'evaluacion_pr2')
+      .map(respuesta => ({
+          id: respuesta.id,
+          tipo: 'evaluacion',
+          subtipo: respuesta.plantilla?.tipo,
+          fecha_creacion: respuesta.fecha_envio,
+          estado: 'enviado',
+          es_respuesta_formulario: true
+      }));
+
+  practica.documentos = [...documentosArchivos, ...bitacoraRespuestas, ...evaluacionRespuestas]; 
   return practica;
 }
 
@@ -184,7 +196,19 @@ export async function findPracticaByStudentId(studentId) {
       es_respuesta_formulario: true 
   }));
 
-    // c) Unificar la lista
-    practica.documentos = [...documentosArchivos, ...bitacoraRespuestas]; 
+    // c) Evaluaciones como documentos
+    const evaluacionRespuestas = practica.formularioRespuestas
+      .filter(respuesta => respuesta.plantilla?.tipo === 'evaluacion_pr1' || respuesta.plantilla?.tipo === 'evaluacion_pr2')
+      .map(respuesta => ({
+        id: respuesta.id,
+        tipo: 'evaluacion',
+        subtipo: respuesta.plantilla?.tipo,
+        fecha_creacion: respuesta.fecha_envio,
+        estado: 'enviado',
+        es_respuesta_formulario: true
+      }));
+
+    // d) Unificar la lista
+    practica.documentos = [...documentosArchivos, ...bitacoraRespuestas, ...evaluacionRespuestas]; 
   return practica; 
 }

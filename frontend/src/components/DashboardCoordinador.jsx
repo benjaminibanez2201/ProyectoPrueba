@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock, MessageCircle } from "lucide-react";
 // ✅ CORRECCIÓN: Importar solo getAllAlumnosDetalles (sin el duplicado)
 import { getAllAlumnosDetalles } from "../services/user.service.js";
-import { showErrorAlert, showSuccessAlert, showInfoAlert, showSelectAlert } from "../helpers/sweetAlert.js";
+import { showErrorAlert, showSuccessAlert, showInfoAlert, showSelectAlert, showConfirmAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
-import { updateEstadoPractica } from "../services/practica.service.js";
+import { updateEstadoPractica, cerrarPractica } from "../services/practica.service.js";
 import GestionRecursosModal from "./GestionRecursosModal";
 import DetallesCompletosAlumno from "./DetallesCompletosAlumno.jsx";
 import BandejaMensajes from "./BandejaMensajes.jsx";
@@ -187,6 +187,25 @@ const DashboardCoordinador = ({ user }) => {
     }
   };
 
+  const handleCerrarPractica = async (alumno) => {
+    const practica = alumno.practicasComoAlumno?.[0];
+    if (!practica) return showErrorAlert("Error", "No hay práctica para cerrar.");
+    if (practica.estado !== 'evaluada') return showErrorAlert("No permitido", "Solo puedes cerrar prácticas ya evaluadas.");
+    const result = await showConfirmAlert(
+      '¿Cerrar práctica?',
+      '¿Cerrar definitivamente esta práctica? Esta acción no se puede deshacer.'
+    );
+    if (!result.isConfirmed) return;
+    try {
+      await cerrarPractica(practica.id);
+      showSuccessAlert("Práctica cerrada", "Se ha cerrado correctamente.");
+      refreshAlumnos();
+    } catch (e) {
+      const msg = e?.response?.data?.message || e?.message || "No se pudo cerrar la práctica.";
+      showErrorAlert("Error", msg);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
@@ -346,6 +365,11 @@ const DashboardCoordinador = ({ user }) => {
                         <button onClick={() => handleEditarEstado(alumno)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200" title="Aprobar/Editar">
                           <Edit size={18} />
                         </button>
+                        {alumno.practicasComoAlumno?.[0]?.estado === 'evaluada' && (
+                          <button onClick={() => handleCerrarPractica(alumno)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200" title="Cerrar práctica">
+                            <Lock size={18} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

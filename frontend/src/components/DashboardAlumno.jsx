@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {Upload,FileText,Activity,Send,PlusCircle,Ticket,Info,AlertCircle,Mail,Clock,AlertTriangle,CheckCircle2,Flag,ClipboardCheck,Lock,FileCheck,Download,BookOpen,Check,} from "lucide-react";
-import { getMyPractica } from "../services/practica.service.js";
+import { getMyPractica, finalizarPractica } from "../services/practica.service.js";
 import {
   showErrorAlert,
   showSuccessAlert,
@@ -158,6 +158,17 @@ const DashboardAlumno = ({ user }) => {
     }
   }, []);
 
+  const onFinalizarPractica = async () => {
+    if (!practica) return;
+    try {
+      await finalizarPractica(practica.id);
+      await showSuccessAlert("Práctica finalizada", "Se envió la evaluación a la empresa.");
+      await fetchMiPractica();
+    } catch (e) {
+      showErrorAlert("No se pudo finalizar", e.message || "Intenta nuevamente");
+    }
+  };
+
   //caragar recursos publicos globales
   const fetchRecursosGlobales = async () => {
     try {
@@ -262,7 +273,17 @@ const DashboardAlumno = ({ user }) => {
                   </>
                 )}
               </div>
-
+              {/* Botón Finalizar práctica (cuando está en curso) */}
+              {practica?.estado === 'en_curso' && (
+                <div className="mt-4">
+                  <button
+                    onClick={onFinalizarPractica}
+                    className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Flag size={16} /> Finalizar Práctica y Enviar Evaluación
+                  </button>
+                </div>
+              )}
               {/* Token (Solo si existe) */}
               {practica?.empresaToken && (
                 <div className="mt-4 bg-green-50 p-3 rounded-lg border border-green-200">
@@ -370,13 +391,14 @@ const DashboardAlumno = ({ user }) => {
                   <BookOpen size={18} /> Completar Bitácora
                 </button>
                 <button
-                  disabled={!practica}
+                  disabled={!practica || practica?.estado === 'cerrada'}
                   onClick={() =>
                     navigate("/upload-document", {
                       state: { practicaId: practica?.id },
                     })
                   }
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap disabled:bg-gray-400"
+                  title={practica?.estado === 'cerrada' ? 'La práctica está cerrada. No se pueden subir documentos.' : undefined}
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   <Upload size={18} /> Subir Documentos
                 </button>

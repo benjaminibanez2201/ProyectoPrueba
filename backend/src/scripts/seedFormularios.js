@@ -478,7 +478,7 @@ async function seedFormularios() {
             required: true
           },
           {
-            id: "direccion",
+            id: "direccion_empresa",
             label: "Dirección",
             tipo: "text",
             fillBy: "empresa",
@@ -527,7 +527,7 @@ async function seedFormularios() {
             required: true
           },
           {
-            id: "fecha_fin",
+            id: "fecha_termino",
             label: "Fecha Término",
             tipo: "date",
             fillBy: "empresa",
@@ -1058,7 +1058,7 @@ async function seedFormularios() {
             required: true
           },
           {
-            id: "direccion",
+            id: "direccion_empresa",
             label: "Dirección",
             tipo: "text",
             fillBy: "empresa",
@@ -1107,7 +1107,7 @@ async function seedFormularios() {
             required: true
           },
           {
-            id: "fecha_fin",
+            id: "fecha_termino",
             label: "Fecha Término",
             tipo: "date",
             fillBy: "empresa",
