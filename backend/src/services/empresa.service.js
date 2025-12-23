@@ -104,9 +104,26 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
         throw new Error("Se requiere confirmación explícita.");
     }
 
-    // 4. Actualizamos Estado de la Práctica
-    practica.estado = 'pendiente_validacion';
-    practica.fecha_inicio = new Date(); // Guardamos fecha tentativa de inicio
+    // 4. Corrección Empresa + Estado de la Práctica
+    practica.correccion_empresa_hecha = true;
+
+    if (practica.correccion_destinatario === 'ambos') {
+        // Si el alumno aún no corrige, no avanzar a validación
+        if (!practica.correccion_alumno_hecha) {
+            // Mantener estado en 'rechazada' si todavía no cambió
+            // o en 'rechazada' / 'enviada_a_empresa' según haya sido ajustado por el alumno
+            // No tocar fecha_inicio
+        } else {
+            // Ambos ya corrigieron → enviar a coordinador
+            practica.estado = 'pendiente_validacion';
+            practica.fecha_inicio = new Date();
+        }
+    } else {
+        // Solo empresa o alumno → al confirmar empresa, pasa a validación
+        practica.estado = 'pendiente_validacion';
+        practica.fecha_inicio = new Date();
+    }
+
     await practicaRepo.save(practica);
 
     // 5. Guardamos las Respuestas del Formulario
@@ -119,12 +136,19 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
         
         console.log("💾 Datos ANTES de fusionar:", datosFinales);
 
-        // FUSIONAMOS:
-        // Lo que envía la empresa se agrega al objeto raíz, junto a lo que ya había
-        datosFinales = { ...datosFinales, ...respuestasEmpresa };
+        // FUSIONAR respuestas de empresa: escribir en raíz y reflejar también en datosFormulario
+        datosFinales = { ...datosFinales, ...(respuestasEmpresa || {}) };
+        const datosFormulario = datosFinales?.datosFormulario && typeof datosFinales.datosFormulario === 'object'
+            ? { ...datosFinales.datosFormulario }
+            : {};
+        for (const [key, value] of Object.entries(respuestasEmpresa || {})) {
+            datosFormulario[key] = value;
+        }
+        datosFinales.datosFormulario = datosFormulario;
 
         console.log("💾 Datos DESPUÉS de fusionar (A Guardar):", datosFinales);
 
+        // Guardar estructura final coherente
         formulario.datos = datosFinales;
         formulario.estado = 'enviado';
         

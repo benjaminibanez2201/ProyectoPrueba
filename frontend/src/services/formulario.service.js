@@ -82,3 +82,9 @@ export const getRespuesta = async (id) => {
     const response = await instance.get(`/formularios/respuesta/${id}`);
     return response.data;
 };
+
+// Alumno corrige su postulación rechazada
+export const corregirPostulacionRespuesta = async (id, respuestas) => {
+  const response = await instance.put(`/formularios/respuesta/${id}/correccion`, { respuestas });
+  return response.data;
+};

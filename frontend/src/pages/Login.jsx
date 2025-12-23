@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { login } from "../services/auth.service";
 import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert.js";
 import { useAuth } from "../context/AuthContext";
@@ -10,6 +10,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { loginContext } = useAuth();
+  const location = useLocation();
 
   const [showPassword, setShowPassword] = useState(false);
   const [tokenEmpresa, setTokenEmpresa] = useState("");
@@ -32,7 +33,8 @@ const Login = () => {
         }
 
         loginContext(userData, token);
-        navigate("/panel");
+        const redirectTo = location.state?.from?.pathname || "/panel";
+        navigate(redirectTo);
       } else {
         showErrorAlert("Error", response.message || response.errorDetails);
       }

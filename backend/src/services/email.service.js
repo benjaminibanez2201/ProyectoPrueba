@@ -110,7 +110,16 @@ export const enviarNotificacionEvaluacion = async (practica, decision, observaci
     // --- CASO B: RECHAZADO / OBSERVADO ---
     else if (decision === 'rechazar') {
         asunto = "[CORRECCIÓN REQUERIDA] - Práctica Profesional UBB";
-        
+      // Intentamos ubicar la respuesta de postulación para deep-link al alumno
+      const respuestaPostulacion = Array.isArray(practica?.formularioRespuestas)
+        ? practica.formularioRespuestas.find(r => r?.plantilla?.tipo === 'postulacion') || practica.formularioRespuestas[0]
+        : null;
+      const respuestaId = respuestaPostulacion?.id;
+      const linkAlumno = respuestaId ? `http://localhost:5173/alumno/correccion/${respuestaId}` : null;
+      // Link para empresa (token)
+      const tokenEmpresa = practica?.empresaToken?.token;
+      const linkEmpresa = tokenEmpresa ? `http://localhost:5173/empresa/acceso/${tokenEmpresa}` : null;
+
         // Lógica de a quién culpar (quién recibe el correo)
         if (destinatarioError === 'alumno') destinatarios = [emailAlumno];
         else if (destinatarioError === 'empresa') destinatarios = [emailEmpresa];
@@ -130,7 +139,24 @@ export const enviarNotificacionEvaluacion = async (practica, decision, observaci
                         ${observaciones}
                     </blockquote>
 
-                    <p><strong>Acción Requerida:</strong> Por favor ingrese al sistema para corregir los datos solicitados a la brevedad.</p>
+            <p><strong>Acción Requerida:</strong> Por favor ingrese al sistema para corregir los datos solicitados a la brevedad.</p>
+            ${linkAlumno && (destinatarioError === 'alumno' || destinatarioError === 'ambos') ? `
+            <div style="text-align:center; margin:24px 0;">
+              <a href="${linkAlumno}" style="background-color:#0d6efd; color:white; padding:12px 20px; text-decoration:none; border-radius:6px; display:inline-block;">Corregir como Alumno</a>
+            </div>
+            <p style="font-size:12px; color:#666; text-align:center;">Si el botón no funciona, use este enlace: ${linkAlumno}</p>
+            ` : ''}
+            ${linkEmpresa && (destinatarioError === 'empresa') ? `
+            <div style="text-align:center; margin:24px 0;">
+              <a href="${linkEmpresa}" style="background-color:#198754; color:white; padding:12px 20px; text-decoration:none; border-radius:6px; display:inline-block;">Corregir como Empresa</a>
+            </div>
+            <p style="font-size:12px; color:#666; text-align:center;">Si el botón no funciona, use este enlace: ${linkEmpresa}</p>
+            ` : ''}
+            ${(destinatarioError === 'ambos') ? `
+            <div style=\"background:#fff7e6; border:1px solid #ffe4b5; padding:12px; border-radius:6px; color:#8a6d3b; margin-top:12px;\">
+              Nota para la Empresa: por favor espere a que el alumno corrija su sección. Posteriormente recibirá un correo para completar su parte.
+            </div>
+            ` : ''}
                 </div>
                 <div style="background-color: #f1f1f1; padding: 10px; text-align: center; font-size: 12px; color: #666;">
                     Universidad del Bío-Bío - Facultad de Ciencias Empresariales

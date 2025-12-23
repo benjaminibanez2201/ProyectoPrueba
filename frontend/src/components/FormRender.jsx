@@ -113,7 +113,7 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
   );
 };
 
-// --- 3. FORM RENDER PRINCIPAL (CON LA LÓGICA NUEVA AGREGADA) ---
+// --- 3. FORM RENDER PRINCIPAL ---
 // Ahora aceptamos 'respuestasIniciales' (o 'valores') y 'userType'
 const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit, readOnly = false, userType = "alumno", titulo, buttonText }) => {
   // Fusionamos valores y respuestasIniciales por compatibilidad
@@ -149,7 +149,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
   // ----------------------------------------
   // ----------------------------------------------------
 
-  const handleChange = (id, value, validationType) => { // 1. Agrega validationType aquí
+  const handleChange = (id, value, validationType) => { // se llama al cambiar un campo
 
     // Guardamos el valor
     setRespuestas((prev) => ({
@@ -158,7 +158,6 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     }));
 
     // 2. Ejecutamos la validación si existe
-    // (Esto es lo que te faltaba, por eso se pasaba la validación por las weas)
     if (validationType && !readOnly) {
       validateField(id, value, validationType);
     }
@@ -238,9 +237,9 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
       handleChange(id, "");
     }
   }
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  
+  const handleSubmit = (e) => { 
+    e.preventDefault(); // Evita que el formulario recargue la página
 
     // === Validación cruzada de fechas ===
     const fechaInicio = new Date(respuestas["fecha_inicio"]);
@@ -258,8 +257,8 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
 
     const firmas = {};
     Object.keys(canvasRefs.current).forEach((key) => {
-      const canvas = canvasRefs.current[key];
-      if (canvas) firmas[key] = canvas.toDataURL("image/png");
+      const canvas = canvasRefs.current[key]; // Obtener el canvas correspondiente
+      if (canvas) firmas[key] = canvas.toDataURL("image/png"); // Convierte el dibujo del canvas en una imagen base64
     });
     const datosFinales = { ...respuestas, ...firmas };
     onSubmit(datosFinales);
@@ -476,7 +475,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
       >
         {esquema && esquema.map((campo) => (
           <React.Fragment key={campo.id || campo.nombre}>
-            {renderField(campo)}
+            {renderField(campo)} 
           </React.Fragment>
         ))}
         {!readOnly && (

@@ -20,6 +20,7 @@ import SubirDocumento from  '@pages/SubirDocumento';
 import AprobarPracticas from '@pages/AprobarPracticas';
 import FormResponder from '@pages/ResponderBitacora';
 import VistaPreviaAlumno from '@pages/VistaPreviaAlumno';
+import AlumnoCorreccion from '@pages/AlumnoCorreccion';
 
 import '@styles/styles.css';
 
@@ -127,6 +128,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['alumno', 'coordinador']}>
             <VistaPreviaAlumno />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/alumno/correccion/:id',
+        element: (
+          <ProtectedRoute allowedRoles={['alumno']}>
+            <AlumnoCorreccion />
           </ProtectedRoute>
         )
       },

@@ -3,6 +3,7 @@ import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
 import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
 import { saveBitacoraResponse } from '../services/formulario.service.js';
 import { getRespuestaById } from '../services/formulario.service.js';
+import { corregirPostulacionRespuesta } from '../services/formulario.service.js';
 
 // La llave
 const plantillaRepository = AppDataSource.getRepository(FormularioPlantilla);
@@ -182,4 +183,20 @@ export const getTodasLasPlantillas = async (req, res) => {
     } catch (error) {
         handleErrorServer(res, 500, "Error al obtener plantillas", error.message);
     }
+};
+
+// Alumno corrige y reenvía su postulación
+export const corregirPostulacion = async (req, res) => {
+  try {
+    const { id } = req.params; // id de FormularioRespuesta
+    const { respuestas } = req.body; // JSON con datos del formulario
+    const alumnoId = req.user.id;
+
+    const result = await corregirPostulacionRespuesta(id, alumnoId, respuestas);
+
+    return handleSuccess(res, 200, 'Postulación corregida exitosamente', result);
+  } catch (error) {
+    console.error('Error en corregirPostulacion:', error);
+    return handleErrorServer(res, 500, error.message || 'Error al corregir');
+  }
 };

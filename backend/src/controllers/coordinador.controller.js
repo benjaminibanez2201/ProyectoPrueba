@@ -3,6 +3,7 @@ import { Practica } from "../entities/practica.entity.js";
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
 import { handleErrorClient, handleSuccess, handleErrorServer } from "../Handlers/responseHandlers.js";
 import { enviarNotificacionEvaluacion } from "../services/email.service.js";
+import { enviarMensajeService } from "../services/comunicacion.service.js";
 
 // 1. Obtener lista de prácticas pendientes de validación
 export const getPendientes = async (req, res) => {
@@ -33,7 +34,12 @@ export const evaluarSolicitud = async (req, res) => {
         // Buscar la práctica
         const practica = await practicaRepo.findOne({
             where: { id },
-            relations: ["formularioRespuestas"]
+            relations: [
+                "formularioRespuestas",
+                "student",
+                "empresaToken",
+                "empresa"
+            ]
         });
 
         if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
@@ -53,7 +59,10 @@ export const evaluarSolicitud = async (req, res) => {
             }
 
         } else if (decision === 'rechazar') {
-            practica.estado = "rechazada"; // Vuelve al alumno o muere ahí
+            practica.estado = "rechazada"; // Vuelve al alumno/empresa según destinatario
+            practica.correccion_destinatario = destinatario || null;
+            practica.correccion_alumno_hecha = false;
+            practica.correccion_empresa_hecha = false;
             
             if (respuestaForm) {
                 respuestaForm.estado = "rechazado";
@@ -69,6 +78,36 @@ export const evaluarSolicitud = async (req, res) => {
         // 3. ENVÍO DE CORREO (Después de guardar todo)
         // No ponemos await para que el response sea rápido y el correo se envíe en segundo plano
         enviarNotificacionEvaluacion(practica, decision, observaciones, destinatario);
+
+        // 4. MENSAJE INTERNO AUTOMÁTICO A EMPRESA CUANDO SE RECHAZA
+        try {
+            if (decision === 'rechazar' && (destinatario === 'empresa' || destinatario === 'ambos')) {
+                const asunto = "Observación de práctica – correcciones requeridas";
+                const contenido = `Se ha observado la documentación de la práctica del alumno ${practica.student?.name || ''}.\n\nDetalle: ${observaciones || 'Sin detalle.'}`;
+
+                const destinatarioNombre = practica.empresaToken?.empresaNombre || practica.empresa?.name || "Empresa";
+                const destinatarioEmail = practica.empresa?.email || practica.empresaToken?.empresaCorreo;
+
+                if (destinatarioEmail) {
+                    // No esperamos a que termine; se ejecuta en segundo plano
+                    enviarMensajeService({
+                        practicaId: practica.id,
+                        asunto,
+                        contenido,
+                        remitenteTipo: 'coordinador',
+                        remitenteNombre: req.user?.name || 'Coordinador',
+                        remitenteEmail: req.user?.email || 'coordinador@u.cl',
+                        destinatarioTipo: 'empresa',
+                        destinatarioNombre,
+                        destinatarioEmail,
+                        coordinadorId: req.user?.id || null
+                    });
+                }
+            }
+        } catch (e) {
+            // Evitamos romper la respuesta si falla el envío del mensaje interno
+            console.warn('No se pudo crear mensaje interno automático:', e?.message);
+        }
 
         return handleSuccess(res, 200, `Solicitud ${decision === 'aprobar' ? 'Aprobada' : 'Rechazada'} correctamente.`);
 

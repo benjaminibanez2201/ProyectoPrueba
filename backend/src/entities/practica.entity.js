@@ -51,6 +51,22 @@ export const Practica = new EntitySchema({
       length: 100,
       nullable: true,
     },
+    correccion_destinatario: {
+      type: "enum",
+      enum: ["alumno", "empresa", "ambos"],
+      nullable: true,
+      comment: "A quién se solicitó corrección tras rechazo",
+    },
+    correccion_alumno_hecha: {
+      type: "boolean",
+      default: false,
+      nullable: false,
+    },
+    correccion_empresa_hecha: {
+      type: "boolean",
+      default: false,
+      nullable: false,
+    },
   },
   relations: {
     student: {

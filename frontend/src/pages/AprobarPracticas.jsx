@@ -71,10 +71,10 @@ const AprobarPracticas = () => {
     // Sacamos 'datosFormulario' aparte, y dejamos el resto (datos empresa) en 'restoDatos'
     const { datosFormulario, ...restoDatos } = respuesta.datos;
 
-    // Mezclamos todo en un solo nivel
+    // Mezclamos todo priorizando los últimos cambios del alumno (datosFormulario)
     const datosUnificados = {
-      ...(datosFormulario || {}), // Datos del Alumno sacados de la caja
       ...restoDatos, // Datos de la Empresa
+      ...(datosFormulario || {}), // Datos del Alumno sobrescriben si hay conflicto
     };
 
     console.log("Datos Unificados para FormRender:", datosUnificados);
