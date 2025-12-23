@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Upload, FileText } from "lucide-react";
+import { Upload, FileText, ArrowLeft } from "lucide-react";
 import { uploadDocumento } from "../services/documento.service";
 import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert";
 import { useLocation, useNavigate } from 'react-router-dom'; 
@@ -55,19 +55,29 @@ const SubirDocumento = () => {
   };
 
   return (
-    <div className="min-h-screen bg-green-100 flex justify-center pt-12 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100  flex justify-center pt-12 p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-5xl border border-gray-100 h-full">
-       {/* 3. CAMBIO: Usamos un Grid para poner el título a la izquierda y el form a la derecha (opcional, pero se ve genial en ancho) */}
         <div className="grid md:grid-cols-3 gap-8">
           
           {/* Columna Izquierda: Título e Instrucciones */}
           <div className="md:col-span-1 border-r border-gray-100 pr-4">
+
+            {/*boton de volver*/}
+            <div className="mb-4">
+               <button 
+                 onClick={() => navigate(-1)} // Vuelve atrás
+                 className="flex items-center gap-2 text-gray-500 hover:text-green-700 transition-colors text-sm font-medium">
+                 <ArrowLeft size={20} />
+                 <span>Volver</span>
+               </button>
+            </div>
+            
             <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
               <Upload className="text-green-600" size={32} />
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Subir Documento</h2>
             <p className="text-gray-500 text-sm mb-4">
-              Sube aquí tus evidencias, informes finales o bitácoras semanales.
+              Sube aquí tus evidencias, informes finales o currículum.
             </p>
             
             <div className="bg-green-50 p-4 rounded-lg text-sm text-green-800">
@@ -90,21 +100,9 @@ const SubirDocumento = () => {
                 >
                   <option value="" disabled>Selecciona una opción...</option>
                   <option value="Informe">Informe Final</option>
-                  <option value="Bitácora">Bitácora</option>
+                  <option value="Curriculum">Currículum</option>
                   <option value="Otro">Otro</option>
                 </select>
-              </div>
-
-              {/* --- SELECCIÓN DE ID PRÁCTICA --- */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">ID Práctica</label>
-                <input
-                  type="number"
-                  value={practicaId}
-                  onChange={(e) => setPracticaId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-50"
-                  readOnly
-                />
               </div>
 
               {/* --- INPUT DE ARCHIVO --- */}

@@ -1,3 +1,5 @@
+import { AppDataSource } from "../config/configDb.js";
+import { DocumentosPractica } from '../entities/documentos.entity.js';
 import { createDocumentoArchivo } from "../services/documento.service.js";
 import {handleSuccess, handleErrorClient, handleErrorServer} from '../Handlers/responseHandlers.js';
 import {getPublicUrl} from '../helpers/file.helper.js';
@@ -5,6 +7,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getDocumentoById, deleteDocumento } from '../services/documento.service.js';
+
+const DocumentoRepository = AppDataSource.getRepository(DocumentosPractica);
 
 export async function uploadDocumento(req, res) {
     try {
@@ -67,4 +71,62 @@ export async function deleteDocumentoHandler(req, res) {
   } catch (error) {
     handleErrorServer(res, 500, "Error al eliminar el documento", error.message);
   }
+}
+
+// para que el coordinador revise un documento específico
+export async function revisarDocumento(req, res) {
+    try {
+        const documentoId = req.params.id; // id del documento a revisar
+
+        // buscar el documento en la bdd
+        const documento = await DocumentoRepository.findOne({ where: { id: documentoId } });
+
+        if (!documento || !documento.ruta_archivo) { // si no existe o no tiene ruta de archivo
+            return handleErrorClient(res, 404, "Documento o ruta de archivo no encontrada.");
+        }
+
+        // construir la ruta física del archivo
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+
+        // eliminar el prefijo 'uploads/' si existe
+        let nombreArchivo = documento.ruta_archivo.replace(/^uploads\//, '');
+        const filePath = path.resolve(__dirname, '../../uploads', nombreArchivo);
+
+        // configuración de encabezados para visualización/descarga
+        const fileExtension = path.extname(documento.ruta_archivo).toLowerCase();
+        let contentType = 'application/octet-stream'; // Tipo genérico
+        
+        if (fileExtension === '.pdf') { // PDF
+            contentType = 'application/pdf';
+        } else if (fileExtension === '.docx' || fileExtension === '.doc') { // DOCX/DOC
+            contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; 
+        } else if (fileExtension === '.zip') { // ZIP
+            contentType = 'application/zip'; 
+        }
+        
+        //establecer los encabezados 
+        res.setHeader('Content-Type', contentType);
+
+        //establecer Content-Disposition según el tipo de archivo
+        if (fileExtension === '.zip') {
+            //ZIP, DOCX: Forzar DESCARGA.
+            res.setHeader('Content-Disposition', `attachment; filename="${path.basename(documento.ruta_archivo)}"`);
+        } else {
+            //PDF: Visualización INLINE.
+            res.setHeader('Content-Disposition', `inline; filename="${path.basename(documento.ruta_archivo)}"`);
+        }
+        //servir el archivo
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error("Error al servir el archivo:", err);
+                if (err.code === 'ENOENT') { // archivo no encontrado
+                    return handleErrorServer(res, 404, "Archivo físico no encontrado en el servidor.", err.code);
+                }
+                return handleErrorServer(res, 500, "Error desconocido al servir el archivo.", err.message);
+            }
+        });
+    } catch (error) {
+        handleErrorServer(res, 500, "Error interno al revisar el documento.", error.message);
+    }
 }

@@ -41,8 +41,14 @@ function fileFilter (req, file, cb) {
 }
 
 //recordar usar 'documento' como nombre del campo en frontend y postman
-export const uploadMiddleware = multer({
+export const upload = multer({
     storage,
     fileFilter,
     limits: { fileSize: 10 * 1024 * 1024 } // Limite de 10MB
-}).single('documento');
+});
+
+//exportaciones
+//1. para alumnos, front envia 'documento'
+export const uploadMiddleware = upload.single('documento');
+//2. para recursos generales del coordi, front envia 'file'
+export const uploadRecursoMiddleware = upload.single('file');

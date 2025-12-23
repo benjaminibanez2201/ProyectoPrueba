@@ -4,8 +4,8 @@ import { validarTokenEmpresa, confirmarInicioPractica } from '../services/empres
 import { getPlantilla } from '../services/formulario.service.js'; // 1. Traer la plantilla
 import FormRender from '../components/FormRender'; // 2. Traer tu componente estrella
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js'; 
-import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, ClipboardList, Clock } from 'lucide-react';
-
+import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, ClipboardList, Clock, MessageCircle } from 'lucide-react';
+import ChatMensajeria from '../components/ChatMensajeria';
 
 const Access = () => {
     const { token } = useParams();
@@ -19,6 +19,7 @@ const Access = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [procesando, setProcesando] = useState(false);
+    const [chatAbierto, setChatAbierto] = useState(false);
 
     // Lógica de Carga Inicial
     useEffect(() => {
@@ -151,11 +152,26 @@ const handleFormSubmit = async (respuestas) => {
                             <p className="text-xs text-gray-500">{empresaNombre}</p>
                         </div>
                     </div>
-                    <button onClick={handleCerrarSesion} className="text-gray-500 hover:text-red-600 flex items-center gap-2 text-sm font-medium transition-colors">
-                        <LogOut size={16} /> Salir
-                    </button>
+                    
+                    {/* ← NUEVO: Botones de acción en el header */}
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => setChatAbierto(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow"
+                        >
+                            <MessageCircle size={18} />
+                            Mensajes
+                        </button>
+                        
+                        <button 
+                            onClick={handleCerrarSesion} 
+                            className="text-gray-500 hover:text-red-600 flex items-center gap-2 text-sm font-medium transition-colors"
+                        >
+                            <LogOut size={16} /> Salir
+                        </button>
+                    </div>
                 </div>
-            </header>
+            </header>          
 
             <main className="max-w-4xl mx-auto px-4 mt-8">
                 
@@ -233,7 +249,20 @@ const handleFormSubmit = async (respuestas) => {
                         </button>
                     </div>
                 )}
-
+                    {/* ← NUEVO: Modal de Chat */}
+                {chatAbierto && data && (
+                    <ChatMensajeria
+                        practicaId={data.practica?.id}
+                        token={token}
+                        destinatarioId={data.coordinadorId} // Asume que el backend devuelve el ID del coordinador
+                        usuarioActual={{ 
+                            id: data.empresaId || 'empresa', 
+                            name: empresaNombre,
+                            email: data.practica?.empresa_email || data.empresaCorreo // ← Agregar email
+                        }}
+                        onClose={() => setChatAbierto(false)}
+                    />
+                )}
             </main>
         </div>
     );

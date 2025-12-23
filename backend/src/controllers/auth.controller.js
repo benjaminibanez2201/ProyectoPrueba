@@ -1,9 +1,9 @@
-import { registerUser,loginUser } from "../services/auth.service.js";
+import { registerUser, loginUser } from "../services/auth.service.js";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 
 export async function login(req, res) {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body; 
     
     if (!email || !password) {
       return handleErrorClient(res, 400, "Email y contraseña son requeridos");
@@ -29,12 +29,12 @@ export async function register(req, res) {
 
     handleSuccess(res, 201, "Usuario registrado exitosamente", newUser);
   } catch (error) {
-    // 1. Verificar si el error es por correo duplicado
+    // Verificar si el error es por correo duplicado
     if (error.message && error.message.includes("El correo ya está registrado.")) { 
       // Si se encuentra, devolvemos un 409 (Conflict)
       return handleErrorClient(res, 409, error.message);
     }else {
-       return handleErrorServer(res, 500, "Error interno del servidor", error.message);
+      return handleErrorServer(res, 500, "Error interno del servidor", error.message);
     }
   }
 }

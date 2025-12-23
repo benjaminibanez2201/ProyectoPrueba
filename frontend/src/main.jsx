@@ -18,6 +18,8 @@ import EditarFormulario from './pages/EditarFormulario';
 import SubirDocumento from  '@pages/SubirDocumento';
 
 import AprobarPracticas from '@pages/AprobarPracticas';
+import FormResponder from '@pages/ResponderBitacora';
+import VistaPreviaAlumno from '@pages/VistaPreviaAlumno';
 
 import '@styles/styles.css';
 
@@ -97,7 +99,11 @@ const router = createBrowserRouter([
       },
       {
         path: '/upload-document',
-        element: <SubirDocumento />
+        element: (
+        <ProtectedRoute>
+        <SubirDocumento />
+        </ProtectedRoute>
+        )
       },
       {
         path: '/coordinador/aprobar-practicas',
@@ -106,7 +112,25 @@ const router = createBrowserRouter([
           <AprobarPracticas />
           </ProtectedRoute>
         )
-      }
+      },
+      {
+        path: '/forms/responder/bitacora', 
+        element: (
+          <ProtectedRoute>
+            <FormResponder /> 
+          </ProtectedRoute>
+        )
+      },
+
+      {
+        path: '/revision-formulario/:id',
+        element: (
+          <ProtectedRoute allowedRoles={['alumno', 'coordinador']}>
+            <VistaPreviaAlumno />
+          </ProtectedRoute>
+        )
+      },
+
     ]
   }
 ]);

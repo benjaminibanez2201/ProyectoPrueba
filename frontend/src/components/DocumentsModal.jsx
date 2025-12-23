@@ -1,7 +1,11 @@
 import React from 'react';
-import { X, FileText, Download,Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, FileText, Download,Trash2, Eye } from 'lucide-react';
 
 const DocumentsModal = ({ isOpen, onClose, studentName, documents, onDelete }) => {
+
+  const navigate = useNavigate();
+
   if (!isOpen) return null;
 
   // URL Base para los links
@@ -31,49 +35,91 @@ const DocumentsModal = ({ isOpen, onClose, studentName, documents, onDelete }) =
         {/* Lista de Documentos */}
         <div className="p-4 max-h-[60vh] overflow-y-auto">
           {documents.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No hay documentos.</p>
+            <p className="text-gray-500 text-center py-4">No hay documentos registrados.</p>
           ) : (
             <div className="space-y-2">
-              {documents.map((doc) => (
-                <a
-                  key={doc.id}
-                  href={`${BASE_URL}/uploads/${doc.ruta_archivo}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50 hover:bg-blue-50 hover:border-blue-200 transition-all group"
-                >
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="bg-white p-2 rounded-md shadow-sm text-blue-500">
-                      <FileText size={20} />
+              {documents.map((doc) => {
+                
+                // DETECTAMOS EL TIPO
+                const isBitacora = doc.es_respuesta_formulario;
+                
+                // CLASES COMUNES (Para que ambos se vean idénticos)
+                const commonClasses = "flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50 hover:bg-blue-50 hover:border-blue-200 transition-all group w-full text-left cursor-pointer relative";
+
+                // CONTENIDO INTERNO (Reutilizable)
+                const innerContent = (
+                  <>
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      {/* Icono: Azul para Bitácora, Gris/Default para Archivo */}
+                      <div className={`p-2 rounded-md shadow-sm ${isBitacora ? 'bg-blue-100 text-blue-600' : 'bg-white text-blue-500'}`}>
+                        <FileText size={20} />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-semibold text-gray-700 text-sm truncate capitalize">
+                          {doc.tipo}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {isBitacora ? "Click para revisar" : "Click para descargar"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-semibold text-gray-700 text-sm truncate">
-                        {doc.tipo}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        Click para ver
-                      </span>
+                    
+                    <div className="flex items-center gap-2">
+                        {/* Icono de Acción (Ojo o Descarga) */}
+                        <div className="text-gray-300 group-hover:text-blue-600 transition-colors mr-2">
+                        {isBitacora ? <Eye size={18} /> : <Download size={18} />}
+                        </div>
+
+                        {/* Botón Eliminar */}
+                        {onDelete && (
+                        <button
+                            onClick={(e) => {
+                            e.preventDefault(); 
+                            e.stopPropagation(); // Evita navegar/descargar al borrar
+                            onClose(); // Opcional: Cerrar modal al borrar o mantenerlo
+                            onDelete(doc.id, isBitacora); 
+                            }}
+                            className="p-1.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors z-10"
+                            title="Eliminar documento"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                        )}
                     </div>
-                  </div>
-                  
-                  <div className="text-gray-300 group-hover:text-blue-600 transition-colors">
-                    <Download size={18} />
-                  </div>
-                  {onDelete && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault(); // Evita que se abra el enlace de descarga
-                          e.stopPropagation();
-                          onDelete(doc.id); // Llamamos a la función
-                        }}
-                        className="p-1.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors z-10"
-                        title="Eliminar documento"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    )}
-                </a>
-              ))}
+                  </>
+                );
+
+                // RENDERIZADO CONDICIONAL
+                if (isBitacora) {
+                    // OPCIÓN A: ES BITÁCORA (Usamos DIV + Navigate)
+                    return (
+                        <div
+                            key={doc.id}
+                            className={commonClasses}
+                            onClick={() => {
+                                onClose();
+                                navigate(`/revision-formulario/${doc.id}`);
+                            }}
+                        >
+                            {innerContent}
+                        </div>
+                    );
+                } else {
+                    // OPCIÓN B: ES ARCHIVO (Usamos etiqueta A + Href)
+                    return (
+                        <a
+                            key={doc.id}
+                            href={`${BASE_URL}/uploads/${doc.ruta_archivo}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={commonClasses}
+                        >
+                            {innerContent}
+                        </a>
+                    );
+                }
+
+              })}
             </div>
           )}
         </div>

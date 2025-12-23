@@ -37,12 +37,47 @@ export const getAlumnos = async () => {
  * Llama al endpoint GET /users/alumnos/:id/detalles
  * (Cumple con el RF5)
  */
+//export const getAlumnoDetalles = async (id) => {
+//  if (!id) {
+//    throw new Error("ID del alumno no proporcionado");
+//  }
+//
+//  try {
+//    const response = await instance.get(
+//      `/users/alumnos/${id}/detalles`
+//    );
+//    return response.data.data;
+//  } catch (error) {
+//    console.error(`Error al obtener detalles del alumno ${id}:`, error);
+//    throw error.response?.data || error;
+//  }
+//};
+
+//export const getAlumnoDetalles = async (id) => {
+//  if (!id) {
+//    throw new Error("ID del alumno no proporcionado");
+//  }
+//
+//  const response = await instance.get(
+//    `/users/alumnos/${id}/detalles`
+//  );
+//
+//  return response.data.data;
+//};
+
+
+// 1. Para obtener TODOS los alumnos (sin ID)
+export const getAllAlumnosDetalles = async () => {
+  const response = await instance.get('/users/alumnos/detalles');
+  return response.data.data;
+};
+
+// 2. Para obtener UN alumno específico (con ID)
 export const getAlumnoDetalles = async (id) => {
-  try {
-    const response = await instance.get(`/users/alumnos/${id}/detalles`);
-    return response.data.data;
-  } catch (error) {
-    console.error(`Error al obtener detalles del alumno ${id}:`, error);
-    throw error.response?.data || error;
+  if (!id) {
+    throw new Error("ID del alumno no proporcionado");
   }
+
+  const response = await instance.get(`/users/alumnos/${id}/detalles`);
+  return response.data.data;
 };

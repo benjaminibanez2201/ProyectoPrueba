@@ -1,19 +1,20 @@
 import React, { useState, useMemo } from "react";
 import { CSVLink } from "react-csv";
-import { useNavigate } from "react-router-dom"; // Hook para navegar
-import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock } from "lucide-react"; // Iconos
-import { getAlumnos } from "../services/user.service.js";
-import { showErrorAlert, showSuccessAlert, showInfoAlert, showHtmlAlert, showSelectAlert } from "../helpers/sweetAlert.js";
+import { useNavigate } from "react-router-dom";
+import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock, MessageCircle } from "lucide-react";
+// ✅ CORRECCIÓN: Importar solo getAllAlumnosDetalles (sin el duplicado)
+import { getAllAlumnosDetalles } from "../services/user.service.js";
+import { showErrorAlert, showSuccessAlert, showInfoAlert, showSelectAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { updateEstadoPractica } from "../services/practica.service.js";
-
+import GestionRecursosModal from "./GestionRecursosModal";
+import DetallesCompletosAlumno from "./DetallesCompletosAlumno.jsx";
+import BandejaMensajes from "./BandejaMensajes.jsx";
 
 // --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---
 const EstadoBadge = ({ practica }) => {
-  // 1. Obtenemos el estado crudo
   const estado = practica ? practica.estado : 'pendiente';
 
-  // 2. DICCIONARIO DE ICONOS
   const icons = {
     pendiente: AlertCircle,
     enviada_a_empresa: Mail,
@@ -25,7 +26,6 @@ const EstadoBadge = ({ practica }) => {
     cerrada: Lock
   };
 
-  // 3. DICCIONARIO DE COLORES
   const statusColors = {
     pendiente: "bg-gray-100 text-gray-600 border border-gray-200",
     enviada_a_empresa: "bg-blue-50 text-blue-700 border border-blue-200",
@@ -37,7 +37,6 @@ const EstadoBadge = ({ practica }) => {
     cerrada: "bg-gray-800 text-white border border-gray-600",
   };
 
-  // 4. DICCIONARIO DE TEXTOS
   const statusLabels = {
     pendiente: "Sin Inscribir Empresa",
     enviada_a_empresa: "Esperando Empresa",
@@ -49,7 +48,6 @@ const EstadoBadge = ({ practica }) => {
     cerrada: "Cerrada"
   };
 
-  // Selección de recursos
   const IconComponent = icons[estado] || AlertCircle;
   const colorClass = statusColors[estado] || statusColors.pendiente;
   const texto = statusLabels[estado] || estado;
@@ -68,7 +66,6 @@ const EstadoBadge = ({ practica }) => {
 
 // --- COMPONENTE PRINCIPAL ---
 const DashboardCoordinador = ({ user }) => {
-  // 1. Hooks
   const navigate = useNavigate();
   const [alumnos, setAlumnos] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -76,13 +73,16 @@ const DashboardCoordinador = ({ user }) => {
   const [showTable, setShowTable] = useState(false);
   const [filter, setFilter] = useState('todas');
   const [selectedStudentForDocs, setSelectedStudentForDocs] = useState(null);
-
-  // 1. FUNCIÓN NUEVA: Solo carga datos (sin cerrar la tabla)
+  const [alumnoDocs, setAlumnoDocs] = useState(null);
+  const [showBandeja, setShowBandeja] = useState(false);
+  const [isRecursosModalOpen, setIsRecursosModalOpen] = useState(false);
+  
+  // ✅ CORRECCIÓN: Usar getAllAlumnosDetalles() sin parámetros
   const refreshAlumnos = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const alumnosArray = await getAlumnos();
+      const alumnosArray = await getAllAlumnosDetalles(); // ← SIN ID
       setAlumnos(alumnosArray);
     } catch (err) {
       const errorMessage = err.message || "No se pudo cargar la lista";
@@ -93,18 +93,15 @@ const DashboardCoordinador = ({ user }) => {
     }
   };
 
-  // 2. Cargar Alumnos
   const handleLoadAlumnos = async () => {
     if (showTable) {
-      setShowTable(false); // Si está abierta, la cerramos
+      setShowTable(false);
     } else {
-      setShowTable(true);  // Si está cerrada, la abrimos...
-      refreshAlumnos();    // ...y cargamos los datos
+      setShowTable(true);
+      refreshAlumnos();
     }
   };
 
-
-  // 3. Filtros
   const alumnosFiltrados = alumnos.filter(alumno => {
     if (filter === 'todas') return true;
     const tipo = alumno.tipo_practica;
@@ -113,7 +110,6 @@ const DashboardCoordinador = ({ user }) => {
     return false;
   });
 
-  // 4. Exportación CSV
   const headers = [
     { label: "Nombre Alumno", key: "name" },
     { label: "Correo Institucional", key: "email" },
@@ -124,10 +120,8 @@ const DashboardCoordinador = ({ user }) => {
   const dataParaExportar = useMemo(() => {
     return alumnosFiltrados.map(alumno => {
       const practica = alumno.practicasComoAlumno?.[0];
-      // Usamos la misma lógica simple para el CSV
       const estadoRaw = practica ? practica.estado : 'pendiente';
 
-      // Mapeo manual simple para el CSV (opcional, podrías reusar el diccionario arriba)
       const labelMap = {
         pendiente: "Sin Inscribir Empresa",
         enviada_a_empresa: "Esperando Empresa",
@@ -148,8 +142,6 @@ const DashboardCoordinador = ({ user }) => {
     });
   }, [alumnosFiltrados]);
 
-  // 5. Handlers de botones (Placeholders)
-  // A) Botón OJO (Ver Detalle Rápido)
   const handleVerPractica = (alumno) => {
     const practica = alumno.practicasComoAlumno?.[0];
 
@@ -158,21 +150,9 @@ const DashboardCoordinador = ({ user }) => {
       return;
     }
 
-    showHtmlAlert(
-      `Detalle: ${alumno.name}`,
-      `
-    <div style="text-align: left;">
-        <p><b>Empresa:</b> ${practica.empresaToken?.empresaNombre || 'No asignada'}</p>
-        <p><b>Estado Actual:</b> <span class="badge">${practica.estado}</span></p>
-        <p><b>Fecha Inicio:</b> ${practica.fecha_inicio ? new Date(practica.fecha_inicio).toLocaleDateString() : 'Pendiente'}</p>
-        <hr style="margin: 10px 0;">
-        <p><b>ID Práctica:</b> ${practica.id}</p>
-    </div>
-  `
-    );
+    setAlumnoDocs(alumno);
   };
 
-  // B) Botón LÁPIZ (Forzar cambio de estado - Admin)
   const handleEditarEstado = async (alumno) => {
     const practica = alumno.practicasComoAlumno?.[0];
 
@@ -181,42 +161,32 @@ const DashboardCoordinador = ({ user }) => {
       return;
     }
 
-const { value: nuevoEstado } = await showSelectAlert(
-  'Modificar Estado Manualmente',
-  `Estado actual: ${practica.estado}`,
-  {
-    pendiente: 'Pendiente (Reinicio)',
-    enviada_a_empresa: 'Enviada a Empresa',
-    pendiente_validacion: 'Pendiente Validación',
-    en_curso: 'En Curso',
-    finalizada: 'Finalizada',
-    rechazada: 'Rechazada',
-    cerrada: 'Cerrada'
-  }
-);
+    const { value: nuevoEstado } = await showSelectAlert(
+      'Modificar Estado Manualmente',
+      `Estado actual: ${practica.estado}`,
+      {
+        pendiente: 'Pendiente (Reinicio)',
+        enviada_a_empresa: 'Enviada a Empresa',
+        pendiente_validacion: 'Pendiente Validación',
+        en_curso: 'En Curso',
+        finalizada: 'Finalizada',
+        rechazada: 'Rechazada',
+        cerrada: 'Cerrada'
+      }
+    );
 
     if (nuevoEstado) {
       try {
-        // 1. Intentamos actualizar (Lo crítico)
         await updateEstadoPractica(practica.id, nuevoEstado);
-
-        // 2. Mostramos éxito (porque ya sabemos que el backend respondió bien)
         showSuccessAlert("¡Listo!", `Estado actualizado a: ${nuevoEstado}`);
-        // 3. Intentamos recargar la tabla (Si falla, no importa tanto)
         refreshAlumnos();
-
       } catch (error) {
-        // Este catch SOLO saltará si falló la actualización real
         console.error(error);
         showErrorAlert("Error", "No se pudo actualizar el estado en el servidor.");
       }
     }
   };
 
-
-
-
-  // --- RENDERIZADO ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
@@ -228,14 +198,20 @@ const { value: nuevoEstado } = await showSelectAlert(
           Bienvenido, <span className="font-semibold">{user.name}</span>.
         </p>
 
-        {/* GRID DE TARJETAS */}
+        <button 
+          onClick={() => setShowBandeja(true)}
+          className="fixed bottom-8 right-8 bg-indigo-600 text-white p-4 rounded-full shadow-2xl hover:bg-indigo-700 transition-all flex items-center gap-2 z-40"
+        >
+          <MessageCircle size={24} />
+          <span className="font-bold">Mensajes</span>
+        </button>
+        {showBandeja && <BandejaMensajes user={user} onClose={() => setShowBandeja(false)} />}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Tarjeta 1: Ver Alumnos */}
           <div className="bg-blue-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <Users className="text-blue-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-blue-800">Ver Alumnos</h3>
-            <p className="text-gray-600 text-sm mt-1">Revisa alumnos inscritos (RF2)</p>
+            <p className="text-gray-600 text-sm mt-1">Revisa alumnos inscritos</p>
             <button
               onClick={handleLoadAlumnos}
               className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg w-full"
@@ -244,7 +220,6 @@ const { value: nuevoEstado } = await showSelectAlert(
             </button>
           </div>
 
-          {/* Tarjeta 2: Generar Claves */}
           <div className="bg-green-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <Key className="text-green-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-green-800">Generar Claves</h3>
@@ -254,21 +229,20 @@ const { value: nuevoEstado } = await showSelectAlert(
             </button>
           </div>
 
-          {/* Tarjeta 3: Reportes */}
           <div className="bg-purple-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <ClipboardList className="text-purple-600 mb-3" size={32} />
-            <h3 className="text-lg font-bold text-purple-800">Reportes</h3>
-            <p className="text-gray-600 text-sm mt-1">Genera reportes (RF4)</p>
-            <button className="mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg w-full">
-              Ver Reportes
+            <h3 className="text-lg font-bold text-purple-800">Documentos</h3>
+            <p className="text-gray-600 text-sm mt-1">Revisa tus formularios y sube documentos</p>
+            <button onClick={() => setIsRecursosModalOpen(true)}
+            className="mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg w-full">
+              Ver Biblioteca
             </button>
           </div>
 
-          {/* Tarjeta 4: Gestión de Formularios (NUEVA) */}
           <div className="bg-orange-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <FileCog className="text-orange-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-orange-800">Formularios</h3>
-            <p className="text-gray-600 text-sm mt-1">Edita las plantillas (RF12)</p>
+            <p className="text-gray-600 text-sm mt-1">Edita las plantillas</p>
             <button
               onClick={() => navigate("/admin/formularios")}
               className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg w-full"
@@ -277,23 +251,19 @@ const { value: nuevoEstado } = await showSelectAlert(
             </button>
           </div>
 
-          {/* Tarjeta 5: Aprobar Prácticas (NUEVA) */}
           <div className="bg-red-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
             <FileText className="text-red-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-red-800">Gestionar Prácticas</h3>
-            <p className="text-gray-600 text-sm mt-1">Revisa confirmaciones de empresas (RF1)</p>
+            <p className="text-gray-600 text-sm mt-1">Revisa confirmaciones de empresas</p>
             <button
-              // Redirección directa a la ruta /coordinador/aprobar-practicas
               onClick={() => navigate("/coordinador/aprobar-practicas")}
               className="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
               Revisar Pendientes
             </button>
           </div>
-
         </div>
 
-        {/* TABLA DE ALUMNOS */}
         {isLoading && (
           <p className="text-gray-600 text-center py-8">Cargando alumnos...</p>
         )}
@@ -305,7 +275,6 @@ const { value: nuevoEstado } = await showSelectAlert(
           <div className="mt-12">
             <h3 className="text-2xl font-bold text-blue-800 mb-4">Gestión de Alumnos</h3>
 
-            {/* Filtros y Exportar */}
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => setFilter('todas')} className={`py-2 px-4 rounded-lg font-medium ${filter === 'todas' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
@@ -330,7 +299,6 @@ const { value: nuevoEstado } = await showSelectAlert(
               </CSVLink>
             </div>
 
-            {/* Tabla */}
             <div className="overflow-x-auto bg-white rounded-lg shadow border">
               <table className="w-full text-left">
                 <thead className="bg-blue-50 border-b border-blue-200">
@@ -353,7 +321,6 @@ const { value: nuevoEstado } = await showSelectAlert(
                         <EstadoBadge practica={alumno.practicasComoAlumno?.[0]} />
                       </td>
 
-                      {/* --- CELDA DE DOCUMENTOS --- */}
                       <td className="p-4">
                         {(() => {
                           const docs = alumno.practicasComoAlumno?.[0]?.documentos;
@@ -394,12 +361,23 @@ const { value: nuevoEstado } = await showSelectAlert(
         )}
       </div>
 
-      {/* MODAL DE DOCUMENTOS */}
       <DocumentsModal
         isOpen={!!selectedStudentForDocs}
         onClose={() => setSelectedStudentForDocs(null)}
         studentName={selectedStudentForDocs?.name}
         documents={selectedStudentForDocs?.practicasComoAlumno?.[0]?.documentos || []}
+      />
+
+      {!!alumnoDocs && (
+        <DetallesCompletosAlumno 
+          alumnoId={alumnoDocs.id}
+          onClose={() => setAlumnoDocs(null)}
+        />
+      )}
+      
+      <GestionRecursosModal 
+        isOpen={isRecursosModalOpen} 
+        onClose={() => setIsRecursosModalOpen(false)} 
       />
     </div>
   );

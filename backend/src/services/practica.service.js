@@ -29,9 +29,30 @@ export async function findPracticaById(id) {
   const practica = await practicaRepository.findOne({ 
     where: { id },
     // 👇 Vital: Traer las respuestas para mostrarlas en el modal del Coordinador
-    relations: ['student', 'empresaToken', 'formularioRespuestas', 'formularioRespuestas.plantilla'] 
+    relations: ['student', 'empresaToken','documentos', 'formularioRespuestas', 'formularioRespuestas.plantilla'] 
   });
   if (!practica) throw new Error("Práctica no encontrada");
+  // --- 2. LÓGICA DE UNIFICACIÓN (Bitácoras + Documentos) ---   
+  // a) Documentos de Archivo (Informes, CV, etc.)
+  const documentosArchivos = practica.documentos || [];
+  
+  // b) Mapear las Respuestas de Bitácora a un formato de Documento
+  const bitacoraRespuestas = practica.formularioRespuestas
+      // Filtramos solo las respuestas que sean de tipo 'bitacora'
+      .filter(respuesta => respuesta.plantilla?.tipo === 'bitacora')
+      .map(respuesta => ({
+          // Usamos el ID de la Respuesta de Formulario para seguimiento
+          id: respuesta.id, 
+          tipo: "bitacora", // Nombre legible para el Frontend/Tracker
+          fecha_creacion: respuesta.fecha_envio, // Usamos la fecha de envío
+          // Asumimos que toda bitácora guardada está 'enviada' para el tracker
+          estado: 'enviado', 
+          // Esto es crucial para que el Front pueda distinguir la Bitácora real del Documento
+          es_respuesta_formulario: true 
+      }));
+
+  // c) Unificar la lista para el Frontend
+  practica.documentos = [...documentosArchivos, ...bitacoraRespuestas]; 
   return practica;
 }
 
@@ -144,7 +165,26 @@ export async function findPracticaByStudentId(studentId) {
   const practica = await practicaRepository.findOne({
     where: { student: { id: studentId } },
     // 👇 Agregamos las relaciones aquí también para que el alumno vea sus respuestas si quiere
-    relations: ['empresaToken', 'documentos', 'formularioRespuestas', 'formularioRespuestas.plantilla'] 
+    relations: ['student','empresaToken', 'documentos', 'formularioRespuestas', 'formularioRespuestas.plantilla'] 
   });
+  if (!practica) return null;
+  // --- 2. LÓGICA DE UNIFICACIÓN (Bitácoras + Documentos) ---
+  // a) Documentos de Archivo (Informes, CV, etc.)
+  const documentosArchivos = practica.documentos || [];
+  // b) Mapear las Respuestas de Bitácora a un formato de Documento
+  const bitacoraRespuestas = practica.formularioRespuestas
+    // Filtramos solo las respuestas que sean de tipo 'bitacora'
+    .filter(respuesta => respuesta.plantilla?.tipo === 'bitacora')
+    .map(respuesta => ({
+      id: respuesta.id, 
+      tipo: "bitacora", 
+      fecha_creacion: respuesta.fecha_envio, 
+      estado: 'enviado', 
+      // PROPIEDAD CLAVE QUE EL FRONTEND DEBE USAR PARA CONTAR
+      es_respuesta_formulario: true 
+  }));
+
+    // c) Unificar la lista
+    practica.documentos = [...documentosArchivos, ...bitacoraRespuestas]; 
   return practica; 
 }
