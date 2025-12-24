@@ -3,6 +3,7 @@ import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { Practica } from "../entities/practica.entity.js";
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
 import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
+import { enviarConfirmacionEvaluacionEmpresa } from "./email.service.js";
 
 export const validarTokenEmpresa = async (tokenAcceso) => {
     console.log("🔍 Validando token:", tokenAcceso);
@@ -177,7 +178,7 @@ export const guardarEvaluacionEmpresa = async (tokenAcceso, respuestas) => {
     const tokenData = await tokenRepo.findOne({ where: { token: tokenAcceso }, relations: ["practica"] });
     if (!tokenData || !tokenData.practica) throw new Error("Token inválido o práctica no encontrada.");
 
-    const practica = await practicaRepo.findOne({ where: { id: tokenData.practica.id }, relations: ["formularioRespuestas"] });
+    const practica = await practicaRepo.findOne({ where: { id: tokenData.practica.id }, relations: ["formularioRespuestas", "student", "empresa", "empresaToken"] });
     if (!practica) throw new Error("Práctica no existe.");
 
     if (!practica.evaluacion_pendiente) {
@@ -223,6 +224,13 @@ export const guardarEvaluacionEmpresa = async (tokenAcceso, respuestas) => {
                 })
                 .where("id = :id", { id: practica.id })
                 .execute();
+
+    // Notificar por correo que la evaluación fue registrada
+    try {
+        await enviarConfirmacionEvaluacionEmpresa(practica, tipoPlantilla);
+    } catch (e) {
+        console.warn("No se pudo enviar confirmación de evaluación:", e?.message);
+    }
 
     return { message: "Evaluación registrada.", practicaId: practica.id };
 };

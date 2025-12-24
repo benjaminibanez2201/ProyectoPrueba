@@ -11,7 +11,7 @@ import { AppDataSource } from "../config/configDb.js";
 import { Practica } from "../entities/practica.entity.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
-import { sendTokenEmail } from "../services/email.service.js";
+import { sendTokenEmail, sendSolicitudEvaluacionEmail } from "../services/email.service.js";
 import crypto from "crypto";
 
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
@@ -185,14 +185,17 @@ async actualizarEstado(req, res) {
         return handleErrorClient(res, 400, "Solo se pueden cerrar prácticas que ya estén evaluadas");
       }
 
+      // Marcar cierre definitivo y auditar
       practica.estado = "cerrada";
-      practica.fecha_fin = new Date();
+      practica.fecha_cierre = new Date();
+      practica.cerrado_por = req.user?.name || req.user?.email || "Coordinador";
 
       const updated = await updatePractica(id, practica);
 
       handleSuccess(res, 200, "Práctica cerrada correctamente", {
         id: practica.id,
-        fecha_cierre: practica.fecha_fin,
+        fecha_cierre: practica.fecha_cierre,
+        cerrado_por: practica.cerrado_por,
         estado: practica.estado,
       });
     } catch (error) {
@@ -246,18 +249,20 @@ async actualizarEstado(req, res) {
 
       await practicaRepo.save(practica);
 
-      // Enviar correo a empresa con instrucción para evaluación
+      // Enviar correo a empresa con instrucción para evaluación (plantilla específica)
       try {
         // Obtener correo/nombre del supervisor desde la postulación
         const post = practica.formularioRespuestas?.find(r => r.plantilla?.tipo === 'postulacion');
         const correo = post?.datos?.correo_supervisor || practica.empresa?.email || practica.empresaToken?.empresaCorreo;
         const nombreRep = post?.datos?.nombre_supervisor || practica.empresa?.name || practica.empresaToken?.empresaNombre || "Supervisor";
         if (correo) {
-          await sendTokenEmail(
+          const nivelTexto = practica.nivel === 'pr2' ? 'Profesional II' : 'Profesional I';
+          await sendSolicitudEvaluacionEmail(
             correo,
             nombreRep,
             tokenValue,
-            practica.student?.name || "Alumno"
+            practica.student?.name || "Alumno",
+            nivelTexto
           );
         }
       } catch (e) {

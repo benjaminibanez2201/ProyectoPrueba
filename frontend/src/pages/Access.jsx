@@ -112,7 +112,11 @@ const handleFormSubmit = async (respuestas) => {
                 '¡Evaluación enviada!',
                 'Gracias. El coordinador revisará la evaluación y cerrará la práctica.'
             );
+            // Actualizar estado local y salir del modo evaluación
             setData(prev => ({ ...prev, estado: 'evaluada' }));
+            setModoEvaluacion(false);
+            // Redirigir al portal de empresa (mismo acceso con token)
+            navigate(`/empresa/acceso/${token}`);
         } else {
             await confirmarInicioPractica(token, true, respuestas);
             await showSuccessAlert(

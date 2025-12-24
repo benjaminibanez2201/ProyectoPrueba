@@ -51,7 +51,6 @@ export class FormularioController {
     try {
       const { id } = req.params;
       const { titulo, descripcion, esquema } = req.body;
-
       // Buscamos por ID (nota: tu ID es un número entero, TypeORM lo maneja bien)
       const plantilla = await plantillaRepository.findOne({ where: { id: Number(id) } });
       

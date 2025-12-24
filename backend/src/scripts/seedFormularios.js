@@ -563,9 +563,7 @@ async function seedFormularios() {
           {
             id: "instrucciones_escala",
             label: "Instrucciones: Marque la letra que corresponda a lo observado. Escala: A (Sobresaliente) - B (Bueno) - C (Moderado) - D (Suficiente) - E (Insuficiente) - F (No aplica)",
-            // Usamos 'paragraph' para texto largo informativo (tendrás que soportarlo en el front)
-            // Si no quieres crear un componente nuevo, usa 'header' temporalmente.
-            tipo: "paragraph"
+            tipo: "header"
           },
 
           // ============================================================
@@ -1143,9 +1141,7 @@ async function seedFormularios() {
           {
             id: "instrucciones_escala",
             label: "Instrucciones: Marque la letra que corresponda a lo observado. Escala: A (Sobresaliente) - B (Bueno) - C (Moderado) - D (Suficiente) - E (Insuficiente) - F (No aplica)",
-            // Usamos 'paragraph' para texto largo informativo (tendrás que soportarlo en el front)
-            // Si no quieres crear un componente nuevo, usa 'header' temporalmente.
-            tipo: "paragraph"
+            tipo: "header"
           },
 
           // ============================================================
