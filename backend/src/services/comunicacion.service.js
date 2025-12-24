@@ -68,17 +68,17 @@ export const enviarMensajeService = async (data) => {
 
 /**
  * Obtener conversación de una práctica específica
+ * Obtiene TODOS los mensajes de la práctica para mostrar la conversación completa
  */
 export const obtenerConversacionService = async (practicaId, emailUsuario) => {
     try {
         const mensajeRepo = AppDataSource.getRepository(Mensaje);
         
-        // Obtener mensajes donde el usuario sea remitente o destinatario (por email)
+        // Obtener TODOS los mensajes de esta práctica (la conversación completa)
         return await mensajeRepo.find({
-            where: [
-                { practica: { id: practicaId }, remitente_email: emailUsuario },
-                { practica: { id: practicaId }, destinatario_email: emailUsuario }
-            ],
+            where: { 
+                practica: { id: Number(practicaId) }
+            },
             relations: ['practica', 'practica.student', 'coordinador'],
             order: { fecha_envio: "ASC" }
         });

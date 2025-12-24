@@ -187,14 +187,14 @@ const handleFormSubmit = async (respuestas) => {
                         </div>
                     </div>
                     
-                    {/* ← NUEVO: Botones de acción en el header */}
+                    {/* Botones de acción en el header */}
                     <div className="flex items-center gap-3">
                         <button 
                             onClick={() => setChatAbierto(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow"
                         >
                             <MessageCircle size={18} />
-                            Mensajes
+                            <span>Mensajes</span>
                         </button>
                         
                         <button 
@@ -309,13 +309,13 @@ const handleFormSubmit = async (respuestas) => {
                     {/* ← NUEVO: Modal de Chat */}
                 {chatAbierto && data && (
                     <ChatMensajeria
-                        practicaId={data.practica?.id}
+                        practicaId={data.practicaId}
                         token={token}
-                        destinatarioId={data.coordinadorId} // Asume que el backend devuelve el ID del coordinador
+                        destinatarioId={data.coordinadorId}
                         usuarioActual={{ 
                             id: data.empresaId || 'empresa', 
                             name: empresaNombre,
-                            email: data.practica?.empresa_email || data.empresaCorreo // ← Agregar email
+                            email: data.empresaCorreo
                         }}
                         onClose={() => setChatAbierto(false)}
                     />

@@ -16,7 +16,7 @@ import { User } from "../entities/user.entity.js";
 //Enviar mensaje (Empresa o Coordinador)
 export const enviarMensaje = async (req, res) => {
     try {
-        const { asunto, contenido, practicaId, token } = req.body;
+        const { asunto, contenido, practicaId, token, destinatarioId } = req.body;
         const practicaRepo = AppDataSource.getRepository(Practica);
         const userRepo = AppDataSource.getRepository(User);
 
@@ -61,9 +61,6 @@ export const enviarMensaje = async (req, res) => {
         else {
             practicaIdFinal = practicaId;
                 
-            console.log("🧪 practicaId recibido:", practicaIdFinal);
-            console.log("🧪 req.user:", req.user);
-                
             if (!practicaIdFinal) {
                 return handleErrorClient(res, 400, "No se pudo determinar el ID de la práctica.");
             }
@@ -86,9 +83,16 @@ export const enviarMensaje = async (req, res) => {
                 practica.empresa?.name ||
                 "Empresa";
         
+            // Prioridad: destinatarioId (email del frontend) > empresaToken.empresaCorreo > empresa.email
             destinatarioEmail =
-                practica.empresa?.email ||
-                practica.empresaToken?.empresaCorreo;
+                destinatarioId ||
+                practica.empresaToken?.empresaCorreo ||
+                practica.empresa?.email;
+
+            // Validar que tengamos el email del destinatario
+            if (!destinatarioEmail) {
+                return handleErrorClient(res, 400, "No se pudo obtener el email de la empresa. Verifique que la práctica tenga una empresa asociada.");
+            }
         }
 
 
@@ -125,70 +129,45 @@ export const getConversacion = async (req, res) => {
         const { practicaId } = req.params;
         const token = req.query.token;
         
-        console.log('🔍 getConversacion llamado');
-        console.log('📋 PracticaId:', practicaId);
-        console.log('🔑 Token:', token ? token.substring(0, 10) + '...' : 'NO');
-        
         let emailUsuario;
         
         if (token) {
-            // Empresa con token
-            console.log('👔 Procesando como empresa...');
-            
             // Validar token
             const tokenData = await validarTokenEmpresa(token);
-            console.log('✅ Token validado');
             
-            // ✅ Obtener email de la empresa desde la práctica
+            // Obtener email de la empresa desde la práctica
             const practicaRepo = AppDataSource.getRepository(Practica);
             const practica = await practicaRepo.findOne({
                 where: { id: parseInt(practicaId) },
-                relations: ['empresaToken', 'empresa', 'student'] // Cargar todas las relaciones
-            });
-
-            console.log('📋 Práctica encontrada:', {
-                id: practica?.id,
-                empresa: practica?.empresa,
-                empresaToken: practica?.empresaToken
+                relations: ['empresaToken', 'empresa', 'student']
             });
 
             if (!practica) {
                 return handleErrorClient(res, 404, "Práctica no encontrada");
             }
 
-            // Prioridad de búsqueda de email:
-            // 1. De la relación empresa (User)
-            // 2. Del empresaToken (empresaCorreo)
-            // 3. Del tokenData validado
+            // Prioridad de búsqueda de email
             emailUsuario = practica.empresa?.email 
                         || practica.empresaToken?.empresaCorreo
                         || tokenData.empresaCorreo;
-            
-            console.log('📧 Email empresa:', emailUsuario);
 
             if (!emailUsuario) {
-                console.error('❌ No se encontró email de la empresa en ninguna fuente');
-                return handleErrorClient(res, 400, "No se pudo identificar el email de la empresa. Por favor contacte al coordinador.");
+                return handleErrorClient(res, 400, "No se pudo identificar el email de la empresa.");
             }
             
         } else if (req.user) {
             // Coordinador autenticado
-            console.log('👨‍💼 Procesando como coordinador');
             emailUsuario = req.user.email;
-            console.log('📧 Email coordinador:', emailUsuario);
         } else {
             return handleErrorClient(res, 401, "No autorizado");
         }
 
-        console.log('🎯 Buscando conversación para:', emailUsuario);
         const conversacion = await obtenerConversacionService(practicaId, emailUsuario);
-        console.log('✅ Conversación obtenida:', conversacion.length, 'mensajes');
         
         return handleSuccess(res, 200, "Conversación obtenida", conversacion);
 
     } catch (error) {
-        console.error("💥 Error al obtener conversación:", error);
-        console.error("💥 Stack:", error.stack);
+        console.error("Error al obtener conversación:", error);
         return handleErrorServer(res, 500, error.message);
     }
 };
@@ -240,10 +219,13 @@ export const marcarLeido = async (req, res) => {
             // Obtener email de la empresa desde la práctica
             const practicaRepo = AppDataSource.getRepository(Practica);
             const practica = await practicaRepo.findOne({
-                where: { id: tokenData.practica.id }
+                where: { id: tokenData.practicaId },
+                relations: ['empresaToken', 'empresa']
             });
 
-            emailUsuario = practica.empresa_email || tokenData.empresaCorreo;
+            emailUsuario = practica?.empresa?.email 
+                        || practica?.empresaToken?.empresaCorreo 
+                        || tokenData.empresaCorreo;
         } else if (req.user) {
             emailUsuario = req.user.email;
         } else {
@@ -270,6 +252,58 @@ export const getNoLeidos = async (req, res) => {
 
     } catch (error) {
         console.error("Error al contar no leídos:", error);
+        return handleErrorServer(res, 500, error.message);
+    }
+};
+
+/**
+ * Obtener cantidad de mensajes no leídos para empresa
+ */
+export const getNoLeidosEmpresa = async (req, res) => {
+    try {
+        const { practicaId } = req.params;
+        const token = req.query.token;
+
+        if (!token) {
+            return handleErrorClient(res, 401, "Token requerido");
+        }
+
+        // Validar token
+        const tokenData = await validarTokenEmpresa(token);
+
+        // Obtener email de la empresa
+        const practicaRepo = AppDataSource.getRepository(Practica);
+        const practica = await practicaRepo.findOne({
+            where: { id: parseInt(practicaId) },
+            relations: ['empresaToken', 'empresa']
+        });
+
+        if (!practica) {
+            return handleErrorClient(res, 404, "Práctica no encontrada");
+        }
+
+        const emailEmpresa = practica.empresa?.email 
+                          || practica.empresaToken?.empresaCorreo
+                          || tokenData.empresaCorreo;
+
+        if (!emailEmpresa) {
+            return handleSuccess(res, 200, "No leídos obtenidos", { noLeidos: 0 });
+        }
+
+        // Contar mensajes no leídos donde el destinatario es la empresa
+        const mensajeRepo = AppDataSource.getRepository(Mensaje);
+        const count = await mensajeRepo.count({
+            where: {
+                practica: { id: parseInt(practicaId) },
+                destinatario_email: emailEmpresa,
+                leido: false
+            }
+        });
+
+        return handleSuccess(res, 200, "No leídos obtenidos", { noLeidos: count });
+
+    } catch (error) {
+        console.error("Error al contar no leídos empresa:", error);
         return handleErrorServer(res, 500, error.message);
     }
 };

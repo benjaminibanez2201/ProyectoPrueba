@@ -3,6 +3,7 @@ import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { Practica } from "../entities/practica.entity.js";
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
 import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
+import { User } from "../entities/user.entity.js";
 import { enviarConfirmacionEvaluacionEmpresa } from "./email.service.js";
 
 export const validarTokenEmpresa = async (tokenAcceso) => {
@@ -59,16 +60,23 @@ export const validarTokenEmpresa = async (tokenAcceso) => {
 
     console.log("✔ Práctica cargada. Alumno:", practicaCompleta.student.name);
 
-    // 3️⃣ RETORNAR INFORMACIÓN SANA
+    // 3️⃣ BUSCAR COORDINADOR PARA MENSAJERÍA
+    const userRepo = AppDataSource.getRepository(User);
+    const coordinador = await userRepo.findOne({ where: { role: 'coordinador' } });
+
+    // 4️⃣ RETORNAR INFORMACIÓN SANA
     return {
         practicaId: practicaCompleta.id,
         alumnoNombre: practicaCompleta.student.name,
         empresaNombre: tokenData.empresaNombre,
+        empresaCorreo: tokenData.empresaCorreo, // Email de la empresa desde el token
         estado: practicaCompleta.estado,
         formularioRespuestas: practicaCompleta.formularioRespuestas ?? [],
         evaluacionPendiente: !!practicaCompleta.evaluacion_pendiente,
         evaluacionCompletada: !!practicaCompleta.evaluacion_completada,
         nivel: practicaCompleta.nivel || null,
+        coordinadorId: coordinador?.id || null, // ID del coordinador para mensajería
+        coordinadorEmail: coordinador?.email || null, // Email del coordinador
     };
 };
 

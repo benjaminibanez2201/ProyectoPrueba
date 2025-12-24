@@ -29,7 +29,6 @@ const BandejaMensajes = ({ user, onClose }) => {
             
             setMensajes(response.data.mensajes || response.data || []);
         } catch (error) {
-            console.error('Error al cargar mensajes:', error);
             showErrorAlert('Error', 'No se pudieron cargar los mensajes');
         } finally {
             setLoading(false);
@@ -43,19 +42,24 @@ const BandejaMensajes = ({ user, onClose }) => {
                 prev.map(m => m.id === mensajeId ? { ...m, leido: true } : m)
             );
         } catch (error) {
-            console.error('Error al marcar como leído:', error);
+            // Error silencioso
         }
     };
 
     const handleAbrirChat = (mensaje) => {
-        // CORRECCIÓN: Si el objeto remitente/destinatario no existe, usamos los campos de texto
+        // Usar los campos de texto de la BD que siempre existen
         const nombreContacto = vista === 'recibidos' 
-            ? (mensaje.remitente_nombre || mensaje.remitente?.name)
-            : (mensaje.destinatario_nombre || mensaje.destinatario?.name);
+            ? (mensaje.remitente_nombre || 'Empresa')
+            : (mensaje.destinatario_nombre || 'Empresa');
+        
+        // Usar email como identificador ya que la empresa no tiene ID de usuario
+        const emailContacto = vista === 'recibidos'
+            ? mensaje.remitente_email
+            : mensaje.destinatario_email;
 
         setChatAbierto({
             practicaId: mensaje.practica?.id || mensaje.practicaId,
-            destinatarioId: vista === 'recibidos' ? mensaje.remitente?.id : mensaje.destinatario?.id,
+            destinatarioId: emailContacto, // Usamos email en lugar de ID
             destinatarioNombre: nombreContacto
         });
 
@@ -82,6 +86,37 @@ const BandejaMensajes = ({ user, onClose }) => {
         }
         return true;
     });
+
+    // Agrupar mensajes por práctica y mostrar solo el más reciente de cada conversación
+    const conversacionesAgrupadas = Object.values(
+        mensajesFiltrados.reduce((acc, msg) => {
+            const practicaId = msg.practica?.id || msg.practicaId;
+            if (!practicaId) return acc;
+            
+            // Solo contar no leídos en la vista de recibidos
+            const esNoLeido = vista === 'recibidos' && !msg.leido;
+            
+            if (!acc[practicaId]) {
+                acc[practicaId] = {
+                    ...msg,
+                    noLeidosCount: esNoLeido ? 1 : 0
+                };
+            } else {
+                const fechaActual = new Date(acc[practicaId].fecha_envio);
+                const fechaNueva = new Date(msg.fecha_envio);
+                if (fechaNueva > fechaActual) {
+                    const prevNoLeidos = acc[practicaId].noLeidosCount;
+                    acc[practicaId] = {
+                        ...msg,
+                        noLeidosCount: prevNoLeidos + (esNoLeido ? 1 : 0)
+                    };
+                } else {
+                    acc[practicaId].noLeidosCount += esNoLeido ? 1 : 0;
+                }
+            }
+            return acc;
+        }, {})
+    ).sort((a, b) => new Date(b.fecha_envio) - new Date(a.fecha_envio));
 
     const formatearFecha = (fecha) => {
         if (!fecha) return "Sin fecha";
@@ -128,34 +163,48 @@ const BandejaMensajes = ({ user, onClose }) => {
                     <div className="flex-1 overflow-y-auto">
                         {loading ? (
                             <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-indigo-600" size={40} /></div>
-                        ) : mensajesFiltrados.length === 0 ? (
+                        ) : conversacionesAgrupadas.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-gray-400">
                                 <MessageCircle size={64} className="mb-4 opacity-30" />
                                 <p>No hay mensajes para mostrar</p>
                             </div>
                         ) : (
                             <div className="divide-y divide-gray-200">
-                                {mensajesFiltrados.map((mensaje) => {
+                                {conversacionesAgrupadas.map((mensaje) => {
                                     const esRecibido = vista === 'recibidos';
-                                    // CORRECCIÓN CLAVE: Usar los nombres de la BD directamente
-                                    const nombreMostrar = esRecibido ? mensaje.remitente_nombre : mensaje.destinatario_nombre;
-                                    const estaNoLeido = esRecibido && !mensaje.leido;
+                                    // En recibidos: mostrar quien envió (remitente)
+                                    // En enviados: mostrar a quien se envió (destinatario)
+                                    const nombreMostrar = esRecibido 
+                                        ? mensaje.remitente_nombre 
+                                        : mensaje.destinatario_nombre;
+                                    const tieneNoLeidos = esRecibido && mensaje.noLeidosCount > 0;
+                                    const alumnoNombre = mensaje.practica?.student?.name;
 
                                     return (
-                                        <div key={mensaje.id} onClick={() => handleAbrirChat(mensaje)} className={`p-4 hover:bg-indigo-50 cursor-pointer transition ${estaNoLeido ? 'bg-blue-50' : 'bg-white'}`}>
+                                        <div key={`conv-${mensaje.practica?.id || mensaje.practicaId}`} onClick={() => handleAbrirChat(mensaje)} className={`p-4 hover:bg-indigo-50 cursor-pointer transition ${tieneNoLeidos ? 'bg-blue-50' : 'bg-white'}`}>
                                             <div className="flex items-start gap-4">
-                                                <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${estaNoLeido ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                                <div className={`relative flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${tieneNoLeidos ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
                                                     <User size={24} />
+                                                    {tieneNoLeidos && (
+                                                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                                                            {mensaje.noLeidosCount}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-start">
                                                         <div>
-                                                            <p className={`text-gray-900 ${estaNoLeido ? 'font-bold' : 'font-semibold'}`}>
-                                                                {nombreMostrar || "Desconocido"}
+                                                            <p className={`text-gray-900 ${tieneNoLeidos ? 'font-bold' : 'font-semibold'}`}>
+                                                                <span className="text-xs text-gray-500 font-normal">
+                                                                    {esRecibido ? 'De: ' : 'Para: '}
+                                                                </span>
+                                                                {nombreMostrar || "Empresa"}
                                                             </p>
-                                                            <p className="text-xs text-gray-500">
-                                                                Práctica #{mensaje.practica?.id || mensaje.practicaId}
-                                                            </p>
+                                                            {alumnoNombre && (
+                                                                <p className="text-xs text-gray-500">
+                                                                    Alumno: {alumnoNombre}
+                                                                </p>
+                                                            )}
                                                         </div>
                                                         <span className="text-xs text-gray-500 flex items-center gap-1">
                                                             <Clock size={12} /> {formatearFecha(mensaje.fecha_envio)}

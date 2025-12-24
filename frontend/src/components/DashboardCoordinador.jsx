@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { CSVLink } from "react-csv";
 import { useNavigate } from "react-router-dom";
 import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock, MessageCircle } from "lucide-react";
@@ -10,6 +10,7 @@ import { updateEstadoPractica, cerrarPractica } from "../services/practica.servi
 import GestionRecursosModal from "./GestionRecursosModal";
 import DetallesCompletosAlumno from "./DetallesCompletosAlumno.jsx";
 import BandejaMensajes from "./BandejaMensajes.jsx";
+import { getNoLeidos } from "../services/mensaje.service.js";
 
 // --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---
 const EstadoBadge = ({ practica }) => {
@@ -76,6 +77,23 @@ const DashboardCoordinador = ({ user }) => {
   const [alumnoDocs, setAlumnoDocs] = useState(null);
   const [showBandeja, setShowBandeja] = useState(false);
   const [isRecursosModalOpen, setIsRecursosModalOpen] = useState(false);
+  const [mensajesNoLeidos, setMensajesNoLeidos] = useState(0);
+
+  // Cargar contador de mensajes no leídos
+  useEffect(() => {
+    const cargarNoLeidos = async () => {
+      try {
+        const response = await getNoLeidos();
+        setMensajesNoLeidos(response.data?.noLeidos || 0);
+      } catch (error) {
+        // Error silencioso
+      }
+    };
+    cargarNoLeidos();
+    // Actualizar cada 30 segundos
+    const interval = setInterval(cargarNoLeidos, 30000);
+    return () => clearInterval(interval);
+  }, []);
   
   // ✅ CORRECCIÓN: Usar getAllAlumnosDetalles() sin parámetros
   const refreshAlumnos = async () => {
@@ -222,10 +240,26 @@ const DashboardCoordinador = ({ user }) => {
           onClick={() => setShowBandeja(true)}
           className="fixed bottom-8 right-8 bg-indigo-600 text-white p-4 rounded-full shadow-2xl hover:bg-indigo-700 transition-all flex items-center gap-2 z-40"
         >
-          <MessageCircle size={24} />
+          <div className="relative">
+            <MessageCircle size={24} />
+            {mensajesNoLeidos > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[20px] h-5 rounded-full flex items-center justify-center font-bold px-1">
+                {mensajesNoLeidos > 99 ? '99+' : mensajesNoLeidos}
+              </span>
+            )}
+          </div>
           <span className="font-bold">Mensajes</span>
         </button>
-        {showBandeja && <BandejaMensajes user={user} onClose={() => setShowBandeja(false)} />}
+        {showBandeja && (
+          <BandejaMensajes 
+            user={user} 
+            onClose={() => {
+              setShowBandeja(false);
+              // Recargar contador al cerrar
+              getNoLeidos().then(res => setMensajesNoLeidos(res.data?.noLeidos || 0));
+            }} 
+          />
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5 items-stretch">
           <div className="bg-blue-50 p-6 rounded-xl shadow-inner hover:shadow-md transition flex flex-col justify-between min-h-[200px]">
