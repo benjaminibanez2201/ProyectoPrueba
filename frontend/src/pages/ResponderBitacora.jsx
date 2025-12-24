@@ -27,6 +27,12 @@ const ResponderBitacora = () => {
                 const practicaData = await getMyPractica(); 
                 
                 // 2. REGLA DE NEGOCIO: Solo si la práctica está "En Curso"
+                if (practicaData.estado === 'cerrada') {
+                    showErrorAlert('Práctica Cerrada', 'No puedes crear Bitácoras porque tu práctica ya está cerrada.');
+                    navigate('/panel');
+                    return;
+                }
+                
                 if (practicaData.estado !== 'en_curso') {
                     showErrorAlert('Acceso denegado', 'Solo puedes crear Bitácoras si la práctica está "En Curso".');
                     navigate('/panel');

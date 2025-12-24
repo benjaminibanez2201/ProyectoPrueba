@@ -75,6 +75,44 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
     onChange(nuevoHorario);
   };
 
+  const formatTime = (hora, min) => {
+    if (!hora || !min) return "-";
+    return `${hora}:${min}`;
+  };
+
+  if (readOnly) {
+    return (
+      <div className="overflow-x-auto border rounded-lg shadow-sm bg-gray-50">
+        <table className="w-full text-sm text-left text-gray-700">
+          <thead className="text-xs text-gray-700 uppercase bg-gray-200 font-bold">
+            <tr>
+              <th className="px-4 py-3">Día</th>
+              <th className="px-4 py-3">Mañana</th>
+              <th className="px-4 py-3">Tarde</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dias.map((dia) => (
+              <tr key={dia} className="bg-white border-b">
+                <td className="px-4 py-2 font-medium">{dia}</td>
+                <td className="px-4 py-2">
+                  {value[dia]?.manana?.horaInicio ? 
+                    `${formatTime(value[dia].manana.horaInicio, value[dia].manana.minInicio)} - ${formatTime(value[dia].manana.horaFin, value[dia].manana.minFin)}` 
+                    : "-"}
+                </td>
+                <td className="px-4 py-2">
+                  {value[dia]?.tarde?.horaInicio ? 
+                    `${formatTime(value[dia].tarde.horaInicio, value[dia].tarde.minInicio)} - ${formatTime(value[dia].tarde.horaFin, value[dia].tarde.minFin)}` 
+                    : "-"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto border rounded-lg shadow-sm">
       <table className="w-full text-sm text-left text-gray-500">
@@ -318,7 +356,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     // Header especial (retornamos DIV normal con key fijo)
     if (campo.tipo === "header") {
       return (
-        <div key={campo.id} className={`col-span-12 mt-8 mb-4 border-b-2 border-blue-200 pb-2`}>
+        <div key={campo.id} className={`col-span-12 mt-8 mb-4 border-b-2 border-blue-200 pb-2`} style={{ pageBreakAfter: 'avoid' }}>
           <h2 className="text-xl font-bold text-blue-800">{campo.label}</h2>
         </div>
       );
@@ -332,17 +370,22 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
             </label>
-            <input
-              type={tipo}
-              value={respuestas[id] || ""}
-              onChange={(e) => handleChange(id, e.target.value, validation)}
-              disabled={isReadOnly}
-              required={required && !isReadOnly}
-              placeholder={displayPlaceholder}
-              min={min} max={max}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 font-medium"
-            />
-            {/* Mostramos el error si existe */}
+            {isReadOnly ? (
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 min-h-[40px]">
+                <span className="text-gray-900 font-medium">{respuestas[id] || ''}</span>
+              </div>
+            ) : (
+              <input
+                type={tipo}
+                value={respuestas[id] || ""}
+                onChange={(e) => handleChange(id, e.target.value, validation)}
+                disabled={isReadOnly}
+                required={required && !isReadOnly}
+                placeholder={displayPlaceholder}
+                min={min} max={max}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 font-medium"
+              />
+            )}
             {errors[id] && <p className="text-red-500 text-xs mt-1">{errors[id]}</p>}
           </div>
         );
@@ -354,15 +397,21 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
             </label>
-            <textarea
-              value={respuestas[id] || ""}
-              onChange={(e) => handleChange(id, e.target.value, validation)}
-              disabled={isReadOnly}
-              required={required && !isReadOnly}
-              placeholder={displayPlaceholder}
-              rows={4}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
-            />
+            {isReadOnly ? (
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 min-h-[80px]">
+                <span className="text-gray-900 font-medium whitespace-pre-wrap">{respuestas[id] || ''}</span>
+              </div>
+            ) : (
+              <textarea
+                value={respuestas[id] || ""}
+                onChange={(e) => handleChange(id, e.target.value, validation)}
+                disabled={isReadOnly}
+                required={required && !isReadOnly}
+                placeholder={displayPlaceholder}
+                rows={4}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+              />
+            )}
             {errors[id] && <p className="text-red-500 text-xs mt-1">{errors[id]}</p>}
           </div>
         );
@@ -374,18 +423,24 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
             </label>
-            <select
-              value={respuestas[id] || ""}
-              onChange={(e) => handleChange(id, e.target.value, validation)}
-              disabled={isReadOnly}
-              required={required && !isReadOnly}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 bg-white"
-            >
-              <option value="">Seleccione una opción...</option>
-              {options?.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
+            {isReadOnly ? (
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 min-h-[40px]">
+                <span className="text-gray-900 font-medium">{respuestas[id] || ''}</span>
+              </div>
+            ) : (
+              <select
+                value={respuestas[id] || ""}
+                onChange={(e) => handleChange(id, e.target.value, validation)}
+                disabled={isReadOnly}
+                required={required && !isReadOnly}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 bg-white"
+              >
+                <option value="">Seleccione una opción...</option>
+                {options?.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            )}
             {errors[id] && <p className="text-red-500 text-xs mt-1">{errors[id]}</p>}
           </div>
         );
@@ -415,11 +470,18 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
 
             {isReadOnly ? (
               respuestas[id] && !respuestas[id].includes("pendiente") ? (
-                <div className="border rounded p-2 bg-gray-50 inline-block">
-                  <img src={respuestas[id]} alt="Firma" className="h-24" />
+                <div className="border border-gray-300 rounded-lg p-3 bg-white">
+                  <img 
+                    src={respuestas[id]} 
+                    alt="Firma" 
+                    crossOrigin="anonymous"
+                    style={{ maxHeight: '120px', width: 'auto', display: 'block' }}
+                  />
                 </div>
               ) : (
-                <p className="text-gray-400 italic text-sm border p-2 rounded bg-gray-50">Sin firma registrada</p>
+                <div className="border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+                  <span className="text-gray-400 italic text-sm">Sin firma registrada</span>
+                </div>
               )
             ) : (
               <div className="border-2 border-gray-300 border-dashed rounded bg-white w-full max-w-md touch-none">
@@ -452,7 +514,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
 
     // Finalmente devolvemos el wrapper DIV (con key si renderField se usa fuera del map)
     return (
-      <div key={id} className={`col-span-12 ${spanClass}`}>
+      <div key={id} className={`col-span-12 ${spanClass}`} style={{ pageBreakInside: 'avoid' }}>
         {fieldContent}
       </div>
     );

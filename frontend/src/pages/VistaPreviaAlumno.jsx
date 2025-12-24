@@ -32,18 +32,50 @@ const VistaPreviaAlumno = () => {
         cargarRespuesta();
     }, [id, navigate]);
 
-    const handleDescargarPDF = () => {
-        const element = contentRef.current; // Seleccionamos el div del formulario
+    const handleDescargarPDF = async () => {
+        const element = contentRef.current;
+        
+        // Esperar a que todas las imágenes estén cargadas
+        const images = element.querySelectorAll('img');
+        await Promise.all(Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise((resolve) => {
+                img.onload = resolve;
+                img.onerror = resolve;
+            });
+        }));
+        
         const opt = {
-            margin:       10, // Márgenes en mm
-            filename:     `Documento_${respuesta.plantilla?.tipo || 'formulario'}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true}, // Mejor calidad (evita que se vea borroso)
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            margin: [10, 10, 10, 10],
+            filename: `Documento_${respuesta.plantilla?.tipo || 'formulario'}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                allowTaint: true, 
+                logging: false,
+                backgroundColor: '#ffffff',
+                imageTimeout: 15000,
+                onclone: (clonedDoc) => {
+                    // Asegurar que las imágenes de firma se muestren en el clon
+                    const clonedImages = clonedDoc.querySelectorAll('img');
+                    clonedImages.forEach(img => {
+                        img.style.maxWidth = '100%';
+                        img.style.height = 'auto';
+                        img.style.display = 'block';
+                    });
+                    // Evitar cortes en elementos importantes
+                    const sections = clonedDoc.querySelectorAll('.mb-4, .mb-6, table, h2');
+                    sections.forEach(el => {
+                        el.style.pageBreakInside = 'avoid';
+                    });
+                }
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: 'css', before: '.page-break-before', after: '.page-break-after', avoid: '.no-break' }
         };
 
-        // Ejecutar la conversión
-        html2pdf().set(opt).from(element).save();
+        await html2pdf().set(opt).from(element).save();
     };
 
     if (loading) return (
@@ -77,17 +109,15 @@ const VistaPreviaAlumno = () => {
             </div>
 
             <main className="max-w-4xl mx-auto px-4">
-
-                <div  ref={contentRef}> 
-                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 pointer-events-none opacity-100">
-                        <FormRender 
-                            esquema={respuesta.plantilla.esquema}
-                            valores={respuesta.datos} 
-                            respuestasIniciales={respuesta.datos}
-                            buttonText="" // Ocultamos el botón de guardar para el PDF
-                            onSubmit={() => {}} 
-                        />
-                    </div>
+                <div ref={contentRef} className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+                    <FormRender 
+                        esquema={respuesta.plantilla.esquema}
+                        valores={respuesta.datos} 
+                        respuestasIniciales={respuesta.datos}
+                        readOnly={true}
+                        buttonText=""
+                        onSubmit={() => {}} 
+                    />
                 </div>
             </main>
         </div>

@@ -106,7 +106,7 @@ export const verDetallesAlumnos = async (req, res) => {
                 
                 return {
                     id: alumno.id,
-                    nombre: alumno.name,
+                    name: alumno.name,
                     email: alumno.email,
                     tipo_practica: alumno.tipo_practica || 'N/A',
                     estado_practica: practicaActiva.estado || 'pendiente',
@@ -128,7 +128,7 @@ export const verDetallesAlumnos = async (req, res) => {
         // Datos básicos del alumno
         const alumnoInfo = {
             id: detalles.id,
-            nombre: detalles.name, 
+            name: detalles.name, 
             email: detalles.email,
             tipo_practica: detalles.tipo_practica || 'N/A'
         };
@@ -156,18 +156,24 @@ export const verDetallesAlumnos = async (req, res) => {
             const ruta = doc.ruta_archivo;
             const extension = ruta ? path.extname(ruta).toLowerCase() : '.N/A';
             const nombreBase = ruta ? path.basename(ruta) : doc.tipo; 
-                
+
+            let fecha = 'N/A';
+            if (doc.fecha_creacion) {
+              fecha = new Date(doc.fecha_creacion).toISOString().split('T')[0];
+            } 
+            if (doc.fecha_envio) {
+              fecha = new Date(doc.fecha_envio).toISOString().split('T')[0];
+            } 
+
             return {
                 tipo: doc.tipo,
-                fechaEnvio: (doc.fecha_creacion && doc.fecha_creacion instanceof Date)  
-                    ? doc.fecha_creacion.toISOString().split('T')[0] 
-                    : 'N/A', 
+                fechaEnvio: fecha,
                 estado: doc.estado,
                 extension: extension, 
                 nombre_archivo: nombreBase,
                 urlRevision: doc.ruta_archivo ? `/api/documentos/revisar/${doc.id}` : null,
                 documentoId: doc.id, 
-                datosFormulario: doc.datos_json,
+                datosFormulario: doc.datos_json
             };
         });
 

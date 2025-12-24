@@ -385,8 +385,10 @@ const DashboardAlumno = ({ user }) => {
               <div className="flex gap-3 mt-4 md:mt-0">
                 {/* 1. BOTÓN: COMPLETAR BITÁCORA (El formulario en la página) */}
                 <button
-                  onClick={() => navigate("/forms/responder/bitacora")} //ya agregue la ruta al main.jsx
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap"
+                  disabled={!practica || practica?.estado === 'cerrada'}
+                  onClick={() => navigate("/forms/responder/bitacora")}
+                  title={practica?.estado === 'cerrada' ? 'La práctica está cerrada. No se pueden crear bitácoras.' : undefined}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   <BookOpen size={18} /> Completar Bitácora
                 </button>
