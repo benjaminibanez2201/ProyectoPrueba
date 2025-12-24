@@ -1,18 +1,42 @@
-import React, { useState } from "react";
-import { Upload, FileText, ArrowLeft } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Upload, FileText, ArrowLeft, AlertTriangle } from "lucide-react";
 import { uploadDocumento } from "../services/documento.service";
 import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert";
 import { useLocation, useNavigate } from 'react-router-dom'; 
+import { getMyPractica } from "../services/practica.service";
 
 const SubirDocumento = () => {
   //estados para manejar el formulario
   const [file, setFile] = useState(null);
   const [tipo, setTipo] = useState("");
-  const [ isUploading, setIsUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [practica, setPractica] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const initialId = location.state?.practicaId || '';
-  const [practicaId, setPracticaId] = useState(initialId); //por defecto para probar, luego vendrá automact
+  const [practicaId, setPracticaId] = useState(initialId);
+
+  // Verificar estado de la práctica al cargar
+  useEffect(() => {
+    const fetchPractica = async () => {
+      try {
+        const data = await getMyPractica();
+        setPractica(data);
+        if (!initialId && data?.id) {
+          setPracticaId(data.id);
+        }
+      } catch (error) {
+        console.log("No se pudo cargar la práctica");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPractica();
+  }, [initialId]);
+
+  // Verificar si la práctica está cerrada
+  const isPracticaCerrada = practica?.estado === 'cerrada';
 
   //manejo de selccion de archivo
   const handleFileChange = (e) => {
@@ -23,6 +47,13 @@ const SubirDocumento = () => {
   //manejo de envio del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validar si la práctica está cerrada
+    if (isPracticaCerrada) {
+      showErrorAlert("Práctica Cerrada", "No puedes subir documentos porque tu práctica ya está cerrada.");
+      return;
+    }
+    
     if (!file) {
       showErrorAlert("Error", "Debes seleccionar un archivo");
       return;
@@ -53,6 +84,38 @@ const SubirDocumento = () => {
       setIsUploading(false); //indicar que ya no se esta subiendo
     }
   };
+
+  // Si está cargando, mostrar loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex justify-center items-center">
+        <div className="text-gray-600">Cargando...</div>
+      </div>
+    );
+  }
+
+  // Si la práctica está cerrada, mostrar mensaje de bloqueo
+  if (isPracticaCerrada) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex justify-center pt-12 p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-gray-100 text-center">
+          <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto">
+            <AlertTriangle className="text-red-600" size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Práctica Cerrada</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            Tu práctica ya ha sido cerrada. No es posible subir nuevos documentos.
+          </p>
+          <button 
+            onClick={() => navigate('/panel')}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition"
+          >
+            Volver al Panel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100  flex justify-center pt-12 p-4">
