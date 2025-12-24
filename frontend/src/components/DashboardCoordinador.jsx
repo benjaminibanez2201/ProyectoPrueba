@@ -83,6 +83,7 @@ const DashboardCoordinador = ({ user }) => {
       setIsLoading(true);
       setError(null);
       const alumnosArray = await getAllAlumnosDetalles(); // ← SIN ID
+      console.log(alumnosArray[0]); // Verifica la estructura de los datos
       setAlumnos(alumnosArray);
     } catch (err) {
       const errorMessage = err.message || "No se pudo cargar la lista";

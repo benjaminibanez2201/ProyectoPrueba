@@ -106,7 +106,7 @@ export const verDetallesAlumnos = async (req, res) => {
                 
                 return {
                     id: alumno.id,
-                    nombre: alumno.name,
+                    name: alumno.name,
                     email: alumno.email,
                     tipo_practica: alumno.tipo_practica || 'N/A',
                     estado_practica: practicaActiva.estado || 'pendiente',
@@ -128,7 +128,7 @@ export const verDetallesAlumnos = async (req, res) => {
         // Datos básicos del alumno
         const alumnoInfo = {
             id: detalles.id,
-            nombre: detalles.name, 
+            name: detalles.name, 
             email: detalles.email,
             tipo_practica: detalles.tipo_practica || 'N/A'
         };

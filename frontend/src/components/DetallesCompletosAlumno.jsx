@@ -200,7 +200,7 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
 
                 {/* INFORMACIÓN GENERAL */}
                 <div className="p-6 bg-indigo-50 rounded-t-lg">
-                    <p className="text-sm text-indigo-900"><strong>Nombre:</strong> {alumno?.nombre}</p>
+                    <p className="text-sm text-indigo-900"><strong>Nombre:</strong> {alumno?.name}</p>
                     <p className="text-sm text-indigo-900"><strong>Correo Institucional:</strong> {alumno?.email}</p>
                     <p className="text-sm text-indigo-900"><strong>Tipo de Práctica:</strong> {alumno?.tipo_practica}</p>
 
@@ -224,32 +224,15 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Documento</th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Fecha</th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Estado</th>
-                                        <th className="px-4 py-2 text-center text-xs font-medium text-gray-600 uppercase">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {documentos.map((doc) => (
-                                        <tr key={doc.id}>
+                                    {documentos.map((doc, index) => (
+                                        <tr key={doc.id || doc.index || index}>
                                             <td className="px-4 py-2 text-sm">{doc.tipo}</td>
                                             <td className="px-4 py-2 text-sm">{doc.fechaEnvio || 'N/A'}</td>
                                             <td className="px-4 py-2">
                                                 <EstadoDocumento estado={doc.estado} />
-                                            </td>
-                                            <td className="px-4 py-2 text-center">
-                                                {doc.urlRevision ? (
-                                                    <div className="flex justify-center space-x-3">
-                                                        <button
-                                                            onClick={() => handleDocumentAction(doc)}
-                                                            // ✅ Tooltip: Usar la lista de PREVIEW_EXTENSIONS estricta
-                                                            title={PREVIEW_EXTENSIONS.includes(doc.extension?.toLowerCase()) ? "Ver Documento (Vista Previa)" : `Descargar Archivo ${doc.extension}`}
-                                                            className="text-blue-600 hover:text-blue-800"
-                                                        >
-                                                            <Eye size={18} /> 
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-gray-400">N/A</span>
-                                                )}
                                             </td>
                                         </tr>
                                     ))}
