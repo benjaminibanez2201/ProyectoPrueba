@@ -95,7 +95,8 @@ export async function getDetallesAlumnos(id = null, rol=null) {
                     tipo: "bitacora", 
                     estado: 'enviado', 
                     // Bandera clave para el Frontend
-                    es_respuesta_formulario: true 
+                    es_respuesta_formulario: true,
+                    fecha_envio: r.fecha_envio
                 }));
             
             //si es coordinador, limitar a 5 bitacoras. Si es alumno, mostrar todas

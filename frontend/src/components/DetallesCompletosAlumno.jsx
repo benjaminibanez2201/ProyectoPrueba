@@ -8,19 +8,6 @@ const HOST_URL = 'http://localhost:3000';
 //SOLO PDF ES PREVISUALIZABLE EN EL NAVEGADOR
 const PREVIEW_EXTENSIONS = ['.pdf'];
 
-//FUNCIÓN DE DECISIÓN (Lógica de Click del Botón)
-    const handleDocumentAction = (doc) => {
-        const isPreviewable = PREVIEW_EXTENSIONS.includes(doc.extension?.toLowerCase());
-
-        if (isPreviewable) {
-            // Si es PDF, ejecutar la vista previa de inmediato
-            executeFileAction(doc, 'preview'); 
-        } else {
-            // Si es DOCX/ZIP/RAR, abrir el modal de confirmación
-            setDocToProcess(doc); 
-        }
-    };
-
 // Componente para mostrar el estado del documento
 const EstadoDocumento = ({ estado }) => {
     let style = 'bg-gray-100 text-gray-700';
@@ -87,18 +74,6 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
         }
     };
 
-    //FUNCIÓN DE DECISIÓN (Lógica de Click del Botón)
-    const handleDocumentAction = (doc) => {
-        const isPreviewable = PREVIEW_EXTENSIONS.includes(doc.extension?.toLowerCase());
-
-        if (isPreviewable) {
-            // Si es PDF, ejecutar la vista previa de inmediato
-            executeFileAction(doc, 'preview'); 
-        } else {
-            // Si es DOCX/ZIP/RAR, abrir el modal de confirmación
-            setDocToProcess(doc); 
-        }
-    };
 
     useEffect(() => {
         const loadDocs = async () => {
@@ -230,7 +205,7 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                                     {documentos.map((doc, index) => (
                                         <tr key={doc.id || doc.index || index}>
                                             <td className="px-4 py-2 text-sm">{doc.tipo}</td>
-                                            <td className="px-4 py-2 text-sm">{doc.fechaEnvio || 'N/A'}</td>
+                                            <td className="px-4 py-2 text-sm">{doc.fechaEnvio|| 'N/A'}</td>
                                             <td className="px-4 py-2">
                                                 <EstadoDocumento estado={doc.estado} />
                                             </td>
