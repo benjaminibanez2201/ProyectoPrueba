@@ -2,6 +2,8 @@ import { AppDataSource } from "../config/configDb.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { Practica } from "../entities/practica.entity.js";
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
+import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
+import { enviarConfirmacionEvaluacionEmpresa } from "./email.service.js";
 
 export const validarTokenEmpresa = async (tokenAcceso) => {
     console.log("🔍 Validando token:", tokenAcceso);
@@ -63,7 +65,10 @@ export const validarTokenEmpresa = async (tokenAcceso) => {
         alumnoNombre: practicaCompleta.student.name,
         empresaNombre: tokenData.empresaNombre,
         estado: practicaCompleta.estado,
-        formularioRespuestas: practicaCompleta.formularioRespuestas ?? []
+        formularioRespuestas: practicaCompleta.formularioRespuestas ?? [],
+        evaluacionPendiente: !!practicaCompleta.evaluacion_pendiente,
+        evaluacionCompletada: !!practicaCompleta.evaluacion_completada,
+        nivel: practicaCompleta.nivel || null,
     };
 };
 
@@ -104,9 +109,26 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
         throw new Error("Se requiere confirmación explícita.");
     }
 
-    // 4. Actualizamos Estado de la Práctica
-    practica.estado = 'pendiente_validacion';
-    practica.fecha_inicio = new Date(); // Guardamos fecha tentativa de inicio
+    // 4. Corrección Empresa + Estado de la Práctica
+    practica.correccion_empresa_hecha = true;
+
+    if (practica.correccion_destinatario === 'ambos') {
+        // Si el alumno aún no corrige, no avanzar a validación
+        if (!practica.correccion_alumno_hecha) {
+            // Mantener estado en 'rechazada' si todavía no cambió
+            // o en 'rechazada' / 'enviada_a_empresa' según haya sido ajustado por el alumno
+            // No tocar fecha_inicio
+        } else {
+            // Ambos ya corrigieron → enviar a coordinador
+            practica.estado = 'pendiente_validacion';
+            practica.fecha_inicio = new Date();
+        }
+    } else {
+        // Solo empresa o alumno → al confirmar empresa, pasa a validación
+        practica.estado = 'pendiente_validacion';
+        practica.fecha_inicio = new Date();
+    }
+
     await practicaRepo.save(practica);
 
     // 5. Guardamos las Respuestas del Formulario
@@ -119,12 +141,19 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
         
         console.log("💾 Datos ANTES de fusionar:", datosFinales);
 
-        // FUSIONAMOS:
-        // Lo que envía la empresa se agrega al objeto raíz, junto a lo que ya había
-        datosFinales = { ...datosFinales, ...respuestasEmpresa };
+        // FUSIONAR respuestas de empresa: escribir en raíz y reflejar también en datosFormulario
+        datosFinales = { ...datosFinales, ...(respuestasEmpresa || {}) };
+        const datosFormulario = datosFinales?.datosFormulario && typeof datosFinales.datosFormulario === 'object'
+            ? { ...datosFinales.datosFormulario }
+            : {};
+        for (const [key, value] of Object.entries(respuestasEmpresa || {})) {
+            datosFormulario[key] = value;
+        }
+        datosFinales.datosFormulario = datosFormulario;
 
         console.log("💾 Datos DESPUÉS de fusionar (A Guardar):", datosFinales);
 
+        // Guardar estructura final coherente
         formulario.datos = datosFinales;
         formulario.estado = 'enviado';
         
@@ -137,4 +166,71 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
         message: "Datos guardados y práctica enviada a validación.", 
         practicaId: practica.id 
     };
+};
+
+// Empresa envía evaluación final (PR1/PR2)
+export const guardarEvaluacionEmpresa = async (tokenAcceso, respuestas) => {
+    const tokenRepo = AppDataSource.getRepository(EmpresaToken);
+    const practicaRepo = AppDataSource.getRepository(Practica);
+    const respuestaRepo = AppDataSource.getRepository(FormularioRespuesta);
+    const plantillaRepo = AppDataSource.getRepository(FormularioPlantilla);
+
+    const tokenData = await tokenRepo.findOne({ where: { token: tokenAcceso }, relations: ["practica"] });
+    if (!tokenData || !tokenData.practica) throw new Error("Token inválido o práctica no encontrada.");
+
+    const practica = await practicaRepo.findOne({ where: { id: tokenData.practica.id }, relations: ["formularioRespuestas", "student", "empresa", "empresaToken"] });
+    if (!practica) throw new Error("Práctica no existe.");
+
+    if (!practica.evaluacion_pendiente) {
+        // Idempotente: si ya está evaluada, retornamos ok
+        if (practica.evaluacion_completada || practica.estado === 'evaluada') {
+            return { message: "Evaluación ya registrada.", practicaId: practica.id };
+        }
+        throw new Error("No hay evaluación pendiente para esta práctica.");
+    }
+
+    const tipoPlantilla = practica.nivel === 'pr2' ? 'evaluacion_pr2' : 'evaluacion_pr1';
+    const plantillaEval = await plantillaRepo.findOne({ where: { tipo: tipoPlantilla } });
+    if (!plantillaEval) throw new Error(`No existe plantilla de ${tipoPlantilla}.`);
+
+    if (!practica.id) throw new Error("Práctica inválida (sin ID).");
+    if (!plantillaEval.id) throw new Error("Plantilla inválida (sin ID).");
+
+    console.log('➡️ Guardar evaluación: practica.id =', practica.id, 'plantilla.id =', plantillaEval.id);
+
+    // Inserción explícita con SQL crudo para fijar columnas join correctamente
+    const insertSql = `
+        INSERT INTO formulario_respuestas (datos, estado, fecha_envio, plantilla_id, practica_id)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+    `;
+    const insertParams = [
+        JSON.stringify(respuestas || {}),
+        'enviado',
+        new Date(),
+        plantillaEval.id,
+        practica.id,
+    ];
+    const insertResult = await AppDataSource.query(insertSql, insertParams);
+    console.log('✔️ Evaluación insertada, id =', insertResult?.[0]?.id);
+
+        // Actualizar práctica con UPDATE directo para evitar side-effects en relaciones
+        await practicaRepo.createQueryBuilder()
+                .update(Practica)
+                .set({
+                    evaluacion_pendiente: false,
+                    evaluacion_completada: true,
+                    estado: 'evaluada'
+                })
+                .where("id = :id", { id: practica.id })
+                .execute();
+
+    // Notificar por correo que la evaluación fue registrada
+    try {
+        await enviarConfirmacionEvaluacionEmpresa(practica, tipoPlantilla);
+    } catch (e) {
+        console.warn("No se pudo enviar confirmación de evaluación:", e?.message);
+    }
+
+    return { message: "Evaluación registrada.", practicaId: practica.id };
 };

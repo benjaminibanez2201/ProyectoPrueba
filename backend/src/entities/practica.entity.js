@@ -51,6 +51,43 @@ export const Practica = new EntitySchema({
       length: 100,
       nullable: true,
     },
+    correccion_destinatario: {
+      type: "enum",
+      enum: ["alumno", "empresa", "ambos"],
+      nullable: true,
+      comment: "A quién se solicitó corrección tras rechazo",
+    },
+    correccion_alumno_hecha: {
+      type: "boolean",
+      default: false,
+      nullable: false,
+    },
+    correccion_empresa_hecha: {
+      type: "boolean",
+      default: false,
+      nullable: false,
+    },
+    // Flujo de evaluación final
+    evaluacion_pendiente: {
+      type: "boolean",
+      default: false,
+      nullable: false,
+    },
+    evaluacion_completada: {
+      type: "boolean",
+      default: false,
+      nullable: false,
+    },
+    nivel: {
+      type: "enum",
+      enum: ["pr1", "pr2"],
+      nullable: true,
+      comment: "Nivel de práctica profesional (PR1 o PR2)",
+    },
+    nota_final: {
+      type: "float",
+      nullable: true,
+    },
   },
   relations: {
     student: {

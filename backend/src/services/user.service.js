@@ -106,5 +106,11 @@ export async function getDetallesAlumnos(id = null, rol=null) {
         return alumno; 
     });
     //si se pidio un id especìfico, devolver solo ese alumno, si no el array completo
+    //return id ? alumnosConDocsUnificados[0] : alumnosConDocsUnificados;
+    if (id && alumnosConDocsUnificados.length === 0) {
+        return null;
+    }
+
     return id ? alumnosConDocsUnificados[0] : alumnosConDocsUnificados;
+
 }

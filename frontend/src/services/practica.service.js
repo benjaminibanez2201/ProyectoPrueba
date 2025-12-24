@@ -70,3 +70,15 @@ export const getPracticaById = async (id) => {
   const response = await instance.get(`/practicas/${id}`);
   return response.data;
 };
+
+// Alumno finaliza práctica para solicitar evaluación a la empresa
+export const finalizarPractica = async (id) => {
+  const response = await instance.post(`/practicas/${id}/finalizar`);
+  return response.data;
+};
+
+// Cerrar práctica (Coordinador)
+export const cerrarPractica = async (id) => {
+  const response = await instance.patch(`/practicas/${id}/cerrar`);
+  return response.data;
+};

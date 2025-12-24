@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {Upload,FileText,Activity,Send,PlusCircle,Ticket,Info,AlertCircle,Mail,Clock,AlertTriangle,CheckCircle2,Flag,ClipboardCheck,Lock,FileCheck,Download,BookOpen,Check,} from "lucide-react";
-import { getMyPractica } from "../services/practica.service.js";
+import { getMyPractica, finalizarPractica } from "../services/practica.service.js";
 import {
   showErrorAlert,
   showSuccessAlert,
@@ -158,6 +158,17 @@ const DashboardAlumno = ({ user }) => {
     }
   }, []);
 
+  const onFinalizarPractica = async () => {
+    if (!practica) return;
+    try {
+      await finalizarPractica(practica.id);
+      await showSuccessAlert("Práctica finalizada", "Se envió la evaluación a la empresa.");
+      await fetchMiPractica();
+    } catch (e) {
+      showErrorAlert("No se pudo finalizar", e.message || "Intenta nuevamente");
+    }
+  };
+
   //caragar recursos publicos globales
   const fetchRecursosGlobales = async () => {
     try {
@@ -262,7 +273,17 @@ const DashboardAlumno = ({ user }) => {
                   </>
                 )}
               </div>
-
+              {/* Botón Finalizar práctica (cuando está en curso) */}
+              {practica?.estado === 'en_curso' && (
+                <div className="mt-4">
+                  <button
+                    onClick={onFinalizarPractica}
+                    className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Flag size={16} /> Finalizar Práctica y Enviar Evaluación
+                  </button>
+                </div>
+              )}
               {/* Token (Solo si existe) */}
               {practica?.empresaToken && (
                 <div className="mt-4 bg-green-50 p-3 rounded-lg border border-green-200">
@@ -339,6 +360,48 @@ const DashboardAlumno = ({ user }) => {
                   )}
               </div>
             </div>
+
+            {/* Tarjeta Mi Postulación (Visualización) */}
+            <div
+              className={`bg-white p-6 rounded-xl shadow-sm border border-green-100 ${
+                !practica ? "opacity-50 grayscale" : ""
+              }`}
+            >
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <FileCheck size={20} className="text-blue-600" /> Mi Postulación
+              </h3>
+              <div className="space-y-3">
+                <div className="text-sm">
+                  <p className="text-gray-500">Empresa:</p>
+                  <p className="font-medium text-gray-800">
+                    {practica?.empresaToken?.empresaNombre || "-"}
+                  </p>
+                </div>
+                <div className="text-sm">
+                  <p className="text-gray-500">Fecha de envío:</p>
+                  <p className="font-medium text-gray-800">
+                    {practica?.fecha_creacion
+                      ? new Date(practica.fecha_creacion).toLocaleDateString()
+                      : "-"}
+                  </p>
+                </div>
+                  {postulacionId ? (
+                    <button
+                        onClick={() => navigate(`/revision-formulario/${postulacionId}`)}
+                        className="w-full mt-2 border border-blue-600 text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-md"
+                    >
+                        <FileCheck size={16} /> Ver Formulario de Postulación
+                    </button>
+                  ) : (
+                    <button
+                        disabled={!practica}
+                        className="w-full mt-2 border border-blue-200 text-blue-600 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Download size={16} /> Comprobante No Disponible
+                    </button>
+                  )}
+              </div>
+            </div>
           </div>
 
           {/* --- FILA 2: BITÁCORAS (El Tracker) --- */}
@@ -370,13 +433,14 @@ const DashboardAlumno = ({ user }) => {
                   <BookOpen size={18} /> Completar Bitácora
                 </button>
                 <button
-                  disabled={!practica}
+                  disabled={!practica || practica?.estado === 'cerrada'}
                   onClick={() =>
                     navigate("/upload-document", {
                       state: { practicaId: practica?.id },
                     })
                   }
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap disabled:bg-gray-400"
+                  title={practica?.estado === 'cerrada' ? 'La práctica está cerrada. No se pueden subir documentos.' : undefined}
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   <Upload size={18} /> Subir Documentos
                 </button>

@@ -1,6 +1,7 @@
 # Ignorar carpetas de dependencias (de ambos)
-backend/node_modules
-frontend/node_modules
+backend/node_modules/
+frontend/node_modules/
+node_modules/
 
 # Ignorar carpeta de "build" (del frontend)
 frontend/dist

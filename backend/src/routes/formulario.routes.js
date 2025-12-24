@@ -4,6 +4,7 @@ import { authMiddleware,} from "../middleware/auth.middleware.js";
 import { submitBitacora } from "../controllers/formulario.controller.js";
 import { getRespuesta } from '../controllers/formulario.controller.js';
 import { getTodasLasPlantillas } from "../controllers/formulario.controller.js";
+import { corregirPostulacion } from "../controllers/formulario.controller.js";
 
 const router = Router();
 const controller = new FormularioController();
@@ -18,5 +19,7 @@ router.delete("/:id", authMiddleware(["coordinador"]), controller.deletePlantill
 router.post("/bitacora",authMiddleware(["alumno"]), submitBitacora); // Nueva ruta para guardar Bitácora
 router.get('/respuesta/:id',authMiddleware(["alumno", "coordinador"]), getRespuesta);//[GET] /api/formularios/respuesta/:id (Obtener una respuesta de formulario por ID)
 router.get("/plantillas", getTodasLasPlantillas);
+// Alumno corrige su postulación rechazada
+router.put('/respuesta/:id/correccion', authMiddleware(["alumno"]), corregirPostulacion);
 
 export default router;

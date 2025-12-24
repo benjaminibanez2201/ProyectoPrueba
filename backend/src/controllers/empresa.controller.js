@@ -3,7 +3,7 @@ import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { Practica } from "../entities/practica.entity.js";
 import jwt from "jsonwebtoken";
 import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
-import { validarTokenEmpresa, confirmarInicioPracticaService } from "../services/empresa.service.js";
+import { validarTokenEmpresa, confirmarInicioPracticaService, guardarEvaluacionEmpresa } from "../services/empresa.service.js";
 
 // --- Generar Token ---
 export const generarTokenEmpresa = async (req, res) => {
@@ -52,15 +52,18 @@ export const verFormulario = async (req, res) => {
 // --- Enviar Evaluación (empresa) ---
 export const enviarEvaluacion = async (req, res) => {
   try {
-    // más adelante procesaremos la evaluación enviada
-    return res.json({ message: "Aquí se recibirá la evaluación enviada por la empresa." });
+    const { token, respuestas } = req.body;
+    if (!token) return handleErrorClient(res, 400, "Falta token." );
+
+    const resultado = await guardarEvaluacionEmpresa(token, respuestas);
+    return handleSuccess(res, 200, "Evaluación registrada.", resultado);
   } catch (error) {
     console.error("Error al enviar evaluación:", error);
-    return handleErrorClient(res, 500, "Error interno al enviar evaluación.");
+    return handleErrorClient(res, 400, error.message || "Error interno al enviar evaluación.");
   }
 };
 
-// --- Validar Token (empresa) ---
+//Validar Token (empresa)
 export const validarToken = async (req, res) => {
   try {
     const { token } = req.params;
@@ -82,20 +85,19 @@ export const validarToken = async (req, res) => {
   }
 };
 
-// confirmar inicio de práctica
-// CONFIRMAR INICIO (Versión Arreglada)
+//confirmar inicio de práctica
 export const confirmarInicioPractica = async (req, res) => {
   try {
     // El frontend envía: { token: '...', confirmacion: true, respuestas: { ... } }
     const { token, confirmacion, respuestas } = req.body; 
 
-    console.log("📦 DATOS RECIBIDOS DESDE FRONTEND (EMPRESA):", respuestas);
+    console.log("DATOS RECIBIDOS DESDE FRONTEND (EMPRESA):", respuestas);
 
     if (!token) {
         return handleErrorClient(res, 400, "Falta el token de acceso.");
     }
 
-    // Llamamos al servicio nuevo
+    // Llamamos al servicio que maneja la confirmación
     const resultado = await confirmarInicioPracticaService(token, confirmacion, respuestas);
 
     return handleSuccess(res, 200, "Confirmación exitosa.", resultado);

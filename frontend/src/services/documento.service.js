@@ -31,11 +31,23 @@ export async function uploadDocumento(file, tipo, practicaId) {
  * Elimina un documento por su ID
  */
 export async function deleteDocumento(id) {
-  try {
+    try {
     const response = await axios.delete(`/documentos/${id}`);
     return response.data;
-  } catch (error) {
+    } catch (error) {
     console.error("Error al eliminar documento:", error);
     return error.response?.data || { status: "Error", message: "Error de conexión" };
-  }
+    }
+}
+
+export async function getDocsAlumno(alumnoId) {
+    try {
+        const response = await axios.get(`/users/alumnos/${alumnoId}/detalles`);
+        return {
+            payload: response.data.data  // ← Adaptar estructura
+        };
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || 'Error de conexión o datos no encontrados.';
+        throw new Error(errorMessage);
+    }
 }
