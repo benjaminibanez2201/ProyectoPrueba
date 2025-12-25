@@ -81,9 +81,11 @@ export async function getMensajesEnviados() {
 /**
  * Marcar mensaje como leído
  */
-export async function marcarComoLeido(mensajeId) {
+export async function marcarComoLeido(mensajeId, token = null) {
     try {
-        const response = await axios.patch(`/comunicacion/${mensajeId}/leido`);
+        const response = await axios.patch(`/comunicacion/${mensajeId}/leido`, {}, {
+            params: token ? { token } : {}
+        });
         return response.data;
     } catch (error) {
         console.error('Error al marcar como leído:', error);
@@ -100,6 +102,21 @@ export async function getNoLeidos() {
         return response.data;
     } catch (error) {
         console.error('Error al obtener no leídos:', error);
+        return { data: { noLeidos: 0 } };
+    }
+}
+
+/**
+ * Obtener cantidad de mensajes no leídos para empresa (con token)
+ */
+export async function getNoLeidosEmpresa(practicaId, token) {
+    try {
+        const response = await axios.get(`/comunicacion/no-leidos-empresa/${practicaId}`, {
+            params: { token }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener no leídos empresa:', error);
         return { data: { noLeidos: 0 } };
     }
 }

@@ -27,39 +27,32 @@ const ChatMensajeria = ({ practicaId, token, destinatarioId, usuarioActual, onCl
     const cargarConversacion = async () => {
         try {
             setLoading(true);
-            console.log('🔍 Cargando conversación...', { practicaId, tieneToken: !!token });
             
             let response;
             
             if (token) {
-                // Empresa con token
-                console.log('👔 Cargando como empresa con token');
                 response = await getConversacionPracticaConToken(practicaId, token);
             } else {
-                // Coordinador autenticado
-                console.log('👨‍💼 Cargando como coordinador');
                 response = await getConversacionPractica(practicaId);
             }
-            
-            console.log('✅ Conversación cargada:', response);
             
             const mensajesData = response.data || [];
             setMensajes(mensajesData);
 
-            // Marcar como leídos los mensajes recibidos
+            // Marcar como leídos los mensajes recibidos (donde soy el destinatario)
             for (const msg of mensajesData) {
-                if (msg.destinatario?.id === usuarioActual.id && !msg.leido) {
+                // Verificar si el mensaje es para mí (por email) y no está leído
+                const esMiMensaje = msg.destinatario_email === usuarioActual.email;
+                if (esMiMensaje && !msg.leido) {
                     try {
-                        await marcarComoLeido(msg.id);
+                        await marcarComoLeido(msg.id, token);
                     } catch (error) {
-                        console.error('Error al marcar como leído:', error);
+                        // Error silencioso
                     }
                 }
             }
 
         } catch (error) {
-            console.error('❌ Error al cargar conversación:', error);
-            console.error('❌ Detalles:', error.response?.data);
             showErrorAlert('Error', error.message || 'No se pudo cargar la conversación');
         } finally {
             setLoading(false);
@@ -76,11 +69,6 @@ const ChatMensajeria = ({ practicaId, token, destinatarioId, usuarioActual, onCl
 
         try {
             setEnviando(true);
-            console.log('📤 Enviando mensaje...', { 
-            practicaId,           // ← Debe existir
-            destinatarioId,       // ← Debe existir
-            tieneToken: !!token   // ← Ver si hay token
-            });
 
             // Obtenemos el destinatario de la conversación cargada si no viene por props
             const ultimoMensajeRecibido = [...mensajes].reverse().find(m => m.remitente_email !== usuarioActual.email);
@@ -89,28 +77,24 @@ const ChatMensajeria = ({ practicaId, token, destinatarioId, usuarioActual, onCl
                 asunto: nuevoMensaje.asunto,
                 contenido: nuevoMensaje.contenido,
                 practicaId: Number(practicaId),
-                // SEGURO: Si no hay mensajes previos (chat vacío), necesitamos un plan C
-                destinatarioId: destinatarioId || ultimoMensajeRecibido?.remitente_email || "empresa@correo.com" 
+                // El destinatarioId ahora es un email, no un ID numérico
+                destinatarioId: destinatarioId || ultimoMensajeRecibido?.remitente_email
             };
 
-            // Validamos que realmente tengamos un destinatario antes de disparar la petición
-            if (!data.destinatarioId) {
-                // Si sigue siendo undefined, el backend lanzará el error 400 que viste
-                console.error("Falta el destinatarioId. Revisa las props del chat.");
+            // Validamos que realmente tengamos un destinatario (solo si NO hay token)
+            // Cuando hay token (empresa), el backend determina automáticamente el destinatario
+            if (!data.destinatarioId && !token) {
+                showErrorAlert('Error', 'No se pudo identificar el destinatario del mensaje');
+                setEnviando(false);
+                return;
             }
 
             // Si es empresa, incluir el token
             if (token) {
-            data.token = token;
-            console.log('👔 Enviando como empresa con token');
-            } else {
-                console.log('👨‍💼 Enviando como coordinador');
+                data.token = token;
             }
 
-            console.log('📦 Data a enviar:', data);
-
             const response = await enviarMensaje(data);
-            console.log('✅ Mensaje enviado:', response);
             
             // Agregar el nuevo mensaje a la lista
             setMensajes(prev => [...prev, response.data]);
@@ -121,8 +105,6 @@ const ChatMensajeria = ({ practicaId, token, destinatarioId, usuarioActual, onCl
             showSuccessAlert('¡Enviado!', 'Mensaje enviado correctamente');
 
         } catch (error) {
-            console.error('❌ Error al enviar:', error);
-            console.error('❌ Detalles:', error.response?.data);
             showErrorAlert('Error', error.message);
         } finally {
             setEnviando(false);

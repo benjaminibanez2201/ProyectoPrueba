@@ -1,92 +1,236 @@
-# ProyectoPrueba
+# 📚 Sistema de Gestión de Prácticas Profesionales
 
 Sistema web para la gestión de prácticas profesionales de la carrera de Ingeniería Civil en Informática en la Universidad del Bío-Bío.
 
-## Descripción
+## 📝 Descripción
 
-Esta aplicación permite:
+Esta aplicación permite la gestión del proceso de prácticas profesionales, incluyendo:
 
-- Registro de **estudiantes** y **coordinadores**.
-- Generación de **tokens de empresa** por parte del coordinador para que las empresas puedan acceder a formularios y evaluaciones de alumnos asignados.
-- Validación de **JWT** para autenticación y autorización.
-- Base lista para que las empresas accedan a los formularios y chateen con coordinadores (funcionalidad de chat en desarrollo).
+### Funcionalidades para Estudiantes
+- 📋 Registro y gestión de perfil
+- 📄 Subida y gestión de documentos
+- 📝 Respuesta de formularios y bitácoras
+- 💬 Sistema de mensajería con coordinadores
 
-El backend está desarrollado con **Node.js**, **Express**, **TypeORM** y **PostgreSQL**.
+### Funcionalidades para Coordinadores
+- 👥 Gestión de usuarios (estudiantes y coordinadores)
+- ✅ Aprobación de prácticas
+- 🔑 Generación de tokens de empresa para acceso externo
+- 📊 Creación y edición de formularios dinámicos
+- 📁 Gestión de recursos y documentos
+- 💬 Sistema de comunicación con estudiantes y empresas
 
-## Tecnologías
+### Funcionalidades para Empresas
+- 🔐 Acceso mediante token único
+- 📝 Visualización y respuesta de formularios de evaluación
+- 👀 Vista de información del alumno asignado
 
-- Node.js
-- Express
-- TypeORM
-- PostgreSQL
-- JWT para autenticación
-- Yup para validación de datos
+---
 
-## Instalación
+## 🛠️ Tecnologías
 
-1. Clonar el repositorio:
+### Backend
+| Tecnología | Descripción |
+|------------|-------------|
+| Node.js | Entorno de ejecución |
+| Express | Framework web |
+| TypeORM | ORM para base de datos |
+| PostgreSQL | Base de datos relacional |
+| JWT | Autenticación y autorización |
+| Bcrypt | Encriptación de contraseñas |
+| Yup | Validación de datos |
+| Multer | Manejo de archivos |
+| Nodemailer | Envío de correos electrónicos |
+
+### Frontend
+| Tecnología | Descripción |
+|------------|-------------|
+| React 18 | Biblioteca de UI |
+| Vite | Build tool y dev server |
+| React Router DOM | Enrutamiento |
+| Tailwind CSS | Framework de estilos |
+| Axios | Cliente HTTP |
+| SweetAlert2 | Alertas y modales |
+| Lucide React | Iconos |
+| React Signature Canvas | Firma digital |
+| html2pdf.js | Generación de PDFs |
+
+---
+
+## 🚀 Instalación
+
+### Prerrequisitos
+- Node.js (v18 o superior)
+- PostgreSQL (v14 o superior)
+- npm o yarn
+
+### 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/benjaminibanez2201/ProyectoPrueba.git
-Entrar al proyecto:
-
-bash
-Copiar código
 cd ProyectoPrueba
-Instalar dependencias:
+```
 
-bash
-Copiar código
+### 2. Configurar el Backend
+
+```bash
+cd backend
 npm install
-Configurar variables de entorno en un archivo .env:
+```
 
-env
-Copiar código
+Crear archivo `.env` en la carpeta `backend/`:
+
+```env
 PORT=3000
-JWT_SECRET=tu_secreto
+JWT_SECRET=tu_secreto_jwt_seguro
+
+# Base de datos
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=tu_usuario
 DB_PASSWORD=tu_password
 DB_NAME=proyecto_prueba
 
-# Configuración de Correo
-EMAIL_USER= correo
-EMAIL_PASS= contraseña de aplicacion
+# Configuración de Correo (Gmail)
+EMAIL_USER=tu_correo@gmail.com
+EMAIL_PASS=tu_contraseña_de_aplicacion
+```
 
-Iniciar la base de datos PostgreSQL y sincronizar con TypeORM.
+### 3. Configurar el Frontend
 
-Levantar el servidor:
+```bash
+cd frontend
+npm install
+```
 
-bash
-Copiar código
+### 4. Iniciar la aplicación
+
+**Backend** (desde carpeta `backend/`):
+```bash
 npm run dev
-Uso
-Registro de usuarios: POST /api/auth/register
+```
 
-Login: POST /api/auth/login
+**Frontend** (desde carpeta `frontend/`):
+```bash
+npm run dev
+```
 
-Generar token de empresa (solo coordinador): POST /api/empresa/generar-token
+---
 
-Acceso de empresa con token: GET /api/empresa/ver-formulario?token=<TOKEN>
+## 📡 API Endpoints
 
-Estructura del proyecto
-bash
-Copiar código
-src/
-├─ config/          # Configuración de la base de datos
-├─ controllers/     # Lógica de rutas
-├─ entities/        # Entidades TypeORM
-├─ middleware/      # Middlewares (auth, empresaAuth)
-├─ routes/          # Definición de rutas
-├─ services/        # Servicios (si se crean)
-├─ validation/      # Validaciones con Yup
-index.js             # Entrada de la aplicación
-Estado del proyecto
-Backend: funcionando
+### Autenticación (`/api/auth`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/register` | Registro de usuarios |
+| POST | `/login` | Inicio de sesión |
 
-Frontend: en desarrollo
+### Usuarios (`/api/users`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/` | Listar usuarios |
+| GET | `/:id` | Obtener usuario por ID |
+| PUT | `/:id` | Actualizar usuario |
+| DELETE | `/:id` | Eliminar usuario |
 
-Funcionalidad de chat para empresas: pendiente
+### Prácticas (`/api/practicas`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/` | Listar prácticas |
+| POST | `/` | Crear práctica |
+| PUT | `/:id` | Actualizar práctica |
 
-Formularios y evaluaciones dinámicas para empresas: pendiente
+### Formularios (`/api/formularios`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/` | Listar formularios |
+| POST | `/` | Crear formulario |
+| PUT | `/:id` | Actualizar formulario |
+
+### Documentos (`/api/documentos`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/` | Listar documentos |
+| POST | `/upload` | Subir documento |
+| DELETE | `/:id` | Eliminar documento |
+
+### Empresa (`/api/empresa`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/generar-token` | Generar token de acceso (coordinador) |
+| GET | `/ver-formulario` | Acceder con token de empresa |
+
+### Comunicación (`/api/comunicacion`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/mensajes` | Obtener mensajes |
+| POST | `/enviar` | Enviar mensaje |
+
+### Recursos (`/api/recursos`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/` | Listar recursos |
+| POST | `/` | Crear recurso |
+| DELETE | `/:id` | Eliminar recurso |
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+ProyectoPrueba/
+├── backend/
+│   ├── src/
+│   │   ├── config/           # Configuración de BD y entorno
+│   │   ├── controllers/      # Controladores de rutas
+│   │   ├── entities/         # Entidades TypeORM
+│   │   ├── Handlers/         # Manejadores de respuestas
+│   │   ├── helpers/          # Funciones auxiliares
+│   │   ├── middleware/       # Middlewares (auth, upload, validate)
+│   │   ├── routes/           # Definición de rutas
+│   │   ├── services/         # Lógica de negocio
+│   │   ├── validation/       # Esquemas de validación Yup
+│   │   └── index.js          # Punto de entrada
+│   └── uploads/              # Archivos subidos
+│
+├── frontend/
+│   ├── public/               # Archivos estáticos
+│   └── src/
+│       ├── components/       # Componentes React reutilizables
+│       ├── context/          # Contextos (AuthContext)
+│       ├── helpers/          # Funciones auxiliares
+│       ├── hooks/            # Custom hooks
+│       ├── pages/            # Páginas/vistas
+│       ├── services/         # Servicios API
+│       └── styles/           # Estilos CSS
+│
+└── README.md
+```
+
+---
+
+## ✅ Estado del Proyecto
+
+| Módulo | Estado |
+|--------|--------|
+| 🟢 Backend API | Funcionando |
+| 🟢 Autenticación JWT | Funcionando |
+| 🟢 Gestión de usuarios | Funcionando |
+| 🟢 Gestión de prácticas | Funcionando |
+| 🟢 Formularios dinámicos | Funcionando |
+| 🟢 Subida de documentos | Funcionando |
+| 🟢 Sistema de mensajería | Funcionando |
+| 🟢 Tokens de empresa | Funcionando |
+| 🟢 Frontend React | Funcionando |
+| 🟢 Dashboard Alumno | Funcionando |
+| 🟢 Dashboard Coordinador | Funcionando |
+| 🟢 Gestión de recursos | Funcionando |
+
+---
+
+## 👥 Autores
+
+- **Benjamín Ibáñez** - [GitHub](https://github.com/benjaminibanez2201)
+- **Javiera Carrasco** - [GitHub](https://github.com/javimiau)
+- **Catalina Muñoz** - [GitHub](https://github.com/nutss2635)
+
