@@ -177,10 +177,28 @@ export const verDetallesAlumnos = async (req, res) => {
             };
         });
 
+        // Formularios (Postulación y Evaluación) - Solo los enviados/aprobados
+        const formulariosRespuestas = practicaActiva.formularioRespuestas || [];
+        const formulariosInfo = formulariosRespuestas
+            .filter(r => 
+                ['postulacion', 'evaluacion_pr1', 'evaluacion_pr2'].includes(r.plantilla?.tipo) &&
+                ['enviado', 'aprobado'].includes(r.estado) // Formularios ya completados
+            )
+            .map(r => ({
+                id: r.id,
+                tipo: r.plantilla?.tipo,
+                titulo: r.plantilla?.titulo,
+                estado: r.estado,
+                fechaEnvio: r.fecha_envio 
+                    ? new Date(r.fecha_envio).toISOString().split('T')[0] 
+                    : 'N/A'
+            }));
+
         const detallesCompletos = {
             alumno: alumnoInfo,
             practica: practicaInfo,
             documentos: documentosInfo,
+            formularios: formulariosInfo,
         };
 
         return handleSuccess(res, 200, "Información completa de alumno obtenida exitosamente", detallesCompletos);

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { validarTokenEmpresa, confirmarInicioPractica, enviarEvaluacionEmpresa } from '../services/empresa.service.js';
+import { validarTokenEmpresa, confirmarInicioPractica, enviarEvaluacionEmpresa, getFormularioEmpresa } from '../services/empresa.service.js';
 import { getPlantilla } from '../services/formulario.service.js'; // 1. Traer la plantilla
 import FormRender from '../components/FormRender'; // 2. Traer tu componente estrella
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js'; 
-import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, ClipboardList, Clock, MessageCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, ClipboardList, Clock, MessageCircle, Download, Eye } from 'lucide-react';
 import ChatMensajeria from '../components/ChatMensajeria';
+import html2pdf from 'html2pdf.js';
 
 const Access = () => {
     const { token } = useParams();
@@ -15,6 +16,8 @@ const Access = () => {
     const [data, setData] = useState(null);
     const [plantilla, setPlantilla] = useState(null); // Para guardar las preguntas
     const [modoEvaluacion, setModoEvaluacion] = useState(false);
+    const [formulariosDisponibles, setFormulariosDisponibles] = useState([]); // Formularios para descargar
+    const [formularioVisualizando, setFormularioVisualizando] = useState(null); // Formulario actual en vista
     
     // Estados de UI
     const [loading, setLoading] = useState(true);
@@ -49,6 +52,16 @@ const Access = () => {
                 } else {
                     const plantillaData = await getPlantilla('postulacion');
                     setPlantilla(plantillaData);
+                }
+
+                // Cargar formularios disponibles para descarga (postulación y evaluación)
+                try {
+                    const formulariosRes = await getFormularioEmpresa(token);
+                    if (formulariosRes?.data?.formularios) {
+                        setFormulariosDisponibles(formulariosRes.data.formularios);
+                    }
+                } catch (e) {
+                    console.warn('No se pudieron cargar formularios:', e);
                 }
 
             } catch (err) {
@@ -101,6 +114,18 @@ const Access = () => {
         return out;
     };
 
+    // Función para recargar los formularios disponibles
+    const recargarFormularios = async () => {
+        try {
+            const formulariosRes = await getFormularioEmpresa(token);
+            if (formulariosRes?.data?.formularios) {
+                setFormulariosDisponibles(formulariosRes.data.formularios);
+            }
+        } catch (e) {
+            console.warn('No se pudieron recargar formularios:', e);
+        }
+    };
+
     // Lógica para enviar el formulario completado
 const handleFormSubmit = async (respuestas) => {
     try {
@@ -115,8 +140,8 @@ const handleFormSubmit = async (respuestas) => {
             // Actualizar estado local y salir del modo evaluación
             setData(prev => ({ ...prev, estado: 'evaluada' }));
             setModoEvaluacion(false);
-            // Redirigir al portal de empresa (mismo acceso con token)
-            navigate(`/empresa/acceso/${token}`);
+            // Recargar los formularios para que aparezca la evaluación recién enviada
+            await recargarFormularios();
         } else {
             await confirmarInicioPractica(token, true, respuestas);
             await showSuccessAlert(
@@ -144,6 +169,58 @@ const handleFormSubmit = async (respuestas) => {
     }
 };
 
+    // Función para ver formulario completo
+    const handleVerFormulario = async (tipo) => {
+        try {
+            const response = await getFormularioEmpresa(token, tipo);
+            if (response?.data) {
+                setFormularioVisualizando({
+                    ...response.data,
+                    tipo
+                });
+            }
+        } catch (err) {
+            showErrorAlert('Error', 'No se pudo cargar el formulario.');
+        }
+    };
+
+    // Función para descargar PDF del formulario
+    const handleDescargarPDF = async () => {
+        const element = document.getElementById('formulario-preview-content');
+        if (!element) return;
+
+        const nombreTipo = {
+            'postulacion': 'Formulario_Postulacion',
+            'evaluacion_pr1': 'Evaluacion_Profesional_I',
+            'evaluacion_pr2': 'Evaluacion_Profesional_II'
+        };
+
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: `${nombreTipo[formularioVisualizando?.tipo] || 'Formulario'}_${data?.alumnoNombre || 'Alumno'}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                allowTaint: true, 
+                logging: false,
+                backgroundColor: '#ffffff'
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        };
+
+        await html2pdf().set(opt).from(element).save();
+    };
+
+    // Nombre legible de formulario
+    const getNombreFormulario = (tipo) => {
+        const nombres = {
+            'postulacion': 'Formulario de Postulación',
+            'evaluacion_pr1': 'Evaluación Profesional I',
+            'evaluacion_pr2': 'Evaluación Profesional II'
+        };
+        return nombres[tipo] || tipo;
+    };
 
     const handleCerrarSesion = () => navigate('/auth');
 
@@ -173,6 +250,7 @@ const handleFormSubmit = async (respuestas) => {
     const esPendienteValidacion = estado === 'pendiente_validacion';
     const esEnCurso = estado === 'en_curso';
     const esFinalizada = estado === 'finalizada' || modoEvaluacion;
+    const esEvaluada = estado === 'evaluada' || estado === 'cerrada';
 
     return (
         <div className="min-h-screen bg-gray-50 pb-12">
@@ -306,6 +384,128 @@ const handleFormSubmit = async (respuestas) => {
                         </div>
                     </div>
                 )}
+
+                {/* CASO E: EVALUADA / CERRADA (Mostrar resumen) */}
+                {esEvaluada && !modoEvaluacion && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-8 text-center mb-6">
+                        <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle className="text-purple-600" size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-purple-800 mb-2">
+                            {estado === 'cerrada' ? 'Práctica Cerrada' : 'Evaluación Completada'}
+                        </h3>
+                        <p className="text-purple-700 max-w-md mx-auto">
+                            {estado === 'cerrada' 
+                                ? 'Esta práctica ha sido cerrada oficialmente. Gracias por su participación.'
+                                : 'La evaluación ha sido enviada correctamente. El coordinador procesará el cierre de la práctica.'
+                            }
+                        </p>
+                    </div>
+                )}
+
+                {/* SECCIÓN DE FORMULARIOS PARA DESCARGAR */}
+                {formulariosDisponibles.length > 0 && !modoEvaluacion && (
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mt-6">
+                        <div className="bg-indigo-600 p-4 text-white">
+                            <h3 className="font-bold flex items-center gap-2">
+                                <FileText size={20} /> Documentos de la Práctica
+                            </h3>
+                            <p className="text-indigo-100 text-sm mt-1">
+                                Puede visualizar y descargar los formularios completados.
+                            </p>
+                        </div>
+                        <div className="p-6">
+                            <div className="grid gap-3">
+                                {formulariosDisponibles.map((form) => (
+                                    <div 
+                                        key={form.id} 
+                                        className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-full ${
+                                                form.tipo === 'postulacion' 
+                                                    ? 'bg-blue-100 text-blue-600' 
+                                                    : 'bg-green-100 text-green-600'
+                                            }`}>
+                                                <FileText size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-800">
+                                                    {getNombreFormulario(form.tipo)}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    Enviado: {form.fechaEnvio ? new Date(form.fechaEnvio).toLocaleDateString() : 'N/A'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleVerFormulario(form.tipo)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium transition"
+                                        >
+                                            <Eye size={16} />
+                                            Ver / Descargar
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL PARA VISUALIZAR Y DESCARGAR FORMULARIO */}
+                {formularioVisualizando && (
+                    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+                            {/* Header del Modal */}
+                            <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-800">
+                                        {getNombreFormulario(formularioVisualizando.tipo)}
+                                    </h3>
+                                    <p className="text-sm text-gray-500">
+                                        Alumno: {data?.alumnoNombre}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handleDescargarPDF}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+                                    >
+                                        <Download size={18} />
+                                        Descargar PDF
+                                    </button>
+                                    <button
+                                        onClick={() => setFormularioVisualizando(null)}
+                                        className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-2 rounded-full transition"
+                                    >
+                                        <XCircle size={24} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Contenido del Formulario */}
+                            <div className="flex-1 overflow-y-auto p-6 bg-gray-100">
+                                <div id="formulario-preview-content" className="bg-white rounded-lg p-6 shadow">
+                                    {formularioVisualizando.plantilla ? (
+                                        <FormRender 
+                                            esquema={formularioVisualizando.plantilla.esquema}
+                                            valores={formularioVisualizando.datos} 
+                                            respuestasIniciales={formularioVisualizando.datos}
+                                            readOnly={true}
+                                            buttonText=""
+                                            onSubmit={() => {}} 
+                                        />
+                                    ) : (
+                                        <p className="text-center text-gray-500 py-8">
+                                            No se pudo cargar el formulario.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                     {/* ← NUEVO: Modal de Chat */}
                 {chatAbierto && data && (
                     <ChatMensajeria

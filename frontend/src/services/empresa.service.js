@@ -44,3 +44,16 @@ export const enviarEvaluacionEmpresa = async (token, respuestas) => {
     }
 }
 
+// Obtener formulario específico de la práctica (postulación o evaluación)
+export const getFormularioEmpresa = async (token, tipo = null) => {
+    try {
+        const url = tipo 
+            ? `/empresa/formulario/${token}?tipo=${tipo}`
+            : `/empresa/formulario/${token}`;
+        const response = await instance.get(url);
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener formulario:', error);
+        throw error.response?.data || error.message;
+    }
+}

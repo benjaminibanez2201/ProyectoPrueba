@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   CheckCircle,
   XCircle,
@@ -9,6 +9,7 @@ import {
   Eye,
   FileText,
   ArrowLeft,
+  Download,
 } from "lucide-react";
 import instance from "../services/root.service"; // Usamos tu instancia configurada
 import FormRender from "../components/FormRender"; // El visor del formulario
@@ -21,11 +22,13 @@ import {
   customAlert,
 } from "../helpers/sweetAlert";
 import { useNavigate } from "react-router-dom";
+import html2pdf from 'html2pdf.js';
 
 const AprobarPracticas = () => {
   const navigate = useNavigate();
   const [practicas, setPracticas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const formContentRef = useRef(null);
 
   // Estados para el Modal de Revisión
   const [modalOpen, setModalOpen] = useState(false);
@@ -84,6 +87,37 @@ const AprobarPracticas = () => {
   const handleRevisar = (practica) => {
     setSeleccionada(practica);
     setModalOpen(true);
+  };
+
+  // Función para descargar PDF del formulario de postulación
+  const handleDescargarPDF = async () => {
+    const element = formContentRef.current;
+    if (!element) return;
+
+    const alumnoNombre = seleccionada?.student?.name || 'Alumno';
+    
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: `Formulario_Postulacion_${alumnoNombre.replace(/\s+/g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        allowTaint: true, 
+        logging: false,
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          const sections = clonedDoc.querySelectorAll('.mb-4, .mb-6, table, h2');
+          sections.forEach(el => {
+            el.style.pageBreakInside = 'avoid';
+          });
+        }
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: 'css', before: '.page-break-before', after: '.page-break-after', avoid: '.no-break' }
+    };
+
+    await html2pdf().set(opt).from(element).save();
   };
 
   // --- LÓGICA DE APROBACIÓN/RECHAZO ---
@@ -274,29 +308,41 @@ const AprobarPracticas = () => {
                   Evaluación de Solicitud
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Revisa los datos antes de aprobar.
+                  Revisa los datos antes de aprobar. - {seleccionada?.student?.name}
                 </p>
               </div>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-2 rounded-full transition"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDescargarPDF}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+                  title="Descargar formulario como PDF"
+                >
+                  <Download size={18} />
+                  PDF
+                </button>
+                <button
+                  onClick={() => setModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-2 rounded-full transition"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Modal Content (Scrollable) */}
             <div className="flex-1 overflow-y-auto p-6 bg-gray-100">
-              {plantilla ? (
-                <FormRender
-                  esquema={plantilla.esquema}
-                  respuestasIniciales={getRespuestasDePractica(seleccionada)}
-                  readOnly={true} // Bloqueado para edición
-                  userType="coordinador"
-                />
-              ) : (
-                <div className="text-center py-10">Cargando formulario...</div>
-              )}
+              <div ref={formContentRef} className="bg-white rounded-lg p-6 shadow">
+                {plantilla ? (
+                  <FormRender
+                    esquema={plantilla.esquema}
+                    respuestasIniciales={getRespuestasDePractica(seleccionada)}
+                    readOnly={true} // Bloqueado para edición
+                    userType="coordinador"
+                  />
+                ) : (
+                  <div className="text-center py-10">Cargando formulario...</div>
+                )}
+              </div>
             </div>
 
             {/* Modal Footer (Actions) */}

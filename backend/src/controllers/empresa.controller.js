@@ -107,3 +107,80 @@ export const confirmarInicioPractica = async (req, res) => {
     return handleErrorServer(res, 500, "Error al procesar la solicitud", error.message);
   }
 };
+
+// Obtener formulario específico de la práctica por token de empresa
+export const getFormularioByToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { tipo } = req.query; // tipo: 'postulacion', 'evaluacion_pr1', 'evaluacion_pr2'
+
+    if (!token) {
+      return handleErrorClient(res, 400, "Token requerido.");
+    }
+
+    // Validamos el token y obtenemos la práctica
+    const tokenRepo = AppDataSource.getRepository(EmpresaToken);
+    const practicaRepo = AppDataSource.getRepository(Practica);
+
+    const tokenData = await tokenRepo.findOne({
+      where: { token },
+      relations: ["practica"],
+    });
+
+    if (!tokenData || !tokenData.practica) {
+      return handleErrorClient(res, 404, "Token inválido o práctica no encontrada.");
+    }
+
+    if (tokenData.expiracion < new Date()) {
+      return handleErrorClient(res, 401, "Token expirado.");
+    }
+
+    // Cargamos la práctica con sus respuestas de formulario
+    const practica = await practicaRepo.findOne({
+      where: { id: tokenData.practica.id },
+      relations: ["formularioRespuestas", "formularioRespuestas.plantilla", "student"]
+    });
+
+    if (!practica) {
+      return handleErrorClient(res, 404, "Práctica no encontrada.");
+    }
+
+    // Si no se especifica tipo, devolvemos todos los formularios disponibles (solo los enviados/aprobados)
+    if (!tipo) {
+      const formularios = (practica.formularioRespuestas || [])
+        .filter(r => 
+          ['postulacion', 'evaluacion_pr1', 'evaluacion_pr2'].includes(r.plantilla?.tipo) &&
+          ['enviado', 'aprobado'].includes(r.estado) // Formularios ya completados
+        )
+        .map(r => ({
+          id: r.id,
+          tipo: r.plantilla?.tipo,
+          titulo: r.plantilla?.titulo,
+          estado: r.estado,
+          fechaEnvio: r.fecha_envio
+        }));
+      
+      return handleSuccess(res, 200, "Formularios de la práctica", { formularios });
+    }
+
+    // Buscamos el formulario del tipo especificado
+    const respuesta = practica.formularioRespuestas?.find(r => r.plantilla?.tipo === tipo);
+
+    if (!respuesta) {
+      return handleErrorClient(res, 404, `No se encontró formulario de tipo '${tipo}'.`);
+    }
+
+    return handleSuccess(res, 200, "Formulario obtenido", {
+      id: respuesta.id,
+      datos: respuesta.datos,
+      estado: respuesta.estado,
+      fechaEnvio: respuesta.fecha_envio,
+      plantilla: respuesta.plantilla
+    });
+
+  } catch (error) {
+    console.error("Error al obtener formulario:", error);
+    return handleErrorServer(res, 500, "Error interno", error.message);
+  }
+};
+

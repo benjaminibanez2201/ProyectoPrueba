@@ -5,6 +5,7 @@ import {
   generarTokenEmpresa,
   verFormulario,
   enviarEvaluacion,
+  getFormularioByToken,
 } from "../controllers/empresa.controller.js";
 import { validarTokenEmpresa } from "../middleware/empresaAuth.middleware.js";
 
@@ -25,5 +26,9 @@ router.post("/enviar-evaluacion", enviarEvaluacion);
 router.get("/validar-acceso/:token", validarToken);
 // POST api/empresa/confirmar-inicio-practica
 router.post("/confirmar-inicio-practica", confirmarInicioPractica)
+
+// Obtener formulario de la práctica por token (postulación, evaluación)
+// GET api/empresa/formulario/:token?tipo=postulacion
+router.get("/formulario/:token", getFormularioByToken);
 
 export default router;
