@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, FileText, Download,Trash2, Eye } from 'lucide-react';
+import { X, FileText, Download, Trash2, Eye, Folder, Calendar } from 'lucide-react';
 
 const DocumentsModal = ({ isOpen, onClose, studentName, documents, onDelete }) => {
 
@@ -12,111 +12,147 @@ const DocumentsModal = ({ isOpen, onClose, studentName, documents, onDelete }) =
   const API_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000/api';
   const BASE_URL = API_URL.replace('/api', '');
 
+  // Función para formatear el tipo de documento con tildes
+  const formatTipoDocumento = (tipo) => {
+    const formatos = {
+      'bitacora': 'Bitácora',
+      'Bitacora': 'Bitácora',
+      'curriculum': 'Currículum',
+      'Curriculum': 'Currículum',
+      'evaluacion': 'Evaluación',
+      'Evaluacion': 'Evaluación',
+      'evaluacion_pr1': 'Evaluación PR1',
+      'evaluacion_pr2': 'Evaluación PR2',
+      'informe': 'Informe',
+      'Informe': 'Informe'
+    };
+    return formatos[tipo] || tipo;
+  };
+
+  // Función para obtener color según tipo de documento
+  // Todos los archivos en azul (bitácoras, informes, etc.)
+  const getDocumentStyle = () => {
+    return 'bg-blue-100 text-blue-600 border-blue-200';
+  };
+
   return (
-    // 1. El Fondo Oscuro (Overlay)
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+    // Overlay con blur
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       
-      {/* 2. La Caja Blanca (El Modal) */}
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
+      {/* Modal Container */}
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
         
-        {/* Encabezado */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-blue-200">
-          <h3 className="text-lg font-bold text-gray-800">
-            Documentos de {studentName}
-          </h3>
-          <button 
-            onClick={onClose}
-            className="text-blue-100 hover:text-white hover:bg-blue-500 p-1 rounded-full transition"
-          >
-            <X size={20} />
-          </button>
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-5">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <Folder className="text-white" size={22} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  Documentos
+                </h3>
+                <p className="text-indigo-200 text-sm">{studentName}</p>
+              </div>
+            </div>
+            <button 
+              onClick={onClose}
+              className="text-white/70 hover:text-white hover:bg-white/20 p-2 rounded-lg transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Lista de Documentos */}
-        <div className="p-4 max-h-[60vh] overflow-y-auto">
+        <div className="p-5 max-h-[60vh] overflow-y-auto bg-gray-50">
           {documents.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No hay documentos registrados.</p>
+            <div className="text-center py-10">
+              <Folder className="mx-auto text-gray-300 mb-3" size={48} />
+              <p className="text-gray-500 font-medium">No hay documentos registrados</p>
+              <p className="text-gray-400 text-sm mt-1">Los archivos aparecerán aquí</p>
+            </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {documents.map((doc) => {
                 
-                // DETECTAMOS EL TIPO
                 const isBitacora = doc.es_respuesta_formulario;
+                const docStyle = getDocumentStyle(doc);
                 
-                // CLASES COMUNES (Para que ambos se vean idénticos)
-                const commonClasses = "flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50 hover:bg-blue-50 hover:border-blue-200 transition-all group w-full text-left cursor-pointer relative";
+                const commonClasses = "flex items-center justify-between p-4 rounded-xl border-2 bg-white hover:shadow-lg transition-all duration-200 group w-full text-left cursor-pointer";
 
-                // CONTENIDO INTERNO (Reutilizable)
                 const innerContent = (
                   <>
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      {/* Icono: Azul para Bitácora, Gris/Default para Archivo */}
-                      <div className={`p-2 rounded-md shadow-sm ${isBitacora ? 'bg-blue-100 text-blue-600' : 'bg-white text-blue-500'}`}>
-                        <FileText size={20} />
+                    <div className="flex items-center gap-4 overflow-hidden flex-1">
+                      {/* Icono del documento */}
+                      <div className={`p-3 rounded-xl ${docStyle}`}>
+                        <FileText size={22} />
                       </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-semibold text-gray-700 text-sm truncate capitalize">
-                          {doc.tipo}
+                      
+                      {/* Info del documento */}
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="font-semibold text-gray-800 truncate">
+                          {formatTipoDocumento(doc.tipo)}
                         </span>
-                        <span className="text-xs text-gray-400">
-                          {isBitacora ? "Click para revisar" : "Click para descargar"}
-                        </span>
+                        <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+                          <Calendar size={12} />
+                          <span>{(doc.fecha_envio || doc.fecha_creacion) ? new Date(doc.fecha_envio || doc.fecha_creacion).toLocaleDateString() : 'Sin fecha'}</span>
+                        </div>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2">
-                        {/* Icono de Acción (Ojo o Descarga) */}
-                        <div className="text-gray-300 group-hover:text-blue-600 transition-colors mr-2">
+                      {/* Botón de acción principal - Azul para todos */}
+                      <div className="p-2 rounded-lg bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
                         {isBitacora ? <Eye size={18} /> : <Download size={18} />}
-                        </div>
+                      </div>
 
-                        {/* Botón Eliminar */}
-                        {onDelete && (
+                      {/* Botón Eliminar */}
+                      {onDelete && (
                         <button
-                            onClick={(e) => {
+                          onClick={(e) => {
                             e.preventDefault(); 
-                            e.stopPropagation(); // Evita navegar/descargar al borrar
-                            onClose(); // Opcional: Cerrar modal al borrar o mantenerlo
+                            e.stopPropagation();
+                            onClose();
                             onDelete(doc.id, isBitacora); 
-                            }}
-                            className="p-1.5 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors z-10"
-                            title="Eliminar documento"
+                          }}
+                          className="p-2 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors z-10"
+                          title="Eliminar documento"
                         >
-                            <Trash2 size={18} />
+                          <Trash2 size={18} />
                         </button>
-                        )}
+                      )}
                     </div>
                   </>
                 );
 
-                // RENDERIZADO CONDICIONAL
+                // Renderizado condicional - Todos con borde azul
                 if (isBitacora) {
-                    // OPCIÓN A: ES BITÁCORA (Usamos DIV + Navigate)
-                    return (
-                        <div
-                            key={doc.id}
-                            className={commonClasses}
-                            onClick={() => {
-                                onClose();
-                                navigate(`/revision-formulario/${doc.id}`);
-                            }}
-                        >
-                            {innerContent}
-                        </div>
-                    );
+                  return (
+                    <div
+                      key={doc.id}
+                      className={`${commonClasses} border-blue-100 hover:border-blue-300`}
+                      onClick={() => {
+                        onClose();
+                        navigate(`/revision-formulario/${doc.id}`);
+                      }}
+                    >
+                      {innerContent}
+                    </div>
+                  );
                 } else {
-                    // OPCIÓN B: ES ARCHIVO (Usamos etiqueta A + Href)
-                    return (
-                        <a
-                            key={doc.id}
-                            href={`${BASE_URL}/uploads/${doc.ruta_archivo}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={commonClasses}
-                        >
-                            {innerContent}
-                        </a>
-                    );
+                  return (
+                    <a
+                      key={doc.id}
+                      href={`${BASE_URL}/uploads/${doc.ruta_archivo}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${commonClasses} border-blue-100 hover:border-blue-300`}
+                    >
+                      {innerContent}
+                    </a>
+                  );
                 }
 
               })}
@@ -124,11 +160,14 @@ const DocumentsModal = ({ isOpen, onClose, studentName, documents, onDelete }) =
           )}
         </div>
 
-        {/* Pie del Modal */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-100 bg-white flex justify-between items-center">
+          <span className="text-sm text-gray-500">
+            {documents.length} {documents.length === 1 ? 'documento' : 'documentos'}
+          </span>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-blue-200 transition"
+            className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm hover:shadow"
           >
             Cerrar
           </button>

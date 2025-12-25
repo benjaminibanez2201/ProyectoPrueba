@@ -9,6 +9,7 @@ import {
 } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { deleteDocumento } from "../services/documento.service.js";
+import { deleteBitacora } from "../services/formulario.service.js";
 import instance from "../services/root.service.js";
 // --- 1. BADGE ---
 const EstadoBadge = ({ estado }) => {
@@ -206,19 +207,21 @@ const DashboardAlumno = ({ user }) => {
     init();
   }, [fetchMiPractica]);
 
-  const handleDeleteDocumento = async (id,es_respuesta_formulario) => {
-    // Si el documento es una respuesta de formulario (una bitácora), no podemos eliminarlo con el servicio de archivos
-    if (es_respuesta_formulario) {
-        showErrorAlert("Error", "La Bitácora debe ser anulada por el Coordinador.");
-        return; 
-    }
+  const handleDeleteDocumento = async (id, es_respuesta_formulario) => {
     deleteDataAlert(async () => {
       try {
-        await deleteDocumento(id);
-        showSuccessAlert("Eliminado", "Documento eliminado.");
+        // Si es una bitácora (respuesta de formulario), usar el servicio de formularios
+        if (es_respuesta_formulario) {
+          await deleteBitacora(id);
+          showSuccessAlert("Eliminado", "Bitácora eliminada correctamente.");
+        } else {
+          // Si es un documento normal (archivo), usar el servicio de documentos
+          await deleteDocumento(id);
+          showSuccessAlert("Eliminado", "Documento eliminado.");
+        }
         fetchMiPractica();
       } catch (error) {
-        showErrorAlert("Error", "No se pudo eliminar.");
+        showErrorAlert("Error", error.message || "No se pudo eliminar.");
       }
     });
   };
@@ -516,7 +519,7 @@ const DashboardAlumno = ({ user }) => {
           <DocumentsModal
             isOpen={showDocsModal}
             onClose={() => setShowDocsModal(false)}
-            studentName="la práctica"
+            studentName="Registros de la práctica"
             documents={practica.documentos || []}
             onDelete={handleDeleteDocumento}
           />

@@ -4,6 +4,7 @@ import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers
 import { saveBitacoraResponse } from '../services/formulario.service.js';
 import { getRespuestaById } from '../services/formulario.service.js';
 import { corregirPostulacionRespuesta } from '../services/formulario.service.js';
+import { deleteBitacoraRespuesta } from '../services/formulario.service.js';
 
 // La llave
 const plantillaRepository = AppDataSource.getRepository(FormularioPlantilla);
@@ -197,5 +198,20 @@ export const corregirPostulacion = async (req, res) => {
   } catch (error) {
     console.error('Error en corregirPostulacion:', error);
     return handleErrorServer(res, 500, error.message || 'Error al corregir');
+  }
+};
+
+// Alumno elimina una bitácora
+export const deleteBitacora = async (req, res) => {
+  try {
+    const { id } = req.params; // id de FormularioRespuesta (bitácora)
+    const alumnoId = req.user.id;
+
+    const result = await deleteBitacoraRespuesta(id, alumnoId);
+
+    return handleSuccess(res, 200, 'Bitácora eliminada exitosamente', result);
+  } catch (error) {
+    console.error('Error al eliminar bitácora:', error);
+    return handleErrorServer(res, 500, error.message || 'Error al eliminar bitácora');
   }
 };

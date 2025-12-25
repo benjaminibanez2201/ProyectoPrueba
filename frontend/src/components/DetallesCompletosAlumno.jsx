@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Eye, CheckCircle, Clock, XCircle, Folder, Download, FileText } from 'lucide-react';
+import { X, Eye, CheckCircle, Clock, XCircle, Folder, Download, FileText, Calendar } from 'lucide-react';
 import { getDocsAlumno } from '../services/documento.service.js';
 import { getRespuesta } from '../services/formulario.service.js';
 import FormRender from './FormRender';
@@ -248,31 +248,39 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                         </h3>
 
                         {documentos?.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Documento</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Fecha</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {documentos.map((doc, index) => (
-                                            <tr key={doc.id || doc.index || index}>
-                                                <td className="px-4 py-2 text-sm">{doc.tipo}</td>
-                                            <td className="px-4 py-2 text-sm">{doc.fechaEnvio|| 'N/A'}</td>
-                                            <td className="px-4 py-2">
-                                                <EstadoDocumento estado={doc.estado} />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <p className="text-center text-gray-500">No hay documentos aún.</p>
-                    )}
+                            <div className="grid gap-3">
+                                {documentos.map((doc, index) => (
+                                    <div 
+                                        key={doc.id || doc.index || index}
+                                        className="flex items-center justify-between bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            {/* Icono del documento - Azul para todos los archivos */}
+                                            <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+                                                <FileText size={22} />
+                                            </div>
+                                            
+                                            {/* Info del documento */}
+                                            <div>
+                                                <p className="font-semibold text-gray-800">{doc.tipo}</p>
+                                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                                    <Calendar size={12} />
+                                                    <span>{doc.fechaEnvio || 'Sin fecha'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Estado */}
+                                        <EstadoDocumento estado={doc.estado} />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                                <Folder className="mx-auto text-gray-300 mb-2" size={40} />
+                                <p className="text-gray-500">No hay documentos subidos aún</p>
+                            </div>
+                        )}
                 </div>
 
                 {/* FORMULARIOS (Postulación y Evaluación) */}
@@ -289,11 +297,7 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                                     className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-full ${
-                                            form.tipo === 'postulacion' 
-                                                ? 'bg-blue-100 text-blue-600' 
-                                                : 'bg-green-100 text-green-600'
-                                        }`}>
+                                        <div className="p-2 rounded-full bg-green-100 text-green-600">
                                             <FileText size={20} />
                                         </div>
                                         <div>

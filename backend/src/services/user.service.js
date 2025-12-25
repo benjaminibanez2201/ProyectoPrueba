@@ -74,7 +74,8 @@ export async function getDetallesAlumnos(id = null, rol=null) {
             'practicasComoAlumno',
             'practicasComoAlumno.documentos',
             'practicasComoAlumno.formularioRespuestas',
-            'practicasComoAlumno.formularioRespuestas.plantilla' 
+            'practicasComoAlumno.formularioRespuestas.plantilla',
+            'practicasComoAlumno.empresaToken' 
         ],
         where: id ? { id: parseInt(id), role: 'alumno' } : { role: 'alumno' }
     });

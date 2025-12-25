@@ -88,3 +88,9 @@ export const corregirPostulacionRespuesta = async (id, respuestas) => {
   const response = await instance.put(`/formularios/respuesta/${id}/correccion`, { respuestas });
   return response.data;
 };
+
+// Alumno elimina su propia bitácora
+export const deleteBitacora = async (id) => {
+  const response = await instance.delete(`/formularios/bitacora/${id}`);
+  return response.data;
+};

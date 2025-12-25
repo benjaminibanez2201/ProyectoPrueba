@@ -157,7 +157,7 @@ export const verDetallesAlumnos = async (req, res) => {
             const extension = ruta ? path.extname(ruta).toLowerCase() : '.N/A';
             const nombreBase = ruta ? path.basename(ruta) : doc.tipo; 
 
-            let fecha = 'N/A';
+            let fecha = 'Sin fecha';
             if (doc.fecha_creacion) {
               fecha = new Date(doc.fecha_creacion).toISOString().split('T')[0];
             } 

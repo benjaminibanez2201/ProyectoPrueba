@@ -121,3 +121,32 @@ export async function getRespuestaById(id) {
 
         return { respuesta, practica };
     }
+
+/**
+ * Elimina una bitácora (FormularioRespuesta) del alumno.
+ * Solo puede eliminar sus propias bitácoras de tipo "bitacora".
+ */
+export async function deleteBitacoraRespuesta(respuestaId, alumnoId) {
+    const respuesta = await respuestaRepository.findOne({
+        where: { id: Number(respuestaId) },
+        relations: ['practica', 'practica.student', 'plantilla']
+    });
+
+    if (!respuesta) {
+        throw new Error('Bitácora no encontrada');
+    }
+
+    // Verificar que sea una bitácora
+    if (respuesta.plantilla?.tipo !== 'bitacora') {
+        throw new Error('Solo se pueden eliminar bitácoras');
+    }
+
+    // Verificar que el alumno sea el dueño
+    if (String(respuesta.practica.student.id) !== String(alumnoId)) {
+        throw new Error('No autorizado para eliminar esta bitácora');
+    }
+
+    await respuestaRepository.remove(respuesta);
+
+    return { message: 'Bitácora eliminada correctamente' };
+}

@@ -422,11 +422,7 @@ const handleFormSubmit = async (respuestas) => {
                                         className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-full ${
-                                                form.tipo === 'postulacion' 
-                                                    ? 'bg-blue-100 text-blue-600' 
-                                                    : 'bg-green-100 text-green-600'
-                                            }`}>
+                                            <div className="p-2 rounded-full bg-green-100 text-green-600">
                                                 <FileText size={20} />
                                             </div>
                                             <div>

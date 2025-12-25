@@ -8,7 +8,8 @@ export async function createDocumentoArchivo(fileData, metadata) {
         tipo: metadata.tipo_documento, //bitacora, informe
         ruta_archivo: fileData.filename,//nombre del archivo 
         estado: 'enviado',//estado inicial x defecto
-        practica: {id: parseInt(metadata.practicaId)}//relacion con practica
+        practica: {id: parseInt(metadata.practicaId)},//relacion con practica
+        fecha_creacion: new Date() // Asegurar que se guarde la fecha
     });    
     return await documentoRepository.save(newDoc);
 }

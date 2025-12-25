@@ -385,18 +385,20 @@ const DashboardCoordinador = ({ user }) => {
                         })()}
                       </td>
 
-                      <td className="p-4 space-x-2">
-                        <button onClick={() => handleVerPractica(alumno)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200" title="Ver Detalle">
-                          <Eye size={18} />
-                        </button>
-                        <button onClick={() => handleEditarEstado(alumno)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200" title="Aprobar/Editar">
-                          <Edit size={18} />
-                        </button>
-                        {alumno.practicasComoAlumno?.[0]?.estado === 'evaluada' && (
-                          <button onClick={() => handleCerrarPractica(alumno)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200" title="Cerrar práctica">
-                            <Lock size={18} />
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => handleVerPractica(alumno)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition" title="Ver Detalle">
+                            <Eye size={18} />
                           </button>
-                        )}
+                          <button onClick={() => handleEditarEstado(alumno)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition" title="Aprobar/Editar">
+                            <Edit size={18} />
+                          </button>
+                          {alumno.practicasComoAlumno?.[0]?.estado === 'evaluada' && (
+                            <button onClick={() => handleCerrarPractica(alumno)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition" title="Cerrar práctica">
+                              <Lock size={18} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
