@@ -6,38 +6,32 @@ import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
 import { User } from "../entities/user.entity.js";
 import { enviarConfirmacionEvaluacionEmpresa } from "./email.service.js";
 
+// Validar token de empresa y obtener datos de la práctica asociada
 export const validarTokenEmpresa = async (tokenAcceso) => {
-    console.log("🔍 Validando token:", tokenAcceso);
-
     const tokenRepo = AppDataSource.getRepository(EmpresaToken);
     const practicaRepo = AppDataSource.getRepository(Practica);
 
-    // 1️⃣ BUSCAR SOLO EL TOKEN
+    // validar token
     const tokenData = await tokenRepo.findOne({
-        where: { token: tokenAcceso },
+        where: { token: tokenAcceso }, // buscar por token
         relations: ["practica"], // solo para obtener el id de la práctica
     });
 
-    if (!tokenData) {
-        console.log("❌ Token no existe");
+    if (!tokenData) { 
         throw new Error("Token inválido.");
     }
 
     if (tokenData.expiracion < new Date()) {
-        console.log("❌ Token expirado");
         throw new Error("Token expirado.");
     }
 
     if (!tokenData.practica) {
-        console.log("❌ Token encontrado pero sin práctica asociada");
         throw new Error("El token no tiene práctica asociada.");
     }
 
-    console.log("✔ Token válido. Práctica ID:", tokenData.practica.id);
-
     const practicaId = tokenData.practica.id;
 
-    // 2️⃣ BUSCAR LA PRÁCTICA COMPLETA SIN QUE PETE
+    // buscar práctica completa
     const practicaCompleta = await practicaRepo.findOne({
         where: { id: practicaId },
         relations: [
@@ -49,29 +43,27 @@ export const validarTokenEmpresa = async (tokenAcceso) => {
     });
 
     if (!practicaCompleta) {
-        console.log("❌ La práctica no existe en la tabla");
         throw new Error("La práctica no existe.");
     }
 
     if (!practicaCompleta.student) {
-        console.log("❌ La práctica existe pero student = NULL");
         throw new Error("La práctica no tiene alumno asignado.");
     }
 
-    console.log("✔ Práctica cargada. Alumno:", practicaCompleta.student.name);
+    console.log("Práctica cargada. Alumno:", practicaCompleta.student.name);
 
-    // 3️⃣ BUSCAR COORDINADOR PARA MENSAJERÍA
+    // Buscar coordinador para mensajería
     const userRepo = AppDataSource.getRepository(User);
     const coordinador = await userRepo.findOne({ where: { role: 'coordinador' } });
 
-    // 4️⃣ RETORNAR INFORMACIÓN SANA
+    // Retornar datos relevantes
     return {
         practicaId: practicaCompleta.id,
         alumnoNombre: practicaCompleta.student.name,
         empresaNombre: tokenData.empresaNombre,
         empresaCorreo: tokenData.empresaCorreo, // Email de la empresa desde el token
         estado: practicaCompleta.estado,
-        formularioRespuestas: practicaCompleta.formularioRespuestas ?? [],
+        formularioRespuestas: practicaCompleta.formularioRespuestas ?? [], 
         evaluacionPendiente: !!practicaCompleta.evaluacion_pendiente,
         evaluacionCompletada: !!practicaCompleta.evaluacion_completada,
         nivel: practicaCompleta.nivel || null,
@@ -80,8 +72,7 @@ export const validarTokenEmpresa = async (tokenAcceso) => {
     };
 };
 
-// ... (tus imports y la función validarTokenEmpresa déjalos igual) ...
-
+// Confirmar inicio de práctica por parte de la empresa
 export const confirmarInicioPracticaService = async (token, confirmacion, respuestasEmpresa) => {
     const tokenRepo = AppDataSource.getRepository(EmpresaToken);
     const practicaRepo = AppDataSource.getRepository(Practica);
@@ -125,7 +116,6 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
         if (!practica.correccion_alumno_hecha) {
             // Mantener estado en 'rechazada' si todavía no cambió
             // o en 'rechazada' / 'enviada_a_empresa' según haya sido ajustado por el alumno
-            // No tocar fecha_inicio
         } else {
             // Ambos ya corrigieron → enviar a coordinador
             practica.estado = 'pendiente_validacion';
@@ -147,7 +137,7 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
         // Hacemos copia de lo que ya había
         let datosFinales = formulario.datos ? JSON.parse(JSON.stringify(formulario.datos)) : {};
         
-        console.log("💾 Datos ANTES de fusionar:", datosFinales);
+        console.log("Datos ANTES de fusionar:", datosFinales);
 
         // FUSIONAR respuestas de empresa: escribir en raíz y reflejar también en datosFormulario
         datosFinales = { ...datosFinales, ...(respuestasEmpresa || {}) };
@@ -159,7 +149,7 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
         }
         datosFinales.datosFormulario = datosFormulario;
 
-        console.log("💾 Datos DESPUÉS de fusionar (A Guardar):", datosFinales);
+        console.log("Datos DESPUÉS de fusionar (A Guardar):", datosFinales);
 
         // Guardar estructura final coherente
         formulario.datos = datosFinales;
@@ -167,7 +157,7 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
         
         await respuestaRepo.save(formulario);
     } else {
-        console.warn("⚠️ No se encontró formulario para guardar respuestas.");
+        console.warn("No se encontró formulario para guardar respuestas.");
     }
 
     return { 

@@ -8,13 +8,13 @@ import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, Clipb
 import ChatMensajeria from '../components/ChatMensajeria';
 
 const Access = () => {
-    const { token } = useParams();
-    const navigate = useNavigate();
+    const { token } = useParams(); // Token de acceso en la URL
+    const navigate = useNavigate(); // Para redirecciones
 
     // Estados de Datos
     const [data, setData] = useState(null);
     const [plantilla, setPlantilla] = useState(null); // Para guardar las preguntas
-    const [modoEvaluacion, setModoEvaluacion] = useState(false);
+    const [modoEvaluacion, setModoEvaluacion] = useState(false); // Modo evaluación o postulación
     
     // Estados de UI
     const [loading, setLoading] = useState(true);
@@ -62,7 +62,6 @@ const Access = () => {
         cargarTodo();
     }, [token]);
 
-    //  1. AGREGAMOS ESTA FUNCIÓN AUXILIAR
     // Esta función busca entre todas las respuestas de la práctica (postulación, evaluación, etc.)
     // y extrae solo la que corresponde a la 'postulacion' para mostrarla en el formulario.
     const getRespuestasAlumno = () => {
@@ -78,8 +77,7 @@ const Access = () => {
 
         const misDatos = respuestaEncontrada.datos;
 
-        //  LA CORRECCIÓN MÁGICA
-        // Si los datos están escondidos dentro de "datosFormulario", los sacamos hacia afuera.
+        // Si los datos están escondidos dentro de "datosFormulario", los sacamos
         if (misDatos && misDatos.datosFormulario) {
             return { ...misDatos, ...misDatos.datosFormulario };
         }
@@ -87,7 +85,7 @@ const Access = () => {
         return misDatos || {};
     };
 
-    // Prefill evaluación con datos de postulación
+    // Prefil evaluación con datos de postulación
     const getEvaluacionInicial = () => {
         const base = getRespuestasAlumno();
         if (!plantilla?.esquema) return {};
@@ -102,52 +100,50 @@ const Access = () => {
     };
 
     // Lógica para enviar el formulario completado
-const handleFormSubmit = async (respuestas) => {
-    try {
-        setProcesando(true);
+    const handleFormSubmit = async (respuestas) => {
+        try {
+            setProcesando(true);
 
-        if (modoEvaluacion) {
-            await enviarEvaluacionEmpresa(token, respuestas);
-            await showSuccessAlert(
-                '¡Evaluación enviada!',
-                'Gracias. El coordinador revisará la evaluación y cerrará la práctica.'
+            if (modoEvaluacion) {
+                await enviarEvaluacionEmpresa(token, respuestas);
+                await showSuccessAlert(
+                    '¡Evaluación enviada!',
+                    'Gracias. El coordinador revisará la evaluación y cerrará la práctica.'
+                );
+                // Actualizar estado local y salir del modo evaluación
+                setData(prev => ({ ...prev, estado: 'evaluada' }));
+                setModoEvaluacion(false);
+                // Redirigir al portal de empresa (mismo acceso con token)
+                navigate(`/empresa/acceso/${token}`);
+            } else {
+                await confirmarInicioPractica(token, true, respuestas);
+                await showSuccessAlert(
+                    '¡Enviado!',
+                    'Los datos han sido enviados al Coordinador para su validación.'
+                );
+                setData(prev => ({
+                    ...prev,
+                    estado: 'pendiente_validacion'
+                }));
+            }
+
+            window.scrollTo(0, 0);
+
+        } catch (err) {
+            console.error(err);
+
+            showErrorAlert(
+                'Error',
+                err.message || 'Error al guardar los datos.'
             );
-            // Actualizar estado local y salir del modo evaluación
-            setData(prev => ({ ...prev, estado: 'evaluada' }));
-            setModoEvaluacion(false);
-            // Redirigir al portal de empresa (mismo acceso con token)
-            navigate(`/empresa/acceso/${token}`);
-        } else {
-            await confirmarInicioPractica(token, true, respuestas);
-            await showSuccessAlert(
-                '¡Enviado!',
-                'Los datos han sido enviados al Coordinador para su validación.'
-            );
-            setData(prev => ({
-                ...prev,
-                estado: 'pendiente_validacion'
-            }));
+
+        } finally {
+            setProcesando(false);
         }
+    };
 
-        window.scrollTo(0, 0);
-
-    } catch (err) {
-        console.error(err);
-        
-        showErrorAlert(
-            'Error',
-            err.message || 'Error al guardar los datos.'
-        );
-
-    } finally {
-        setProcesando(false);
-    }
-};
-
-
+    // para cerrar sesión y volver a la página de login
     const handleCerrarSesion = () => navigate('/auth');
-
-    // --- RENDERIZADO ---
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -279,8 +275,8 @@ const handleFormSubmit = async (respuestas) => {
                             El alumno está activo. Al finalizar el periodo, podrá realizar su evaluación aquí.
                         </p>
                         <button 
-                          onClick={() => setModoEvaluacion(true)}
-                          className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition shadow-lg shadow-green-200">
+                        onClick={() => setModoEvaluacion(true)}
+                        className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition shadow-lg shadow-green-200">
                             Realizar Evaluación de Desempeño
                         </button>
                     </div>
@@ -297,16 +293,16 @@ const handleFormSubmit = async (respuestas) => {
                         </div>
                         <div className="p-6">
                             <FormRender 
-                              esquema={plantilla.esquema}
-                              respuestasIniciales={getEvaluacionInicial()}
-                              onSubmit={handleFormSubmit}
-                              buttonText={procesando ? "Enviando..." : "Enviar Evaluación"}
-                              userType="empresa"
+                            esquema={plantilla.esquema}
+                            respuestasIniciales={getEvaluacionInicial()}
+                            onSubmit={handleFormSubmit}
+                            buttonText={procesando ? "Enviando..." : "Enviar Evaluación"}
+                            userType="empresa"
                             />
                         </div>
                     </div>
                 )}
-                    {/* ← NUEVO: Modal de Chat */}
+                    {/* Modal de Chat */}
                 {chatAbierto && data && (
                     <ChatMensajeria
                         practicaId={data.practicaId}
