@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Eye, CheckCircle, Clock, XCircle, Folder, Download, FileText, Calendar } from 'lucide-react';
+import { X, Eye, CheckCircle, Clock, XCircle, Folder, Download, FileText, Calendar, Award } from 'lucide-react';
 import { getDocsAlumno } from '../services/documento.service.js';
 import { getRespuesta } from '../services/formulario.service.js';
 import FormRender from './FormRender';
@@ -10,6 +10,69 @@ const HOST_URL = 'http://localhost:3000';
 
 //SOLO PDF ES PREVISUALIZABLE EN EL NAVEGADOR
 const PREVIEW_EXTENSIONS = ['.pdf'];
+
+// Escala de conversión de letras a notas (escala chilena 1-7)
+const ESCALA_NOTAS = {
+    'A': 7.0,  // Sobresaliente
+    'B': 6.0,  // Bueno
+    'C': 5.0,  // Moderado
+    'D': 4.0,  // Suficiente
+    'E': 2.0,  // Insuficiente
+    'F': null  // No aplica - se excluye del cálculo
+};
+
+// IDs de campos que son evaluaciones con letras A-F
+const CAMPOS_EVALUACION = [
+    // CG1
+    'cg1_autonomia', 'cg1_tendencias',
+    // CG2
+    'cg2_horario', 'cg2_efectividad', 'cg2_instrucciones',
+    // CG3
+    'cg3_relacion', 'cg3_colaborativo', 'cg3_comportamiento',
+    // CG4
+    'cg4_lm', 'cg4_si',
+    // CE1
+    'ce1_soporte', 'ce1_instala', 'ce1_redes', 'ce1_evaluacion', 'ce1_funcionamiento',
+    // CE2
+    'ce2_levantamiento', 'ce2_documentacion', 'ce2_metodos', 'ce2_modulos', 'ce2_diseno',
+    // CE3
+    'ce3_diseno', 'ce3_conocimientos', 'ce3_tecnicas',
+    // CE4
+    'ce4_conocimientos', 'ce4_tecnicas', 'ce4_negocios', 'ce4_plan', 'ce4_auditoria',
+    // CE5
+    'ce5_autogestion', 'ce5_conocimientos', 'ce5_capacidad',
+    // Otras competencias (opcionales)
+    'otra_competencia_1_eval', 'otra_competencia_2_eval', 'otra_competencia_3_eval'
+];
+
+/**
+ * Calcula la nota final de una evaluación basada en las respuestas A-F
+ * @param {Object} datos - Los datos del formulario de evaluación
+ * @returns {Object} - { nota: number|null, totalEvaluadas: number, detalle: string }
+ */
+const calcularNotaEvaluacion = (datos) => {
+    if (!datos) return { nota: null, totalEvaluadas: 0, detalle: 'Sin datos' };
+
+    let suma = 0;
+    let conteo = 0;
+
+    CAMPOS_EVALUACION.forEach(campo => {
+        const valor = datos[campo];
+        if (valor && ESCALA_NOTAS[valor] !== undefined && ESCALA_NOTAS[valor] !== null) {
+            suma += ESCALA_NOTAS[valor];
+            conteo++;
+        }
+    });
+
+    if (conteo === 0) return { nota: null, totalEvaluadas: 0, detalle: 'Sin evaluaciones' };
+
+    const nota = suma / conteo;
+    return { 
+        nota: Math.round(nota * 10) / 10, // Redondear a 1 decimal
+        totalEvaluadas: conteo,
+        detalle: `Promedio de ${conteo} competencias evaluadas`
+    };
+};
 
 // Componente para mostrar el estado del documento
 const EstadoDocumento = ({ estado }) => {
@@ -291,7 +354,12 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
 
                     {formularios?.length > 0 ? (
                         <div className="grid gap-3">
-                            {formularios.map((form) => (
+                            {formularios.map((form) => {
+                                // Calcular nota si es evaluación
+                                const esEvaluacion = form.tipo?.includes('evaluacion');
+                                const notaInfo = esEvaluacion ? calcularNotaEvaluacion(form.datos) : null;
+                                
+                                return (
                                 <div 
                                     key={form.id} 
                                     className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
@@ -309,7 +377,21 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex items-center gap-3">
+                                        {/* Badge de nota si es evaluación */}
+                                        {esEvaluacion && notaInfo?.nota && (
+                                            <div 
+                                                className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${
+                                                    notaInfo.nota >= 5.5 ? 'bg-green-100 text-green-700' :
+                                                    notaInfo.nota >= 4.0 ? 'bg-yellow-100 text-yellow-700' :
+                                                    'bg-red-100 text-red-700'
+                                                }`}
+                                                title={notaInfo.detalle}
+                                            >
+                                                <Award size={16} />
+                                                Nota: {notaInfo.nota}
+                                            </div>
+                                        )}
                                         <button
                                             onClick={() => handleVerFormulario(form.id)}
                                             className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition"
@@ -320,7 +402,8 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <p className="text-center text-gray-500 py-4">
@@ -343,7 +426,12 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
             </div>
 
             {/* MODAL PARA VISUALIZAR Y DESCARGAR FORMULARIO */}
-            {formularioVisualizando && (
+            {formularioVisualizando && (() => {
+                // Calcular nota si es evaluación
+                const esEvaluacionModal = formularioVisualizando.plantilla?.tipo?.includes('evaluacion');
+                const notaInfoModal = esEvaluacionModal ? calcularNotaEvaluacion(formularioVisualizando.datos) : null;
+
+                return (
                 <div className="fixed inset-0 bg-black bg-opacity-70 z-[60] flex items-center justify-center p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
                         {/* Header del Modal */}
@@ -357,6 +445,20 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
+                                {/* Badge de nota prominente si es evaluación */}
+                                {esEvaluacionModal && notaInfoModal?.nota && (
+                                    <div 
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-lg font-bold ${
+                                            notaInfoModal.nota >= 5.5 ? 'bg-green-100 text-green-700 border border-green-300' :
+                                            notaInfoModal.nota >= 4.0 ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
+                                            'bg-red-100 text-red-700 border border-red-300'
+                                        }`}
+                                        title={notaInfoModal.detalle}
+                                    >
+                                        <Award size={22} />
+                                        <span>Nota: {notaInfoModal.nota}</span>
+                                    </div>
+                                )}
                                 <button
                                     onClick={handleDescargarPDF}
                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
@@ -375,6 +477,31 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
 
                         {/* Contenido del Formulario */}
                         <div className="flex-1 overflow-y-auto p-6 bg-gray-100">
+                            {/* Banner de nota calculada para evaluaciones */}
+                            {esEvaluacionModal && notaInfoModal?.nota && (
+                                <div className={`mb-4 p-4 rounded-lg flex items-center justify-between ${
+                                    notaInfoModal.nota >= 5.5 ? 'bg-green-50 border border-green-200' :
+                                    notaInfoModal.nota >= 4.0 ? 'bg-yellow-50 border border-yellow-200' :
+                                    'bg-red-50 border border-red-200'
+                                }`}>
+                                    <div className="flex items-center gap-3">
+                                        <Award size={32} className={
+                                            notaInfoModal.nota >= 5.5 ? 'text-green-600' :
+                                            notaInfoModal.nota >= 4.0 ? 'text-yellow-600' :
+                                            'text-red-600'
+                                        } />
+                                        <div>
+                                            <p className="text-sm text-gray-600">Nota calculada automáticamente</p>
+                                            <p className="text-2xl font-bold text-gray-800">{notaInfoModal.nota}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right text-sm text-gray-500">
+                                        <p>{notaInfoModal.detalle}</p>
+                                        <p className="text-xs">Escala: A(7) - B(6) - C(5) - D(4) - E(2)</p>
+                                    </div>
+                                </div>
+                            )}
+                            
                             <div id="formulario-coordinador-content" className="bg-white rounded-lg p-6 shadow">
                                 {formularioVisualizando.plantilla ? (
                                     <FormRender 
@@ -394,7 +521,8 @@ const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
                         </div>
                     </div>
                 </div>
-            )}
+                );
+            })()}
         </div>
     );
 };
