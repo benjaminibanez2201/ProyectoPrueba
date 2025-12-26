@@ -21,7 +21,7 @@ Esta aplicación permite la gestión del proceso de prácticas profesionales, in
 
 ### Funcionalidades para Empresas
 - 🔐 Acceso mediante token único
-- 📝 Visualización y respuesta de formularios de evaluación y postualción
+- 📝 Visualización y respuesta de formularios de evaluación y postulación
 - 👀 Vista de información del alumno asignado
 
 ---
