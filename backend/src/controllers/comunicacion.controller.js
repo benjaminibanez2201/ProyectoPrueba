@@ -23,7 +23,7 @@ export const enviarMensaje = async (req, res) => {
         // Variables para el remitente y destinatario
         let remitenteTipo, remitenteNombre, remitenteEmail, coordinadorId; 
         let destinatarioTipo, destinatarioNombre, destinatarioEmail;
-        let practicaIdFinal;
+        let practicaIdFinal; 
 
         // Buscar coordinador con rol 'coordinador'
         const coordinador = await userRepo.findOne({ where: { role: 'coordinador' } });
@@ -32,13 +32,14 @@ export const enviarMensaje = async (req, res) => {
         if (token) {
             const tokenData = await validarTokenEmpresa(token);
 
-            // Determinar el practicaIdFinal
+            // Determinar el practicaIdFinal 
             practicaIdFinal = tokenData.practica?.id || tokenData.practicaId || practicaId;
 
             if (!practicaIdFinal) {
                 return handleErrorClient(res, 400, "No se pudo determinar el ID de la práctica. Verifique que el token sea válido para esta práctica.");
             }
             
+            // Obtener práctica con relaciones necesarias
             const practica = await practicaRepo.findOne({
                 where: { id: practicaIdFinal },
                 relations: ['empresa', 'empresaToken']
@@ -57,7 +58,7 @@ export const enviarMensaje = async (req, res) => {
             destinatarioEmail = coordinador?.email || "coordinador@u.cl";
             coordinadorId = coordinador?.id; 
         } 
-        // --- CASO 2: ENVÍA EL COORDINADOR (Autenticado) ---
+        // Caso 2: Envía el coordinador (Autenticado)
         else {
             practicaIdFinal = practicaId;
                 
@@ -65,6 +66,7 @@ export const enviarMensaje = async (req, res) => {
                 return handleErrorClient(res, 400, "No se pudo determinar el ID de la práctica.");
             }
         
+            // Obtener práctica con relaciones necesarias
             const practica = await practicaRepo.findOne({
                 where: { id: Number(practicaIdFinal) },
                 relations: ['empresa', 'empresaToken']
@@ -72,12 +74,13 @@ export const enviarMensaje = async (req, res) => {
         
             if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
         
-            remitenteTipo = "coordinador";
+            remitenteTipo = "coordinador"; // El coordinador envía el mensaje
+            // Prioridad para nombre y email del remitente
             remitenteNombre = req.user?.name || "Coordinador";
             remitenteEmail = req.user?.email || "coordinador@u.cl";
             coordinadorId = req.user?.id || null;
         
-            destinatarioTipo = "empresa";
+            destinatarioTipo = "empresa"; // Lo recibe la empresa
             destinatarioNombre =
                 practica.empresaToken?.empresaNombre ||
                 practica.empresa?.name ||
@@ -94,7 +97,6 @@ export const enviarMensaje = async (req, res) => {
                 return handleErrorClient(res, 400, "No se pudo obtener el email de la empresa. Verifique que la práctica tenga una empresa asociada.");
             }
         }
-
 
         // Antes de llamar al servicio, nos aseguramos de que practicaIdFinal tenga valor
         if (!practicaIdFinal) {
@@ -121,13 +123,11 @@ export const enviarMensaje = async (req, res) => {
     }
 };
 
-/**
- * Obtener conversación de una práctica
- */
+// Obtener conversación de una práctica
 export const getConversacion = async (req, res) => {
     try {
-        const { practicaId } = req.params;
-        const token = req.query.token;
+        const { practicaId } = req.params; // ID de la práctica desde la URL
+        const token = req.query.token; // Token desde query
         
         let emailUsuario;
         
@@ -172,14 +172,13 @@ export const getConversacion = async (req, res) => {
     }
 };
 
-/**
- * Obtener bandeja de entrada
- */
+// Obtener bandeja de entrada
+
 export const getBandejaEntrada = async (req, res) => {
     try {
-        const coordinadorId = req.user.id;
-        const bandeja = await obtenerBandejaEntradaService(coordinadorId);
-        return handleSuccess(res, 200, "Bandeja de entrada obtenida", bandeja);
+        const coordinadorId = req.user.id; // ID del coordinador autenticado
+        const bandeja = await obtenerBandejaEntradaService(coordinadorId); // Obtener bandeja de entrada
+        return handleSuccess(res, 200, "Bandeja de entrada obtenida", bandeja); 
 
     } catch (error) {
         console.error("Error al obtener bandeja:", error);
@@ -187,13 +186,11 @@ export const getBandejaEntrada = async (req, res) => {
     }
 };
 
-/**
- * Obtener mensajes enviados
- */
+// Obtener mensajes enviados
 export const getMensajesEnviados = async (req, res) => {
     try {
-        const coordinadorId = req.user.id;
-        const mensajes = await obtenerMensajesEnviadosService(coordinadorId);
+        const coordinadorId = req.user.id; // ID del coordinador autenticado
+        const mensajes = await obtenerMensajesEnviadosService(coordinadorId); // Obtener mensajes enviados
         return handleSuccess(res, 200, "Mensajes enviados obtenidos", mensajes);
 
     } catch (error) {
@@ -202,13 +199,12 @@ export const getMensajesEnviados = async (req, res) => {
     }
 };
 
-/**
- * Marcar mensaje como leído
- */
+// Marcar mensaje como leído
+
 export const marcarLeido = async (req, res) => {
     try {
-        const { id } = req.params;
-        const token = req.query.token;
+        const { id } = req.params; // ID del mensaje desde la URL
+        const token = req.query.token; // Token desde query
         
         let emailUsuario;
         
@@ -241,13 +237,11 @@ export const marcarLeido = async (req, res) => {
     }
 };
 
-/**
- * Obtener cantidad de mensajes no leídos
- */
+// Obtener cantidad de mensajes no leídos
 export const getNoLeidos = async (req, res) => {
     try {
-        const coordinadorId = req.user.id;
-        const count = await contarNoLeidosService(coordinadorId);
+        const coordinadorId = req.user.id; // ID del coordinador autenticado
+        const count = await contarNoLeidosService(coordinadorId); // Contar no leídos
         return handleSuccess(res, 200, "No leídos obtenidos", { noLeidos: count });
 
     } catch (error) {
@@ -283,8 +277,8 @@ export const getNoLeidosEmpresa = async (req, res) => {
         }
 
         const emailEmpresa = practica.empresa?.email 
-                          || practica.empresaToken?.empresaCorreo
-                          || tokenData.empresaCorreo;
+                        || practica.empresaToken?.empresaCorreo
+                        || tokenData.empresaCorreo;
 
         if (!emailEmpresa) {
             return handleSuccess(res, 200, "No leídos obtenidos", { noLeidos: 0 });

@@ -11,7 +11,7 @@ export const getPendientes = async (req, res) => {
         const practicaRepo = AppDataSource.getRepository(Practica);
         
         const pendientes = await practicaRepo.find({
-            where: { estado: "pendiente_validacion" },
+            where: { estado: "pendiente_validacion" }, // Filtrar por estado pendiente de validación
             relations: ["student", "empresaToken", "formularioRespuestas", "formularioRespuestas.plantilla"],
             order: { fecha_actualizacion: "DESC" }
         });
@@ -53,7 +53,7 @@ export const evaluarSolicitud = async (req, res) => {
             practica.fecha_inicio = new Date(); // Marcamos inicio oficial
             
             if (respuestaForm) {
-                respuestaForm.estado = "aprobado";
+                respuestaForm.estado = "aprobado"; // Actualizamos estado del formulario
                 respuestaForm.comentario_coordinador = observaciones || "Solicitud aprobada exitosamente.";
                 await respuestaRepo.save(respuestaForm);
             }
@@ -75,11 +75,11 @@ export const evaluarSolicitud = async (req, res) => {
 
         await practicaRepo.save(practica);
 
-        // 3. ENVÍO DE CORREO (Después de guardar todo)
+        // 3. Envío de correo (Después de guardar todo)
         // No ponemos await para que el response sea rápido y el correo se envíe en segundo plano
         enviarNotificacionEvaluacion(practica, decision, observaciones, destinatario);
 
-        // 4. MENSAJE INTERNO AUTOMÁTICO A EMPRESA CUANDO SE RECHAZA
+        // 4. Mensaje interno automático a empresa cuando se rechaza
         try {
             if (decision === 'rechazar' && (destinatario === 'empresa' || destinatario === 'ambos')) {
                 const asunto = "Observación de práctica – correcciones requeridas";
