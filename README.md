@@ -127,49 +127,79 @@ npm run dev
 ### Usuarios (`/api/users`)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/` | Listar usuarios |
-| GET | `/:id` | Obtener usuario por ID |
-| PUT | `/:id` | Actualizar usuario |
-| DELETE | `/:id` | Eliminar usuario |
+| GET | `/alumnos` | Listar alumnos (Coordinador) |
+| GET | `/alumnos/detalles` | Ver detalles de todos los alumnos (Coordinador) |
+| GET | `/alumnos/:id/detalles` | Ver detalles de un alumno específico (Coordinador) |
 
 ### Prácticas (`/api/practicas`)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/` | Listar prácticas |
-| POST | `/` | Crear práctica |
+| GET | `/` | Listar todas las prácticas (Coordinador) |
+| GET | `/me` | Obtener mi práctica (Alumno) |
+| GET | `/:id` | Obtener práctica por ID |
+| POST | `/` | Crear práctica (Coordinador) |
+| POST | `/postular` | Postular a práctica (Alumno) |
 | PUT | `/:id` | Actualizar práctica |
+| DELETE | `/:id` | Eliminar práctica (Coordinador) |
+| PUT | `/estado/:id` | Actualizar estado de práctica (Coordinador) |
+| PATCH | `/:id/cerrar` | Cerrar práctica definitivamente (Coordinador) |
+| PATCH | `/:id/aprobar` | Aprobar inicio de práctica (Coordinador) |
+| PATCH | `/:id/observar` | Observar práctica (Coordinador) |
+| POST | `/:id/finalizar` | Finalizar práctica (Alumno) |
 
 ### Formularios (`/api/formularios`)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/` | Listar formularios |
-| POST | `/` | Crear formulario |
-| PUT | `/:id` | Actualizar formulario |
+| GET | `/plantilla/:tipo` | Obtener estructura de plantilla por tipo |
+| GET | `/` | Listar todas las plantillas |
+| GET | `/plantillas` | Obtener todas las plantillas (alias) |
+| POST | `/` | Crear plantilla (Coordinador) |
+| PUT | `/:id` | Actualizar plantilla |
+| DELETE | `/:id` | Eliminar plantilla (Coordinador) |
+| POST | `/bitacora` | Enviar bitácora (Alumno) |
+| GET | `/respuesta/:id` | Obtener respuesta de formulario por ID |
+| PUT | `/respuesta/:id/correccion` | Corregir postulación rechazada (Alumno) |
+| DELETE | `/bitacora/:id` | Eliminar bitácora (Alumno) |
 
 ### Documentos (`/api/documentos`)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/` | Listar documentos |
 | POST | `/upload` | Subir documento |
 | DELETE | `/:id` | Eliminar documento |
+| GET | `/revisar/:id` | Revisar documento (Coordinador) |
 
 ### Empresa (`/api/empresa`)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/generar-token` | Generar token de acceso (coordinador) |
-| GET | `/ver-formulario` | Acceder con token de empresa |
+| POST | `/generar-token` | Generar token de acceso (Coordinador) |
+| GET | `/ver-formulario` | Acceder a formulario con token |
+| POST | `/enviar-evaluacion` | Enviar evaluación de práctica |
+| GET | `/validar-acceso/:token` | Validar token de acceso |
+| POST | `/confirmar-inicio-practica` | Confirmar inicio de práctica |
+| GET | `/formulario/:token` | Obtener formulario por token |
+
+### Coordinador (`/api/coordinador`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/pendientes` | Ver solicitudes pendientes |
+| PUT | `/evaluar/:id` | Evaluar solicitud (Aprobar/Rechazar) |
 
 ### Comunicación (`/api/comunicacion`)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/mensajes` | Obtener mensajes |
 | POST | `/enviar` | Enviar mensaje |
+| GET | `/practica/:practicaId` | Obtener conversación de una práctica |
+| GET | `/bandeja` | Obtener bandeja de entrada |
+| GET | `/enviados` | Obtener mensajes enviados |
+| PATCH | `/:id/leido` | Marcar mensaje como leído |
+| GET | `/no-leidos` | Obtener cantidad de mensajes no leídos |
+| GET | `/no-leidos-empresa/:practicaId` | Obtener no leídos para empresa |
 
 ### Recursos (`/api/recursos`)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | GET | `/` | Listar recursos |
-| POST | `/` | Crear recurso |
+| POST | `/` | Subir recurso |
 | DELETE | `/:id` | Eliminar recurso |
 
 ---
