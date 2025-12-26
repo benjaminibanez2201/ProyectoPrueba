@@ -10,19 +10,18 @@ Esta aplicación permite la gestión del proceso de prácticas profesionales, in
 - 📋 Registro y gestión de perfil
 - 📄 Subida y gestión de documentos
 - 📝 Respuesta de formularios y bitácoras
-- 💬 Sistema de mensajería con coordinadores
 
 ### Funcionalidades para Coordinadores
-- 👥 Gestión de usuarios (estudiantes y coordinadores)
+- 👥 Gestión de usuarios (estudiantes)
 - ✅ Aprobación de prácticas
 - 🔑 Generación de tokens de empresa para acceso externo
 - 📊 Creación y edición de formularios dinámicos
 - 📁 Gestión de recursos y documentos
-- 💬 Sistema de comunicación con estudiantes y empresas
+- 💬 Sistema de comunicación con empresas
 
 ### Funcionalidades para Empresas
 - 🔐 Acceso mediante token único
-- 📝 Visualización y respuesta de formularios de evaluación
+- 📝 Visualización y respuesta de formularios de evaluación y postualción
 - 👀 Vista de información del alumno asignado
 
 ---
@@ -62,7 +61,7 @@ Esta aplicación permite la gestión del proceso de prácticas profesionales, in
 ### Prerrequisitos
 - Node.js (v18 o superior)
 - PostgreSQL (v14 o superior)
-- npm o yarn
+- npm 
 
 ### 1. Clonar el repositorio
 
