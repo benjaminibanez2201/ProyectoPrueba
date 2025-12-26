@@ -240,9 +240,6 @@ const AprobarPracticas = () => {
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-500">
-                    ID: {practica.id}
-                  </span>
                 </div>
 
                 {/* Grilla de Datos */}
