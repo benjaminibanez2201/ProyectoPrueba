@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getRespuesta, getPlantilla, corregirPostulacionRespuesta } from '../services/formulario.service.js';
-import FormRender from '../components/FormRender';
-import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js';
-import { Loader2, ArrowLeft, FileText } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  getRespuesta,
+  getPlantilla,
+  corregirPostulacionRespuesta,
+} from "../services/formulario.service.js";
+import FormRender from "../components/FormRender";
+import { showSuccessAlert, showErrorAlert } from "../helpers/sweetAlert.js";
+import { Loader2, ArrowLeft, FileText } from "lucide-react";
 
 const AlumnoCorreccion = () => {
   const { id } = useParams(); // id de FormularioRespuesta
@@ -20,12 +24,12 @@ const AlumnoCorreccion = () => {
         const resp = await getRespuesta(id);
         setRespuesta(resp);
 
-        const pl = await getPlantilla('postulacion');
+        const pl = await getPlantilla("postulacion");
         setPlantilla(pl);
       } catch (e) {
         console.error(e);
-        showErrorAlert('Error', 'No se pudo cargar la corrección.');
-        navigate('/panel');
+        showErrorAlert("Error", "No se pudo cargar la corrección.");
+        navigate("/panel");
       } finally {
         setLoading(false);
       }
@@ -49,35 +53,42 @@ const AlumnoCorreccion = () => {
       const esquema = plantilla?.esquema || [];
       const alumnoIds = new Set(
         esquema
-          .filter(c => c.fillBy === 'alumno' || !c.fillBy)
-          .map(c => c.id)
+          .filter((c) => c.fillBy === "alumno" || !c.fillBy)
+          .map((c) => c.id)
       );
       const respuestasAlumno = Object.fromEntries(
         Object.entries(respuestas).filter(([k]) => alumnoIds.has(k))
       );
       await corregirPostulacionRespuesta(id, respuestasAlumno);
-      await showSuccessAlert('¡Enviado!', 'Corrección enviada. Se retomará el flujo correspondiente.');
-      navigate('/panel');
+      await showSuccessAlert(
+        "¡Enviado!",
+        "Corrección enviada. Se retomará el flujo correspondiente."
+      );
+      navigate("/panel");
     } catch (e) {
       console.error(e);
-      showErrorAlert('Error', e?.message || 'No se pudo enviar la corrección.');
+      showErrorAlert("Error", e?.message || "No se pudo enviar la corrección.");
     } finally {
       setEnviando(false);
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
+      </div>
+    );
 
   if (!respuesta || !plantilla) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       <div className="bg-white shadow-sm py-4 px-6 mb-8 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-600 hover:text-blue-600 font-medium">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-gray-600 hover:text-blue-600 font-medium"
+        >
           <ArrowLeft size={20} /> Volver
         </button>
         <h1 className="flex items-center gap-2 text-xl font-bold text-gray-800">
@@ -92,7 +103,7 @@ const AlumnoCorreccion = () => {
             respuestasIniciales={getRespuestasIniciales()}
             onSubmit={handleSubmit}
             userType="alumno"
-            buttonText={enviando ? 'Enviando...' : 'Enviar Corrección'}
+            buttonText={enviando ? "Enviando..." : "Enviar Corrección"}
           />
         </div>
       </main>

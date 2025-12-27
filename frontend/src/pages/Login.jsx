@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { login } from "../services/auth.service";
 import { showErrorAlert, showSuccessAlert } from "../helpers/sweetAlert.js";
 import { useAuth } from "../context/AuthContext";
-import { Eye, EyeOff, Building2, Key, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Building2, Key, ArrowRight } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ const Login = () => {
 
   const handleAccesoEmpresa = (e) => {
     e.preventDefault();
-    
+
     if (!tokenEmpresa.trim()) {
       showErrorAlert("Error", "Por favor ingresa el token de acceso");
       return;
@@ -59,7 +59,6 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        
         {/* FORMULARIO DE LOGIN NORMAL */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 transform transition-all hover:scale-105">
           <form className="space-y-6" onSubmit={handleSubmit}>
@@ -137,7 +136,9 @@ const Login = () => {
             <div className="w-full border-t-2 border-blue-300"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-transparent text-white font-semibold">O</span>
+            <span className="px-4 bg-transparent text-white font-semibold">
+              O
+            </span>
           </div>
         </div>
 
@@ -151,7 +152,8 @@ const Login = () => {
           </div>
 
           <p className="text-center text-gray-600 mb-6 text-sm">
-            Si eres una empresa y tienes un token de acceso, ingrésalo aquí para gestionar prácticas.
+            Si eres una empresa y tienes un token de acceso, ingrésalo aquí para
+            gestionar prácticas.
           </p>
 
           {!mostrarTokenInput ? (
@@ -207,7 +209,6 @@ const Login = () => {
             </form>
           )}
         </div>
-
       </div>
     </div>
   );

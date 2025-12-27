@@ -11,8 +11,8 @@ import {
   ArrowLeft,
   Download,
 } from "lucide-react";
-import instance from "../services/root.service"; // Usamos tu instancia configurada
-import FormRender from "../components/FormRender"; // El visor del formulario
+import instance from "../services/root.service"; 
+import FormRender from "../components/FormRender"; 
 import {
   showSuccessAlert,
   showErrorAlert,
@@ -22,7 +22,7 @@ import {
   customAlert,
 } from "../helpers/sweetAlert";
 import { useNavigate } from "react-router-dom";
-import html2pdf from 'html2pdf.js';
+import html2pdf from "html2pdf.js";
 
 const AprobarPracticas = () => {
   const navigate = useNavigate();
@@ -70,14 +70,13 @@ const AprobarPracticas = () => {
 
     if (!respuesta || !respuesta.datos) return {};
 
-    // --- LA MAGIA DE APLANAR ---
     // Sacamos 'datosFormulario' aparte, y dejamos el resto (datos empresa) en 'restoDatos'
     const { datosFormulario, ...restoDatos } = respuesta.datos;
 
     // Mezclamos todo priorizando los últimos cambios del alumno (datosFormulario)
     const datosUnificados = {
-      ...restoDatos, // Datos de la Empresa
-      ...(datosFormulario || {}), // Datos del Alumno sobrescriben si hay conflicto
+      ...restoDatos, // Datos de la empresa
+      ...(datosFormulario || {}), // Datos del alumno sobrescriben si hay conflicto
     };
 
     console.log("Datos Unificados para FormRender:", datosUnificados);
@@ -94,27 +93,37 @@ const AprobarPracticas = () => {
     const element = formContentRef.current;
     if (!element) return;
 
-    const alumnoNombre = seleccionada?.student?.name || 'Alumno';
-    
+    const alumnoNombre = seleccionada?.student?.name || "Alumno";
+
     const opt = {
       margin: [10, 10, 10, 10],
-      filename: `Formulario_Postulacion_${alumnoNombre.replace(/\s+/g, '_')}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        allowTaint: true, 
+      filename: `Formulario_Postulacion_${alumnoNombre.replace(
+        /\s+/g,
+        "_"
+      )}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
         logging: false,
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const sections = clonedDoc.querySelectorAll('.mb-4, .mb-6, table, h2');
-          sections.forEach(el => {
-            el.style.pageBreakInside = 'avoid';
+          const sections = clonedDoc.querySelectorAll(
+            ".mb-4, .mb-6, table, h2"
+          );
+          sections.forEach((el) => {
+            el.style.pageBreakInside = "avoid";
           });
-        }
+        },
       },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: 'css', before: '.page-break-before', after: '.page-break-after', avoid: '.no-break' }
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: {
+        mode: "css",
+        before: ".page-break-before",
+        after: ".page-break-after",
+        avoid: ".no-break",
+      },
     };
 
     await html2pdf().set(opt).from(element).save();
@@ -305,7 +314,8 @@ const AprobarPracticas = () => {
                   Evaluación de Solicitud
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Revisa los datos antes de aprobar. - {seleccionada?.student?.name}
+                  Revisa los datos antes de aprobar. -{" "}
+                  {seleccionada?.student?.name}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -328,7 +338,10 @@ const AprobarPracticas = () => {
 
             {/* Modal Content (Scrollable) */}
             <div className="flex-1 overflow-y-auto p-6 bg-gray-100">
-              <div ref={formContentRef} className="bg-white rounded-lg p-6 shadow">
+              <div
+                ref={formContentRef}
+                className="bg-white rounded-lg p-6 shadow"
+              >
                 {plantilla ? (
                   <FormRender
                     esquema={plantilla.esquema}
@@ -337,7 +350,9 @@ const AprobarPracticas = () => {
                     userType="coordinador"
                   />
                 ) : (
-                  <div className="text-center py-10">Cargando formulario...</div>
+                  <div className="text-center py-10">
+                    Cargando formulario...
+                  </div>
                 )}
               </div>
             </div>

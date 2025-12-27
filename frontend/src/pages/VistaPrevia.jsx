@@ -25,16 +25,21 @@ const VistaPrevia = () => {
     cargar();
   }, [tipo]);
 
-  if (loading) return <div className="p-10 text-center">Cargando vista previa...</div>;
-  if (!plantilla) return <div className="p-10 text-center text-red-500">Formulario no encontrado</div>;
+  if (loading)
+    return <div className="p-10 text-center">Cargando vista previa...</div>;
+  if (!plantilla)
+    return (
+      <div className="p-10 text-center text-red-500">
+        Formulario no encontrado
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-5xl mx-auto">
-        
         {/* Botón Volver */}
-        <button 
-          onClick={() => navigate(-1)} 
+        <button
+          onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
         >
           <ArrowLeft size={20} />
@@ -43,15 +48,15 @@ const VistaPrevia = () => {
 
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded shadow-sm">
           <p className="text-yellow-800 font-medium">
-                Modo Vista Previa: Así es como verán el formulario los usuarios.
+            Modo Vista Previa: Así es como verán el formulario los usuarios.
           </p>
         </div>
 
         {/* Renderizamos el formulario en modo Solo Lectura */}
-        <FormRender 
-          esquema={plantilla.esquema} 
+        <FormRender
+          esquema={plantilla.esquema}
           titulo={plantilla.titulo}
-          readOnly={true} // <--- IMPORTANTE: Bloqueado
+          readOnly={true} // Bloqueado
           onSubmit={() => {}} // No hace nada
           userType="coordinador" // Para que vea todos los campos
         />
