@@ -19,7 +19,7 @@ export const Practica = new EntitySchema({
         "en_curso",
         "finalizada",
         "evaluada",
-        "cerrada"
+        "cerrada",
       ],
 
       default: "pendiente",
@@ -103,21 +103,21 @@ export const Practica = new EntitySchema({
     },
     empresaToken: {
       type: "one-to-one",
-      target: "EmpresaToken", 
-      inverseSide: "practica", 
+      target: "EmpresaToken",
+      inverseSide: "practica",
       nullable: true,
-      eager: true, 
+      eager: true,
     },
-    documentos: { 
-        type: "one-to-many",
-        target: "DocumentoPractica", 
-        inverseSide: "practica", 
+    documentos: {
+      type: "one-to-many",
+      target: "DocumentoPractica",
+      inverseSide: "practica",
     },
     formularioRespuestas: {
       type: "one-to-many",
       target: "FormularioRespuesta",
       inverseSide: "practica", // Debe coincidir con la entidad respuesta
-      eager: true, 
+      eager: true,
     },
   },
 });

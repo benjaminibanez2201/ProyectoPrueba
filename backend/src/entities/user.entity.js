@@ -1,5 +1,5 @@
 import { EntitySchema } from "typeorm";
-import { Practica } from "./practica.entity.js"; 
+import { Practica } from "./practica.entity.js";
 
 export const User = new EntitySchema({
   name: "User",
@@ -29,7 +29,7 @@ export const User = new EntitySchema({
     role: {
       type: "varchar",
       length: 50,
-      default: "alumno", 
+      default: "alumno",
     },
     tipo_practica: {
       type: "varchar",

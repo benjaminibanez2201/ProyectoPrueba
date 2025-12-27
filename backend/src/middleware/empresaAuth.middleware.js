@@ -29,9 +29,12 @@ export const validarTokenEmpresa = async (req, res, next) => {
     req.alumnoId = registro.alumnoId;
     req.tokenEmpresa = registro;
     next();
-
   } catch (error) {
     console.error("Error validando token de empresa:", error);
-    return handleErrorClient(res, 500, "Error interno al validar token de empresa.");
+    return handleErrorClient(
+      res,
+      500,
+      "Error interno al validar token de empresa."
+    );
   }
 };
