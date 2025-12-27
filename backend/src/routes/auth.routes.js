@@ -12,4 +12,3 @@ router.post("/register", validate(registerValidationSchema), register);
 router.post("/login", login);
 
 export default router;
-

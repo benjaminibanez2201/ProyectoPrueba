@@ -151,14 +151,14 @@ const GestionRecursosModal = ({ isOpen, onClose }) => {
             className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-all relative
                             ${
                               activeTab === "plantillas"
-                                ? "text-orange-600 bg-white"
-                                : "text-gray-500 hover:text-orange-600 hover:bg-gray-100"
+                                ? "text-green-600 bg-white"
+                                : "text-gray-500 hover:text-green-600 hover:bg-gray-100"
                             }`}
           >
             <Layout size={18} />
             Formularios Digitales
             {activeTab === "plantillas" && (
-              <div className="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-t-full"></div>
+              <div className="absolute bottom-0 left-0 w-full h-1 bg-green-500 rounded-t-full"></div>
             )}
           </button>
         </div>
@@ -249,8 +249,8 @@ const GestionRecursosModal = ({ isOpen, onClose }) => {
           {/* --- TAB 2: VER PLANTILLAS --- */}
           {activeTab === "plantillas" && (
             <div className="space-y-4">
-              <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-lg">
-                <p className="text-sm text-orange-800">
+              <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
+                <p className="text-sm text-green-800">
                   Estos son los formularios activos. Para editarlos, ve a la
                   sección <strong>"Formularios"</strong> del dashboard.
                 </p>
@@ -262,7 +262,7 @@ const GestionRecursosModal = ({ isOpen, onClose }) => {
                     key={plantilla.id}
                     className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm"
                   >
-                    <div className="bg-orange-100 p-3 rounded-xl text-orange-600">
+                    <div className="bg-green-100 p-3 rounded-xl text-green-600">
                       <Layout size={24} />
                     </div>
                     <div className="grow">
@@ -283,7 +283,6 @@ const GestionRecursosModal = ({ isOpen, onClose }) => {
                     <button
                       onClick={() => {
                         onClose(); // Cerramos el modal primero para que no estorbe
-                        // Usamos la ruta exacta que usa tu compañero
                         navigate(
                           `/admin/formularios/preview/${plantilla.tipo}`
                         );

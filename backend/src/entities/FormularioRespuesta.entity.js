@@ -27,7 +27,7 @@ export const FormularioRespuesta = new EntitySchema({
     },
     comentario_coordinador: {
       type: "text",
-      nullable: true, 
+      nullable: true,
     },
   },
   relations: {

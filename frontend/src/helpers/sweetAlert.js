@@ -1,36 +1,36 @@
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 export function showErrorAlert(title, text) {
   Swal.fire({
-    icon: 'error',
+    icon: "error",
     title: title,
     html: text,
-    confirmButtonText: 'Aceptar',
-    confirmButtonColor: '#d33'
+    confirmButtonText: "Aceptar",
+    confirmButtonColor: "#d33",
   });
 }
 
 export function showSuccessAlert(title, text) {
   Swal.fire({
-    icon: 'success',
+    icon: "success",
     title: title,
     text: text,
-    confirmButtonText: 'Aceptar',
-    confirmButtonColor: '#3085d6',
-    timer: 3000
+    confirmButtonText: "Aceptar",
+    confirmButtonColor: "#3085d6",
+    timer: 3000,
   });
 }
 
 export function deleteDataAlert(onConfirm) {
   Swal.fire({
-    title: '¿Estás seguro?',
+    title: "¿Estás seguro?",
     text: "Esta acción no se puede deshacer",
-    icon: 'warning',
+    icon: "warning",
     showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Sí, eliminar',
-    cancelButtonText: 'Cancelar'
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar",
   }).then((result) => {
     if (result.isConfirmed) {
       onConfirm();
@@ -40,21 +40,21 @@ export function deleteDataAlert(onConfirm) {
 
 export function showInfoAlert(title, text) {
   Swal.fire({
-    icon: 'info',               // Icono de información ("i")
+    icon: "info", // Icono de información ("i")
     title: title,
     text: text,
-    confirmButtonText: 'Aceptar',
-    confirmButtonColor: '#3085d6' // Azul (color estándar de info)
+    confirmButtonText: "Aceptar",
+    confirmButtonColor: "#3085d6", // Azul (color estándar de info)
   });
 }
 
 export function showHtmlAlert(title, html) {
   Swal.fire({
-    icon: 'info',
+    icon: "info",
     title,
     html,
-    confirmButtonText: 'Aceptar',
-    confirmButtonColor: '#3085d6'
+    confirmButtonText: "Aceptar",
+    confirmButtonColor: "#3085d6",
   });
 }
 
@@ -62,14 +62,14 @@ export function showSelectAlert(title, text, options) {
   return Swal.fire({
     title,
     text,
-    input: 'select',
+    input: "select",
     inputOptions: options,
-    inputPlaceholder: 'Selecciona una opción',
+    inputPlaceholder: "Selecciona una opción",
     showCancelButton: true,
-    confirmButtonText: 'Aceptar',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33'
+    confirmButtonText: "Aceptar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
   });
 }
 
@@ -80,7 +80,7 @@ export function customAlert(options) {
 // el html  para rechazar
 export async function showRejectFormAlert() {
   return Swal.fire({
-    title: 'Rechazar Solicitud',
+    title: "Rechazar Solicitud",
     html: `
       <p style="margin-bottom:10px; text-align:left; font-size: 0.9em; color:#555;">
         Indique el motivo y quién debe corregir:
@@ -114,19 +114,21 @@ export async function showRejectFormAlert() {
     `,
     focusConfirm: false,
     showCancelButton: true,
-    confirmButtonColor: '#d33',
-    confirmButtonText: 'Rechazar',
+    confirmButtonColor: "#d33",
+    confirmButtonText: "Rechazar",
     preConfirm: () => {
-      const motivo = document.getElementById('swal-input1').value;
-      const radio = document.querySelector('input[name="destinatario"]:checked');
+      const motivo = document.getElementById("swal-input1").value;
+      const radio = document.querySelector(
+        'input[name="destinatario"]:checked'
+      );
 
       if (!motivo) {
-        Swal.showValidationMessage('¡Debes escribir una observación!');
+        Swal.showValidationMessage("¡Debes escribir una observación!");
         return false;
       }
 
       return { motivo, destinatario: radio.value };
-    }
+    },
   });
 }
 
@@ -134,11 +136,11 @@ export function showConfirmAlert(title, text) {
   return Swal.fire({
     title,
     text,
-    icon: 'question',
+    icon: "question",
     showCancelButton: true,
-    confirmButtonText: 'Aceptar',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33'
+    confirmButtonText: "Aceptar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
   });
 }
