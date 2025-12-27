@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { validarTokenEmpresa, confirmarInicioPractica } from '../services/empresa.service.js';
+import { validarTokenEmpresa, confirmarInicioPractica, enviarEvaluacionEmpresa } from '../services/empresa.service.js';
 import { getPlantilla } from '../services/formulario.service.js'; // 1. Traer la plantilla
 import FormRender from '../components/FormRender'; // 2. Traer tu componente estrella
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js'; 
@@ -14,6 +14,7 @@ const Access = () => {
     // Estados de Datos
     const [data, setData] = useState(null);
     const [plantilla, setPlantilla] = useState(null); // Para guardar las preguntas
+    const [modoEvaluacion, setModoEvaluacion] = useState(false);
     
     // Estados de UI
     const [loading, setLoading] = useState(true);
@@ -36,12 +37,19 @@ const Access = () => {
                 if (!response?.data) throw new Error('Datos inválidos del servidor');
                 setData(response.data);
 
-                // B. Cargar la Plantilla del Formulario (Ej: "postulacion")
-                // Asumimos que la empresa debe llenar la parte de "postulacion"
-                // OJO: Podrías necesitar un endpoint que te diga QUÉ plantilla cargar.
-                // Por ahora usamos 'postulacion' por defecto.
-                const plantillaData = await getPlantilla('postulacion');
-                setPlantilla(plantillaData);
+                // Decidir si es evaluación o postulación
+                const { evaluacionPendiente, nivel, estado } = response.data;
+                const esEvaluacion = evaluacionPendiente || estado === 'finalizada';
+                setModoEvaluacion(esEvaluacion);
+
+                if (esEvaluacion) {
+                    const tipo = (nivel === 'pr2') ? 'evaluacion_pr2' : 'evaluacion_pr1';
+                    const plantillaData = await getPlantilla(tipo);
+                    setPlantilla(plantillaData);
+                } else {
+                    const plantillaData = await getPlantilla('postulacion');
+                    setPlantilla(plantillaData);
+                }
 
             } catch (err) {
                 console.error('Error de carga:', err);
@@ -79,22 +87,47 @@ const Access = () => {
         return misDatos || {};
     };
 
+    // Prefill evaluación con datos de postulación
+    const getEvaluacionInicial = () => {
+        const base = getRespuestasAlumno();
+        if (!plantilla?.esquema) return {};
+        const permitido = new Set(plantilla.esquema.map(c => c.id).filter(Boolean));
+        const merged = { ...base };
+        // Si postulación guardó en datosFormulario, ya está mezclado en getRespuestasAlumno
+        const out = {};
+        for (const [k, v] of Object.entries(merged)) {
+            if (permitido.has(k)) out[k] = v;
+        }
+        return out;
+    };
+
     // Lógica para enviar el formulario completado
 const handleFormSubmit = async (respuestas) => {
     try {
         setProcesando(true);
 
-        await confirmarInicioPractica(token, true, respuestas);
-
-        await showSuccessAlert(
-            '¡Enviado!',
-            'Los datos han sido enviados al Coordinador para su validación.'
-        );
-
-        setData(prev => ({
-            ...prev,
-            estado: 'pendiente_validacion'
-        }));
+        if (modoEvaluacion) {
+            await enviarEvaluacionEmpresa(token, respuestas);
+            await showSuccessAlert(
+                '¡Evaluación enviada!',
+                'Gracias. El coordinador revisará la evaluación y cerrará la práctica.'
+            );
+            // Actualizar estado local y salir del modo evaluación
+            setData(prev => ({ ...prev, estado: 'evaluada' }));
+            setModoEvaluacion(false);
+            // Redirigir al portal de empresa (mismo acceso con token)
+            navigate(`/empresa/acceso/${token}`);
+        } else {
+            await confirmarInicioPractica(token, true, respuestas);
+            await showSuccessAlert(
+                '¡Enviado!',
+                'Los datos han sido enviados al Coordinador para su validación.'
+            );
+            setData(prev => ({
+                ...prev,
+                estado: 'pendiente_validacion'
+            }));
+        }
 
         window.scrollTo(0, 0);
 
@@ -136,9 +169,10 @@ const handleFormSubmit = async (respuestas) => {
     const { alumnoNombre, empresaNombre, estado } = data;
     
     // Estados Clave
-    const esModoEdicion = estado === 'enviada_a_empresa' || estado === 'rechazada';
+    const esModoEdicion = (estado === 'enviada_a_empresa' || estado === 'rechazada') && !modoEvaluacion;
     const esPendienteValidacion = estado === 'pendiente_validacion';
     const esEnCurso = estado === 'en_curso';
+    const esFinalizada = estado === 'finalizada' || modoEvaluacion;
 
     return (
         <div className="min-h-screen bg-gray-50 pb-12">
@@ -244,9 +278,32 @@ const handleFormSubmit = async (respuestas) => {
                         <p className="text-green-700 mb-6">
                             El alumno está activo. Al finalizar el periodo, podrá realizar su evaluación aquí.
                         </p>
-                        <button className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition shadow-lg shadow-green-200">
+                        <button 
+                          onClick={() => setModoEvaluacion(true)}
+                          className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition shadow-lg shadow-green-200">
                             Realizar Evaluación de Desempeño
                         </button>
+                    </div>
+                )}
+
+                {/* CASO D: EVALUACIÓN (Formulario) */}
+                {(esFinalizada && plantilla && modoEvaluacion) && (
+                    <div className="bg-white rounded-xl shadow-lg border border-green-100 overflow-hidden mt-6">
+                        <div className="bg-green-600 p-4 text-white">
+                            <h3 className="font-bold flex items-center gap-2">
+                                <ClipboardList size={20} /> Evaluación de Desempeño
+                            </h3>
+                            <p className="text-green-100 text-sm mt-1">Complete la evaluación del alumno.</p>
+                        </div>
+                        <div className="p-6">
+                            <FormRender 
+                              esquema={plantilla.esquema}
+                              respuestasIniciales={getEvaluacionInicial()}
+                              onSubmit={handleFormSubmit}
+                              buttonText={procesando ? "Enviando..." : "Enviar Evaluación"}
+                              userType="empresa"
+                            />
+                        </div>
                     </div>
                 )}
                     {/* ← NUEVO: Modal de Chat */}

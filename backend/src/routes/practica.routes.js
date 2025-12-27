@@ -36,4 +36,7 @@ router.patch("/:id/cerrar", authMiddleware(["coordinador"]), controller.cerrarPr
 router.patch("/:id/aprobar", authMiddleware(["coordinador"]), controller.aprobarInicioPractica);
 router.patch("/:id/observar", authMiddleware(["coordinador"]), controller.observarPractica);
 
+// Alumno finaliza su práctica para disparar evaluación
+router.post("/:id/finalizar", authMiddleware(["alumno"]), controller.finalizarPractica);
+
 export default router;

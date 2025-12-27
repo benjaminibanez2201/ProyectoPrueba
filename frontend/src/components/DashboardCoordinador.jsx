@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock, MessageCircle } from "lucide-react";
 // ✅ CORRECCIÓN: Importar solo getAllAlumnosDetalles (sin el duplicado)
 import { getAllAlumnosDetalles } from "../services/user.service.js";
-import { showErrorAlert, showSuccessAlert, showInfoAlert, showSelectAlert } from "../helpers/sweetAlert.js";
+import { showErrorAlert, showSuccessAlert, showInfoAlert, showSelectAlert, showConfirmAlert } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
-import { updateEstadoPractica } from "../services/practica.service.js";
+import { updateEstadoPractica, cerrarPractica } from "../services/practica.service.js";
 import GestionRecursosModal from "./GestionRecursosModal";
 import DetallesCompletosAlumno from "./DetallesCompletosAlumno.jsx";
 import BandejaMensajes from "./BandejaMensajes.jsx";
@@ -187,6 +187,25 @@ const DashboardCoordinador = ({ user }) => {
     }
   };
 
+  const handleCerrarPractica = async (alumno) => {
+    const practica = alumno.practicasComoAlumno?.[0];
+    if (!practica) return showErrorAlert("Error", "No hay práctica para cerrar.");
+    if (practica.estado !== 'evaluada') return showErrorAlert("No permitido", "Solo puedes cerrar prácticas ya evaluadas.");
+    const result = await showConfirmAlert(
+      '¿Cerrar práctica?',
+      '¿Cerrar definitivamente esta práctica? Esta acción no se puede deshacer.'
+    );
+    if (!result.isConfirmed) return;
+    try {
+      await cerrarPractica(practica.id);
+      showSuccessAlert("Práctica cerrada", "Se ha cerrado correctamente.");
+      refreshAlumnos();
+    } catch (e) {
+      const msg = e?.response?.data?.message || e?.message || "No se pudo cerrar la práctica.";
+      showErrorAlert("Error", msg);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
@@ -207,8 +226,8 @@ const DashboardCoordinador = ({ user }) => {
         </button>
         {showBandeja && <BandejaMensajes user={user} onClose={() => setShowBandeja(false)} />}
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-blue-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5 items-stretch">
+          <div className="bg-blue-50 p-6 rounded-xl shadow-inner hover:shadow-md transition flex flex-col justify-between min-h-[200px]">
             <Users className="text-blue-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-blue-800">Ver Alumnos</h3>
             <p className="text-gray-600 text-sm mt-1">Revisa alumnos inscritos</p>
@@ -220,16 +239,8 @@ const DashboardCoordinador = ({ user }) => {
             </button>
           </div>
 
-          <div className="bg-green-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
-            <Key className="text-green-600 mb-3" size={32} />
-            <h3 className="text-lg font-bold text-green-800">Generar Claves</h3>
-            <p className="text-gray-600 text-sm mt-1">Crea códigos de acceso (RF3)</p>
-            <button className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full">
-              Generar Códigos
-            </button>
-          </div>
-
-          <div className="bg-purple-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
+          
+          <div className="bg-purple-50 p-6 rounded-xl shadow-inner hover:shadow-md transition flex flex-col justify-between min-h-[200px]">
             <ClipboardList className="text-purple-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-purple-800">Documentos</h3>
             <p className="text-gray-600 text-sm mt-1">Revisa tus formularios y sube documentos</p>
@@ -239,19 +250,19 @@ const DashboardCoordinador = ({ user }) => {
             </button>
           </div>
 
-          <div className="bg-orange-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
-            <FileCog className="text-orange-600 mb-3" size={32} />
-            <h3 className="text-lg font-bold text-orange-800">Formularios</h3>
+          <div className="bg-green-50 p-6 rounded-xl shadow-inner hover:shadow-md transition flex flex-col justify-between min-h-[200px]">
+            <FileCog className="text-green-600 mb-3" size={32} />
+            <h3 className="text-lg font-bold text-green-800">Formularios</h3>
             <p className="text-gray-600 text-sm mt-1">Edita las plantillas</p>
             <button
               onClick={() => navigate("/admin/formularios")}
-              className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg w-full"
+              className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
               Gestionar Plantillas
             </button>
           </div>
 
-          <div className="bg-red-50 p-6 rounded-xl shadow-inner hover:shadow-md transition">
+          <div className="bg-red-50 p-6 rounded-xl shadow-inner hover:shadow-md transition flex flex-col justify-between min-h-[200px]">
             <FileText className="text-red-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-red-800">Gestionar Prácticas</h3>
             <p className="text-gray-600 text-sm mt-1">Revisa confirmaciones de empresas</p>
@@ -346,6 +357,11 @@ const DashboardCoordinador = ({ user }) => {
                         <button onClick={() => handleEditarEstado(alumno)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200" title="Aprobar/Editar">
                           <Edit size={18} />
                         </button>
+                        {alumno.practicasComoAlumno?.[0]?.estado === 'evaluada' && (
+                          <button onClick={() => handleCerrarPractica(alumno)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200" title="Cerrar práctica">
+                            <Lock size={18} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

@@ -42,8 +42,14 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
     // 2. Guardar en Session Storage (para el useEffect)
     sessionStorage.setItem('usuario', JSON.stringify(userData));
-    // 3. Guardar la cookie (para el backend)
-    cookies.set('jwt-auth', token, { expires: 1, secure: true, sameSite: 'strict' });
+    // 3. Guardar token accesible para el interceptor
+    sessionStorage.setItem('jwt-token', token);
+    // 4. (Opcional) Cookie: puede fallar en http si secure=true, por eso usamos sessionStorage como fuente primaria
+    try {
+      cookies.set('jwt-auth', token, { expires: 1, secure: true, sameSite: 'strict' });
+    } catch (e) {
+      // Silenciar en dev
+    }
   };
 
   // --- NUEVA FUNCIÓN ---
@@ -53,6 +59,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     // 2. Limpiar Session Storage
     sessionStorage.removeItem('usuario');
+    sessionStorage.removeItem('jwt-token');
     // 3. Limpiar cookie
     cookies.remove('jwt-auth');
   };

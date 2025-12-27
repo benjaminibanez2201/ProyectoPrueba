@@ -13,8 +13,13 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
   (config) => {
-    const token = cookies.get('jwt-auth', { path: '/' });
-    if(token) {
+    let token = cookies.get('jwt-auth', { path: '/' });
+    if (!token) {
+      try {
+        token = sessionStorage.getItem('jwt-token');
+      } catch {}
+    }
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
