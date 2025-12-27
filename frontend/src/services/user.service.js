@@ -1,12 +1,7 @@
 // 1. Importamos la instancia de Axios que ya tiene el token
 import instance from './root.service.js';
 
-/**
- * Llama al endpoint GET /users/alumnos del backend.
- *
- * El token JWT se añade automáticamente gracias
- * al interceptor de 'root.service.js'.
- */
+
 export const getAlumnos = async () => {
   try {
     // 2. Usamos 'instance' para llamar a la ruta

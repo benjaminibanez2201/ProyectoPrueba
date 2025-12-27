@@ -6,6 +6,8 @@ import {
   deletePractica,
   findPracticaByStudentId,
   createPostulacion,
+  actualizarEstadoPractica,
+  finalizarPracticaAlumno,
 } from "../services/practica.service.js";
 import { AppDataSource } from "../config/configDb.js";
 import { Practica } from "../entities/practica.entity.js";
@@ -17,6 +19,7 @@ import crypto from "crypto";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 
 export class PracticaController {
+  // Obtener todas las prácticas
   async getAll(req, res) {
     try {
       const practicas = await findPracticas();
@@ -26,7 +29,8 @@ export class PracticaController {
     }
   }
 
-async getMyPractica(req, res) {
+  // Obtener la práctica del alumno autenticado
+  async getMyPractica(req, res) {
     try {
       const studentId = req.user.id || req.user.sub; 
       if (!studentId) {
@@ -46,10 +50,7 @@ async getMyPractica(req, res) {
   }
 async postularPractica(req, res) {
     try {
-      // --- CORRECCIÓN CRÍTICA AQUÍ ---
-      // Antes: const studentId = req.user.id;
       const studentId = req.user.id || req.user.sub; 
-      // -------------------------------
 
       const data = req.body; 
 
@@ -73,7 +74,7 @@ async postularPractica(req, res) {
       handleErrorServer(res, 500, "Error al crear la postulación", error.message);
     }
   }
-
+  // Obtener práctica por ID
   async getById(req, res) {
     try {
       const { id } = req.params;
@@ -128,49 +129,25 @@ async actualizarEstado(req, res) {
         return handleErrorClient(res, 400, "Estado no válido");
       }
 
-      const practicaRepo = AppDataSource.getRepository(Practica);
-      const practica = await practicaRepo.findOne({ where: { id } });
-      
-      if (!practica) {
-        return handleErrorClient(res, 404, "Práctica no encontrada");
+      const { practica, eliminada } = await actualizarEstadoPractica(id, nuevoEstado);
+
+      if (eliminada) {
+        return handleSuccess(res, 200, "Práctica reiniciada y eliminada. El alumno puede postular nuevamente.", null);
       }
 
-      // ---  LÓGICA DE REINICIO TOTAL (DELETE) ---
-      // Si el coordinador elige "Pendiente", ELIMINAMOS la práctica para que el alumno empiece de cero.
-      if (nuevoEstado === 'pendiente') {
-          console.log(`Eliminando práctica ID ${id} para reinicio completo...`);
-          
-          // 1. Borrar Token de Empresa
-          const tokenRepo = AppDataSource.getRepository(EmpresaToken);
-          const token = await tokenRepo.findOne({ where: { practica: { id } } });
-          if (token) await tokenRepo.remove(token);
-
-          // 2. Borrar Respuestas
-          const respuestasRepo = AppDataSource.getRepository(FormularioRespuesta);
-          const respuestas = await respuestasRepo.find({ where: { practica: { id } } });
-          if (respuestas.length > 0) await respuestasRepo.remove(respuestas);
-
-          // 3. ¡AQUÍ EL CAMBIO! Borramos la práctica completa
-          await practicaRepo.remove(practica);
-
-          return handleSuccess(res, 200, "Práctica reiniciada y eliminada. El alumno puede postular nuevamente.", null);
-      }
-      // -------------------------------------
-
-      // Si NO es pendiente, actualizamos el estado normalmente
-      practica.estado = nuevoEstado;
-      const updated = await practicaRepo.save(practica);
-
-      handleSuccess(res, 200, "Estado de práctica actualizado correctamente", updated);
+      handleSuccess(res, 200, "Estado de práctica actualizado correctamente", practica);
     } catch (error) {
+      if (error.message === "Práctica no encontrada") {
+        return handleErrorClient(res, 404, error.message);
+      }
       handleErrorServer(res, 500, "Error al actualizar estado de práctica", error.message);
     }
   }
 
-  async cerrarPractica(req, res) { // valida el rol, el estado previo y guarda la fecha del cierre para trazabilidad.
+  async cerrarPractica(req, res) {
     try {
       const { id } = req.params;
-      const userRole = req.user?.role; // Se obtiene desde el middleware de autenticación
+      const userRole = req.user?.role;
 
       if (userRole !== "coordinador") {
         return handleErrorClient(res, 403, "Solo el coordinador puede cerrar prácticas");
@@ -185,7 +162,6 @@ async actualizarEstado(req, res) {
         return handleErrorClient(res, 400, "Solo se pueden cerrar prácticas que ya estén evaluadas");
       }
 
-      // Marcar cierre definitivo y auditar
       practica.estado = "cerrada";
       practica.fecha_cierre = new Date();
       practica.cerrado_por = req.user?.name || req.user?.email || "Coordinador";
@@ -203,82 +179,32 @@ async actualizarEstado(req, res) {
     }
   }
   
-  // Alumno: Finaliza su práctica para solicitar evaluación a la empresa
   async finalizarPractica(req, res) {
     try {
-      const { id } = req.params; // id de práctica
+      const { id } = req.params;
       const alumnoId = req.user?.id || req.user?.sub;
       if (!alumnoId) return handleErrorClient(res, 401, "No autenticado");
+      const resultado = await finalizarPracticaAlumno(id, alumnoId);
 
-      const practicaRepo = AppDataSource.getRepository(Practica);
-      const tokenRepo = AppDataSource.getRepository(EmpresaToken);
-
-      const practica = await practicaRepo.findOne({ where: { id }, relations: ["student", "empresaToken", "formularioRespuestas", "formularioRespuestas.plantilla"] });
-      if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
-      if (practica.student?.id !== alumnoId) return handleErrorClient(res, 403, "No autorizado");
-
-      if (practica.estado !== 'en_curso' && practica.estado !== 'finalizada') {
-        return handleErrorClient(res, 400, "La práctica debe estar en curso para finalizar.");
-      }
-
-      // Determinar nivel (PR1/PR2) desde la postulación
-      const postResp = practica.formularioRespuestas?.find(r => r.plantilla?.tipo === 'postulacion');
-      const tipoPractica = postResp?.datos?.tipo_practica; // "Profesional I" | "Profesional II"
-      practica.nivel = (tipoPractica === 'Profesional II') ? 'pr2' : 'pr1';
-
-      // Marcar finalizada y crear solicitud de evaluación
-      practica.estado = 'finalizada';
-      practica.evaluacion_pendiente = true;
-
-      // Asegurar token de empresa existente o crear uno nuevo
-      let tokenValue = practica.empresaToken?.token;
-      if (!tokenValue) {
-        tokenValue = crypto.randomBytes(20).toString('hex');
-        const fechaExp = new Date();
-        fechaExp.setDate(fechaExp.getDate() + 30);
-
-        const nuevoToken = tokenRepo.create({
-          token: tokenValue,
-          empresaNombre: practica.empresa?.name || practica.empresaToken?.empresaNombre || null,
-          empresaCorreo: practica.empresa?.email || practica.empresaToken?.empresaCorreo || null,
-          expiracion: fechaExp,
-          practica,
-        });
-        await tokenRepo.save(nuevoToken);
-      }
-
-      await practicaRepo.save(practica);
-
-      // Enviar correo a empresa con instrucción para evaluación (plantilla específica)
-      try {
-        // Obtener correo/nombre del supervisor desde la postulación
-        const post = practica.formularioRespuestas?.find(r => r.plantilla?.tipo === 'postulacion');
-        const correo = post?.datos?.correo_supervisor || practica.empresa?.email || practica.empresaToken?.empresaCorreo;
-        const nombreRep = post?.datos?.nombre_supervisor || practica.empresa?.name || practica.empresaToken?.empresaNombre || "Supervisor";
-        if (correo) {
-          const nivelTexto = practica.nivel === 'pr2' ? 'Profesional II' : 'Profesional I';
-          await sendSolicitudEvaluacionEmail(
-            correo,
-            nombreRep,
-            tokenValue,
-            practica.student?.name || "Alumno",
-            nivelTexto
-          );
-        }
-      } catch (e) {
-        console.warn("No se pudo enviar correo de evaluación:", e.message);
-      }
-
-      return handleSuccess(res, 200, "Práctica finalizada. Se ha enviado la evaluación a la empresa.", {
-        id: practica.id,
-        estado: practica.estado,
-        evaluacion_pendiente: practica.evaluacion_pendiente,
-      });
+      return handleSuccess(
+        res,
+        200,
+        "Práctica finalizada. Se ha enviado la evaluación a la empresa.",
+        resultado
+      );
     } catch (error) {
+      if (error.message === "Práctica no encontrada") {
+        return handleErrorClient(res, 404, error.message);
+      }
+      if (error.message === "No autorizado") {
+        return handleErrorClient(res, 403, error.message);
+      }
+      if (error.message === "La práctica debe estar en curso para finalizar.") {
+        return handleErrorClient(res, 400, error.message);
+      }
       return handleErrorServer(res, 500, "Error al finalizar práctica", error.message);
     }
   }
-  // Aprobar práctica (Paso de "pendiente_validacion" a "en_curso")
   async aprobarInicioPractica(req, res) {
     try {
       const { id } = req.params;
@@ -291,12 +217,8 @@ async actualizarEstado(req, res) {
       const practica = await findPracticaById(id);
       if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
 
-      // Cambiamos al estado oficial de inicio
       practica.estado = "en_curso";
       
-      // Opcional: Podrías guardar la fecha real de inicio aquí si quisieras
-      // practica.fecha_inicio = new Date();
-
       const updated = await updatePractica(id, practica);
       handleSuccess(res, 200, "Práctica aprobada y puesta En Curso.", updated);
     } catch (error) {
@@ -304,7 +226,6 @@ async actualizarEstado(req, res) {
     }
   }
 
-  // Observar/Rechazar práctica (Devuelve la pelota al alumno)
   async observarPractica(req, res) {
     try {
       const { id } = req.params;
@@ -315,7 +236,6 @@ async actualizarEstado(req, res) {
       const practica = await findPracticaById(id);
       if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
 
-      // Cambiamos al estado que definimos para correcciones
       practica.estado = "rechazada"; 
       
       const updated = await updatePractica(id, practica);

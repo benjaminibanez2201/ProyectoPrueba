@@ -2,11 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {Upload,FileText,Activity,Send,PlusCircle,Ticket,Info,AlertCircle,Mail,Clock,AlertTriangle,CheckCircle2,Flag,ClipboardCheck,Lock,FileCheck,Download,BookOpen,Check,} from "lucide-react";
 import { getMyPractica, finalizarPractica } from "../services/practica.service.js";
-import {
-  showErrorAlert,
-  showSuccessAlert,
-  deleteDataAlert,
-} from "../helpers/sweetAlert.js";
+import {showErrorAlert, showSuccessAlert, deleteDataAlert} from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { deleteDocumento } from "../services/documento.service.js";
 import { deleteBitacora } from "../services/formulario.service.js";
