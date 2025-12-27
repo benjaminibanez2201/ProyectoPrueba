@@ -13,13 +13,13 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
     { value: "header", label: "Título / Separador" },
     { value: "select", label: "Selección" },
     { value: "schedule", label: "Horario" },
-    { value: "signature", label: "Firma (Canvas)" }
+    { value: "signature", label: "Firma (Canvas)" },
   ];
 
   const camposPara = [
     { value: "alumno", label: "Alumno" },
     { value: "empresa", label: "Empresa" },
-    { value: "ambos", label: "Ambos" }
+    { value: "ambos", label: "Ambos" },
   ];
 
   const addField = (tipo) => {
@@ -31,11 +31,10 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
         tipo,
         required: false,
         fillBy: "ambos",
-        options: tipo === "select" ? [] : undefined
-      }
+        options: tipo === "select" ? [] : undefined,
+      },
     ]);
   };
-
 
   const removeField = (index) => {
     setCampos(campos.filter((_, i) => i !== index));
@@ -91,7 +90,6 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
 
   return (
     <div className="flex gap-6">
-
       {/* SIDEBAR */}
       <aside className="w-64 h-fit bg-gray-100 p-4 rounded-xl border border-gray-300 shadow-sm sticky top-6">
         <h3 className="font-bold text-gray-700 mb-4 text-lg">Agregar campo</h3>
@@ -111,7 +109,6 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
 
       {/* CONTENEDOR PRINCIPAL */}
       <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex-1">
-
         {/* HEADER */}
         <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
           <h2 className="text-3xl font-bold text-gray-800 tracking-tight">
@@ -160,7 +157,6 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
 
               {/* FORMULARIO INTERNO ORDENADO */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                 {/* Texto de la pregunta - OCUPA 2 COLUMNAS */}
                 <div className="md:col-span-2">
                   <label className="text-sm font-semibold text-gray-600">
@@ -169,14 +165,18 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
                   <input
                     type="text"
                     value={campo.label}
-                    onChange={(e) => updateField(index, "label", e.target.value)}
+                    onChange={(e) =>
+                      updateField(index, "label", e.target.value)
+                    }
                     className="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 {/* Tipo */}
                 <div>
-                  <label className="text-sm font-semibold text-gray-600">Tipo</label>
+                  <label className="text-sm font-semibold text-gray-600">
+                    Tipo
+                  </label>
                   <select
                     value={campo.tipo}
                     onChange={(e) => updateField(index, "tipo", e.target.value)}
@@ -192,10 +192,14 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
 
                 {/* Campo para */}
                 <div>
-                  <label className="text-sm font-semibold text-gray-600">Campo para</label>
+                  <label className="text-sm font-semibold text-gray-600">
+                    Campo para
+                  </label>
                   <select
                     value={campo.fillBy || "ambos"}
-                    onChange={(e) => updateField(index, "fillBy", e.target.value)}
+                    onChange={(e) =>
+                      updateField(index, "fillBy", e.target.value)
+                    }
                     className="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     {camposPara.map((f) => (
@@ -209,10 +213,14 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
                 {/* Tamaño */}
                 {!["header", "signature", "schedule"].includes(campo.tipo) && (
                   <div>
-                    <label className="text-sm font-semibold text-gray-600">Tamaño (columnas)</label>
+                    <label className="text-sm font-semibold text-gray-600">
+                      Tamaño (columnas)
+                    </label>
                     <select
                       value={campo.cols || 12}
-                      onChange={(e) => updateField(index, "cols", Number(e.target.value))}
+                      onChange={(e) =>
+                        updateField(index, "cols", Number(e.target.value))
+                      }
                       className="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                       <option value={12}>12 (completo)</option>
@@ -223,51 +231,60 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
                   </div>
                 )}
 
-
                 {/* VALIDACIÓN */}
-                {camposQuePermitenValidacion.includes(campo.tipo) && campo.tipo !== "select" && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-600">Validación</label>
-                    <select
-                      value={campo.validation || ""}
-                      onChange={(e) => updateField(index, "validation", e.target.value)}
-                      className="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Sin validación</option>
-                      {validacionesDisponibles[campo.tipo]?.map((v) => (
-                        <option key={v} value={v}>
-                          {v}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
+                {camposQuePermitenValidacion.includes(campo.tipo) &&
+                  campo.tipo !== "select" && (
+                    <div>
+                      <label className="text-sm font-semibold text-gray-600">
+                        Validación
+                      </label>
+                      <select
+                        value={campo.validation || ""}
+                        onChange={(e) =>
+                          updateField(index, "validation", e.target.value)
+                        }
+                        className="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Sin validación</option>
+                        {validacionesDisponibles[campo.tipo]?.map((v) => (
+                          <option key={v} value={v}>
+                            {v}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                 {/* Placeholder */}
                 {!["header", "signature", "schedule"].includes(campo.tipo) && (
                   <div className="md:col-span-2">
-                    <label className="text-sm font-semibold text-gray-600">Placeholder</label>
+                    <label className="text-sm font-semibold text-gray-600">
+                      Placeholder
+                    </label>
                     <input
                       type="text"
                       value={campo.placeholder || ""}
-                      onChange={(e) => updateField(index, "placeholder", e.target.value)}
+                      onChange={(e) =>
+                        updateField(index, "placeholder", e.target.value)
+                      }
                       className="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 )}
-
-
 
                 {/* Obligatorio */}
                 <div className="flex items-center gap-2 mt-6">
                   <input
                     type="checkbox"
                     checked={campo.required || false}
-                    onChange={(e) => updateField(index, "required", e.target.checked)}
+                    onChange={(e) =>
+                      updateField(index, "required", e.target.checked)
+                    }
                     className="w-5 h-5 text-blue-600"
                   />
-                  <span className="text-sm text-gray-700 font-medium">Obligatorio</span>
+                  <span className="text-sm text-gray-700 font-medium">
+                    Obligatorio
+                  </span>
                 </div>
               </div>
 
@@ -306,7 +323,9 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
                       type="text"
                       placeholder="Nueva opción"
                       value={campo.tempOption || ""}
-                      onChange={(e) => updateField(index, "tempOption", e.target.value)}
+                      onChange={(e) =>
+                        updateField(index, "tempOption", e.target.value)
+                      }
                       onKeyDown={(e) => e.key === "Enter" && addOption(index)}
                       className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
@@ -323,18 +342,15 @@ const FormEditor = ({ esquemaInicial, onSave, onCancel }) => {
             </div>
           ))}
 
-
           {campos.length === 0 && (
             <div className="p-8 text-center text-gray-500 border-2 border-dashed rounded-xl">
               No hay preguntas aún. ¡Agrega una!
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
 };
 
 export default FormEditor;
-
