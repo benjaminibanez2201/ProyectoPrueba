@@ -1,6 +1,4 @@
 import { EntitySchema } from "typeorm";
-import { User } from "./user.entity.js";
-import { EmpresaToken } from "./empresaToken.entity.js";
 
 export const Practica = new EntitySchema({
   name: "Practica",
@@ -14,14 +12,14 @@ export const Practica = new EntitySchema({
     estado: {
       type: "enum",
       enum: [
-        "pendiente",               // Existe el alumno en el ramo, nada más.
-        "enviada_a_empresa",       // Alumno envió form, espera a empresa.
-        "pendiente_validacion",    // Empresa respondió, espera a coordinador.
-        "rechazada",               // Coordinador rechazó (observaciones).
-        "en_curso",                // Aprobada y trabajando.
-        "finalizada",              // Terminó por fecha.
-        "evaluada",                // Empresa puso nota.
-        "cerrada"                  // Profe cerró el acta.
+        "pendiente",
+        "enviada_a_empresa",
+        "pendiente_validacion",
+        "rechazada",
+        "en_curso",
+        "finalizada",
+        "evaluada",
+        "cerrada"
       ],
 
       default: "pendiente",
@@ -105,10 +103,10 @@ export const Practica = new EntitySchema({
     },
     empresaToken: {
       type: "one-to-one",
-      target: "EmpresaToken", // Apunta a tu entidad
-      inverseSide: "practica", // El nombre del campo en EmpresaToken.entity.js
+      target: "EmpresaToken", 
+      inverseSide: "practica", 
       nullable: true,
-      eager: true, // ¡La cargamos siempre!
+      eager: true, 
     },
     documentos: { 
         type: "one-to-many",
@@ -119,7 +117,7 @@ export const Practica = new EntitySchema({
       type: "one-to-many",
       target: "FormularioRespuesta",
       inverseSide: "practica", // Debe coincidir con la entidad respuesta
-      eager: true, // Opcional, pero ayuda
+      eager: true, 
     },
   },
 });
