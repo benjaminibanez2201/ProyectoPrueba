@@ -3,7 +3,11 @@
  * Gestiona la biblioteca de documentos generales y reglamentos del sistema
  */
 import { Router } from "express";
-import { uploadRecurso, getRecursos, deleteRecurso } from "../controllers/recurso.controller.js";
+import {
+  uploadRecurso,
+  getRecursos,
+  deleteRecurso,
+} from "../controllers/recurso.controller.js";
 import { uploadRecursoMiddleware } from "../middleware/upload.middleware.js";
 
 const router = Router();
@@ -12,7 +16,7 @@ const router = Router();
  * 1. SUBIR NUEVO RECURSO
  * POST /api/recursos
  * uploadRecursoMiddleware procesa el archivo enviado en el campo 'file'
- * uploadRecurso, el controlador guarda la URL y el nombre en la base de datos.
+ * uploadRecurso, el controlador guarda la URL y el nombre en la base de datos
  */
 router.post("/", uploadRecursoMiddleware, uploadRecurso);
 

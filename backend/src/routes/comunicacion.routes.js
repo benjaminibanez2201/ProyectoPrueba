@@ -1,25 +1,24 @@
 /**
  * ENRUTADOR DE COMUNICACIÓN
- * Define los endpoints para el sistema de mensajería interna entre Coordinadores y Empresas
+ * Define los endpoints para el sistema de mensajería interna entre coordinadores y empresas
  */
 import { Router } from "express";
-import { 
-    enviarMensaje, 
-    getConversacion,
-    getBandejaEntrada,
-    getMensajesEnviados,
-    marcarLeido,
-    getNoLeidos,
-    getNoLeidosEmpresa
+import {
+  enviarMensaje,
+  getConversacion,
+  getBandejaEntrada,
+  getMensajesEnviados,
+  marcarLeido,
+  getNoLeidos,
+  getNoLeidosEmpresa,
 } from "../controllers/comunicacion.controller.js";
-import { checkAuth } from "../middleware/auth.middleware.js"; 
+import { checkAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
 /**
  * 1. ENVIAR MENSAJE
  * POST /api/comunicacion/enviar
- * No tiene middleware restrictivo aquí porque la lógica interna del controlador
  * verifica si viene un 'token' (empresa) o si hay una sesión activa (coordinador)
  */
 router.post("/enviar", enviarMensaje);
@@ -30,17 +29,20 @@ router.post("/enviar", enviarMensaje);
  * - Si hay un token en la URL, se permite el paso al controlador (la empresa)
  * - Si no hay token, se ejecuta 'checkAuth' para verificar que sea un coordinador logueado
  */
-router.get("/practica/:practicaId", (req, res, next) => {
+router.get(
+  "/practica/:practicaId",
+  (req, res, next) => {
     if (req.query.token) {
-        return next(); // Es una empresa con acceso directo
+      return next(); // Es una empresa con acceso directo
     }
     return checkAuth(req, res, next); // Es un usuario del sistema, requiere login
-}, getConversacion);
+  },
+  getConversacion
+);
 
 /**
- * 3. BANDEJA DE ENTRADA (Coordinador)
+ * 3. BANDEJA DE ENTRADA (coordinador)
  * GET /api/comunicacion/bandeja
- * Solo accesible para coordinadores autenticados
  */
 router.get("/bandeja", checkAuth, getBandejaEntrada);
 
@@ -55,12 +57,16 @@ router.get("/enviados", checkAuth, getMensajesEnviados);
  * PATCH /api/comunicacion/:id/leido
  * Permite marcar como leído si la empresa tiene su token o si el coordinador está en su sesión
  */
-router.patch("/:id/leido", (req, res, next) => {
+router.patch(
+  "/:id/leido",
+  (req, res, next) => {
     if (req.query.token) {
-        return next();
+      return next();
     }
     return checkAuth(req, res, next);
-}, marcarLeido);
+  },
+  marcarLeido
+);
 
 /**
  * 6. CONTADOR DE NO LEÍDOS (Coordinador)
