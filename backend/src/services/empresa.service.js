@@ -1,3 +1,7 @@
+/**
+ * SERVICIO DE EMPRESA
+ * Gestiona la lógica de negocio para accesos externos, confirmaciones de inicio y evaluaciones finales
+ */
 import { AppDataSource } from "../config/configDb.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { Practica } from "../entities/practica.entity.js";
@@ -6,32 +10,27 @@ import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
 import { User } from "../entities/user.entity.js";
 import { enviarConfirmacionEvaluacionEmpresa } from "./email.service.js";
 
-// Validar token de empresa y obtener datos de la práctica asociada
+/**
+ * 1. VALIDAR TOKEN DE EMPRESA
+ * Verifica el Magic Link y recupera todo el contexto de la práctica para la vista de la empresa
+ */
 export const validarTokenEmpresa = async (tokenAcceso) => {
     const tokenRepo = AppDataSource.getRepository(EmpresaToken);
     const practicaRepo = AppDataSource.getRepository(Practica);
 
-    // validar token
+    // Buscamos el token y su relación básica con la práctica
     const tokenData = await tokenRepo.findOne({
-        where: { token: tokenAcceso }, // buscar por token
-        relations: ["practica"], // solo para obtener el id de la práctica
+        where: { token: tokenAcceso }, 
+        relations: ["practica"], 
     });
 
-    if (!tokenData) { 
-        throw new Error("Token inválido.");
-    }
-
-    if (tokenData.expiracion < new Date()) {
-        throw new Error("Token expirado.");
-    }
-
-    if (!tokenData.practica) {
-        throw new Error("El token no tiene práctica asociada.");
-    }
-
+    if (!tokenData) throw new Error("Token inválido.");
+    if (tokenData.expiracion < new Date()) throw new Error("Token expirado.");
+    if (!tokenData.practica) throw new Error("El token no tiene práctica asociada.");
+    
     const practicaId = tokenData.practica.id;
 
-    // buscar práctica completa
+    // Una vez validado el token, buscamos la práctica con todo su historial
     const practicaCompleta = await practicaRepo.findOne({
         where: { id: practicaId },
         relations: [
@@ -42,14 +41,9 @@ export const validarTokenEmpresa = async (tokenAcceso) => {
         ]
     });
 
-    if (!practicaCompleta) {
-        throw new Error("La práctica no existe.");
-    }
-
-    if (!practicaCompleta.student) {
-        throw new Error("La práctica no tiene alumno asignado.");
-    }
-
+    if (!practicaCompleta) throw new Error("La práctica no existe.");
+    if (!practicaCompleta.student) throw new Error("La práctica no tiene alumno asignado.");
+    
     console.log("Práctica cargada. Alumno:", practicaCompleta.student.name);
 
     // Buscar coordinador para mensajería
@@ -61,18 +55,21 @@ export const validarTokenEmpresa = async (tokenAcceso) => {
         practicaId: practicaCompleta.id,
         alumnoNombre: practicaCompleta.student.name,
         empresaNombre: tokenData.empresaNombre,
-        empresaCorreo: tokenData.empresaCorreo, // Email de la empresa desde el token
+        empresaCorreo: tokenData.empresaCorreo, 
         estado: practicaCompleta.estado,
         formularioRespuestas: practicaCompleta.formularioRespuestas ?? [], 
         evaluacionPendiente: !!practicaCompleta.evaluacion_pendiente,
         evaluacionCompletada: !!practicaCompleta.evaluacion_completada,
         nivel: practicaCompleta.nivel || null,
-        coordinadorId: coordinador?.id || null, // ID del coordinador para mensajería
-        coordinadorEmail: coordinador?.email || null, // Email del coordinador
+        coordinadorId: coordinador?.id || null, 
+        coordinadorEmail: coordinador?.email || null, 
     };
 };
 
-// Confirmar inicio de práctica por parte de la empresa
+/**
+ * 2. CONFIRMAR INICIO DE PRÁCTICA
+ * Procesa la validación inicial de la empresa y fusiona sus respuestas con las del alumno
+ */
 export const confirmarInicioPracticaService = async (token, confirmacion, respuestasEmpresa) => {
     const tokenRepo = AppDataSource.getRepository(EmpresaToken);
     const practicaRepo = AppDataSource.getRepository(Practica);
@@ -166,7 +163,10 @@ export const confirmarInicioPracticaService = async (token, confirmacion, respue
     };
 };
 
-// Empresa envía evaluación final (PR1/PR2)
+/**
+ * 3. GUARDAR EVALUACIÓN FINAL (PR1/PR2)
+ * Registra la nota/evaluación del supervisor y notifica por correo
+ */
 export const guardarEvaluacionEmpresa = async (tokenAcceso, respuestas) => {
     const tokenRepo = AppDataSource.getRepository(EmpresaToken);
     const practicaRepo = AppDataSource.getRepository(Practica);
@@ -187,6 +187,7 @@ export const guardarEvaluacionEmpresa = async (tokenAcceso, respuestas) => {
         throw new Error("No hay evaluación pendiente para esta práctica.");
     }
 
+    // Seleccionamos la plantilla correcta según el nivel detectado (I o II)
     const tipoPlantilla = practica.nivel === 'pr2' ? 'evaluacion_pr2' : 'evaluacion_pr1';
     const plantillaEval = await plantillaRepo.findOne({ where: { tipo: tipoPlantilla } });
     if (!plantillaEval) throw new Error(`No existe plantilla de ${tipoPlantilla}.`);
@@ -194,7 +195,7 @@ export const guardarEvaluacionEmpresa = async (tokenAcceso, respuestas) => {
     if (!practica.id) throw new Error("Práctica inválida (sin ID).");
     if (!plantillaEval.id) throw new Error("Plantilla inválida (sin ID).");
 
-    console.log('➡️ Guardar evaluación: practica.id =', practica.id, 'plantilla.id =', plantillaEval.id);
+    console.log('Guardar evaluación: practica.id =', practica.id, 'plantilla.id =', plantillaEval.id);
 
     // Inserción explícita con SQL crudo para fijar columnas join correctamente
     const insertSql = `

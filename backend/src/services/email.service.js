@@ -1,18 +1,26 @@
+/**
+ * SERVICIO DE CORREO ELECTRÓNICO (NODEMAILER)
+ * Encargado de las notificaciones automáticas
+ */
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// 1. Configuramos el "Transportador" (El cartero)
+// 1. CONFIGURACIÓN DEL TRANSPORTADOR
+// Se conecta al servidor de correo (Gmail por defecto) usando variables de entorno (.env)
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // O 'hotmail', 'outlook', etc.
+  service: 'gmail', 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
 
-// 2. Función genérica para enviar correos
+/**
+ * 2. FUNCIÓN GENÉRICA DE ENVÍO
+ * Base para todas las notificaciones del sistema
+ */
 export const sendEmail = async (destinatario, asunto, htmlContent) => {
   try {
     const mailOptions = {
@@ -31,10 +39,11 @@ export const sendEmail = async (destinatario, asunto, htmlContent) => {
   }
 };
 
-// 3. Plantilla específica para el Token de Empresa
+/**
+ * 3. TOKEN DE ACCESO EMPRESA (Magic Link Inicial)
+ * Envía el enlace de acceso al supervisor cuando el alumno postula
+ */
 export const sendTokenEmail = async (emailEmpresa, nombreSupervisor, token, nombreAlumno) => {
-  // Aquí definimos el link donde la empresa debería entrar (aunque la página no exista aún)
-  // Suponemos que la ruta será /empresa/login
   const linkAcceso = `http://localhost:5173/empresa/acceso/${token}`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
@@ -72,7 +81,10 @@ export const sendTokenEmail = async (emailEmpresa, nombreSupervisor, token, nomb
   await sendEmail(emailEmpresa, `Solicitud de Práctica: ${nombreAlumno}`, html);
 };
 
-// 4. NUEVA FUNCIÓN: Notificación de Evaluación (Aprobación/Rechazo)
+/**
+ * 4. NOTIFICACIÓN DE EVALUACIÓN (Aprobación/Rechazo)
+ * Notifica al alumno y/o empresa sobre la decisión del coordinador
+ */
 export const enviarNotificacionEvaluacion = async (practica, decision, observaciones, destinatarioError) => {
     
     const emailAlumno = practica.student?.email;
@@ -83,10 +95,9 @@ export const enviarNotificacionEvaluacion = async (practica, decision, observaci
     let mensajeHTML = "";
     let destinatarios = [];
 
-    // --- CASO A: APROBADO ---
+    // CASO APROBADO: Notificamos a ambos que la práctica está 'En Curso'
     if (decision === 'aprobar') {
         asunto = "[UBB] Práctica Profesional Aprobada Exitosamente";
-        // En caso de aprobación, notificamos a AMBOS por defecto
         destinatarios = [emailAlumno, emailEmpresa]; 
         
         mensajeHTML = `
@@ -107,10 +118,9 @@ export const enviarNotificacionEvaluacion = async (practica, decision, observaci
         `;
     } 
     
-    // --- CASO B: RECHAZADO / OBSERVADO ---
+    // CASO RECHAZADO: Se define quién debe corregir (Alumno, Empresa o Ambos)
     else if (decision === 'rechazar') {
         asunto = "[CORRECCIÓN REQUERIDA] - Práctica Profesional UBB";
-      // Intentamos ubicar la respuesta de postulación para deep-link al alumno
       const respuestaPostulacion = Array.isArray(practica?.formularioRespuestas)
         ? practica.formularioRespuestas.find(r => r?.plantilla?.tipo === 'postulacion') || practica.formularioRespuestas[0]
         : null;
@@ -124,7 +134,7 @@ export const enviarNotificacionEvaluacion = async (practica, decision, observaci
         if (destinatarioError === 'alumno') destinatarios = [emailAlumno];
         else if (destinatarioError === 'empresa') destinatarios = [emailEmpresa];
         else if (destinatarioError === 'ambos') destinatarios = [emailAlumno, emailEmpresa];
-        else destinatarios = [emailAlumno]; // Fallback por si acaso
+        else destinatarios = [emailAlumno]; 
 
         mensajeHTML = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
@@ -166,7 +176,6 @@ export const enviarNotificacionEvaluacion = async (practica, decision, observaci
     }
 
     // Enviar el correo usando tu función existente (sendEmail)
-    // sendEmail espera un string, si son varios, los unimos con coma
     if (destinatarios.length > 0) {
         // Filtramos por si alguno es null o undefined
         const listaDestinatarios = destinatarios.filter(e => e).join(', ');
@@ -176,7 +185,11 @@ export const enviarNotificacionEvaluacion = async (practica, decision, observaci
     }
 };
 
-// 5. NUEVA FUNCIÓN: Confirmación de Evaluación Registrada por la Empresa
+/**
+ * 5. CONFIRMACIÓN DE EVALUACIÓN REGISTRADA
+ * Se dispara automáticamente cuando la empresa guarda el formulario de evaluación con éxito
+ * Informa a ambas partes que el proceso ha subido de nivel
+ */
 export const enviarConfirmacionEvaluacionEmpresa = async (practica, tipoEvaluacion) => {
   try {
     const emailAlumno = practica?.student?.email;
@@ -211,7 +224,11 @@ export const enviarConfirmacionEvaluacionEmpresa = async (practica, tipoEvaluaci
   }
 };
 
-// 3b. Plantilla específica para Solicitud de Evaluación de Práctica
+/**
+ * SOLICITUD DE EVALUACIÓN DE PRÁCTICA (Magic Link para evaluar)
+ * Se envía a la empresa cuando el alumno finaliza sus horas
+ * Contiene el enlace directo para que el supervisor evalúe sin loguearse
+ */
 export const sendSolicitudEvaluacionEmail = async (emailEmpresa, nombreSupervisor, token, nombreAlumno, nivelTexto = "Profesional") => {
   const linkAcceso = `http://localhost:5173/empresa/acceso/${token}`;
   const html = `

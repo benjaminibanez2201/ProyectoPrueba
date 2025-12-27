@@ -1,3 +1,8 @@
+/**
+ * SEEDER DE FORMULARIOS
+ * Este script inicializa la base de datos con las plantillas de formularios necesarias
+ * para el funcionamiento del sistema (Postulación, Bitácora y Evaluaciones)
+ */
 import { AppDataSource } from "../config/configDb.js";
 import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
 
@@ -5,15 +10,17 @@ async function seedFormularios() {
   try {
     console.log("Iniciando Seeder de Formularios...");
 
-    // Inicializamos la conexion si esq no esta iniciada 
+    // 1. CONEXIÓN: Aseguramos que la base de datos esté lista
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
-    // (llave) Repositorio (la herramienta) para manipular la entidad FormularioPlantilla.
     const plantillaRepository = AppDataSource.getRepository(FormularioPlantilla);
 
-    // Aqui definimos las plantillas por defecto
-
+    /**
+     * 2. DEFINICIÓN DE PLANTILLAS
+     * Cada objeto define un 'tipo' único y un 'esquema'
+     * El 'esquema' es un JSON que el frontend lee para saber qué inputs mostrar (texto, fecha, select, etc.)
+     */
     const plantillasPorDefecto = [
       // Formulario
       {
@@ -68,7 +75,6 @@ async function seedFormularios() {
             tipo: "email",
             fillBy: "alumno",
             cols: 6,
-            // No le voy a poner validacion al correo del alumno por que aqui inventamos un correo
             required: true
           },
           {
@@ -106,7 +112,7 @@ async function seedFormularios() {
           {
             id: "horario_clases",
             label: "Horario de Clases (Mañana y Tarde)",
-            tipo: "schedule", // El frontend dibujará la tabla
+            tipo: "schedule", 
             fillBy: "alumno",
             required: false
           },
@@ -565,10 +571,7 @@ async function seedFormularios() {
             label: "Instrucciones: Marque la letra que corresponda a lo observado. Escala: A (Sobresaliente) - B (Bueno) - C (Moderado) - D (Suficiente) - E (Insuficiente) - F (No aplica)",
             tipo: "header"
           },
-
-          // ============================================================
           // COMPETENCIA CG1
-          // ============================================================
           {
             id: "header_cg1",
             label: "CG1: Manifiesta una actitud permanente de búsqueda y actualización de sus aprendizajes, incorporando los cambios sociales, científicos y tecnológicos en el ejercicio y desarrollo de su profesión. ",
@@ -590,9 +593,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CG2
-          // ============================================================
           {
             id: "header_cg2",
             label: "CG2: Asume un rol activo como ciudadano y profesional, comprometiéndose de manera responsable con su medio social, natural y cultural.",
@@ -622,9 +623,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CG3
-          // ============================================================
           {
             id: "header_cg3",
             label: "CG3: Establece relaciones dialogantes para el intercambio de aportes constructivos con otras disciplinas y actúa éticamente en su profesión, trabajando de manera asociativa en la consecución de objetivos.",
@@ -654,9 +653,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CG4
-          // ============================================================
           {
             id: "header_cg4",
             label: "CG4: Comunica ideas y sentimientos en forma oral y escrita para interactuar efectivamente en el entorno social y profesional en su lengua materna y en un nivel inicial en un segundo idioma.",
@@ -678,9 +675,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CE1
-          // ============================================================
           {
             id: "header_ce1",
             label: "CE1: Gestiona sistemas computacionales para responder de forma óptima a los requerimientos de los usuarios evaluando su desempeño en base a los recursos disponibles.",
@@ -726,9 +721,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CE2
-          // ============================================================
           {
             id: "header_ce2",
             label: "CE2: Desarrolla software efectivo y eficiente, para diversos dominios, siguiendo un enfoque de ingeniería.",
@@ -774,9 +767,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CE3
-          // ============================================================
           {
             id: "header_ce3",
             label: "CE3: Construye bases de datos que permitan satisfacer las necesidades de información de las organizaciones o individuos, mediante el uso de diversas técnicas de modelado.",
@@ -806,9 +797,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CE4
-          // ============================================================
           {
             id: "header_ce4",
             label: "CE4: Gestiona los recursos informáticos, de manera de apoyar y dar soporte a los procesos y estrategias de negocio de las organizaciones que permitan el mejoramiento continuo de las mismas.",
@@ -854,9 +843,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CE5
-          // ============================================================
           {
             id: "header_ce5",
             label: "CE5: Aplica conocimientos de las ciencias básicas y de la ingeniería para resolver problemas usando pensamiento lógico racional y capacidades analíticas y de abstracción.",
@@ -886,16 +873,14 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
-          // OTRAS COMPETENCIAS 
-          // ============================================================
+          // OTRAS COMPETENCIAS
           {
             id: "header_otras_competencias",
             label: "OTRAS COMPETENCIAS: Describa competencias observadas que no han sido mencionadas",
             tipo: "header"
           },
 
-          // --- ACTIVIDAD EXTRA 1 ---
+          // ACTIVIDAD EXTRA 1 
           {
             id: "otra_competencia_1_desc",
             label: "1. Descripción de la Actividad / Competencia",
@@ -913,7 +898,7 @@ async function seedFormularios() {
             required: false
           },
 
-          // --- ACTIVIDAD EXTRA 2 ---
+          // ACTIVIDAD EXTRA 2
           {
             id: "otra_competencia_2_desc",
             label: "2. Descripción de la Actividad / Competencia",
@@ -931,7 +916,7 @@ async function seedFormularios() {
             required: false
           },
 
-          // --- ACTIVIDAD EXTRA 3 ---
+          // ACTIVIDAD EXTRA 3
           {
             id: "otra_competencia_3_desc",
             label: "3. Descripción de la Actividad / Competencia",
@@ -1144,9 +1129,7 @@ async function seedFormularios() {
             tipo: "header"
           },
 
-          // ============================================================
           // COMPETENCIA CG1
-          // ============================================================
           {
             id: "header_cg1",
             label: "CG1: Manifiesta una actitud permanente de búsqueda y actualización de sus aprendizajes, incorporando los cambios sociales, científicos y tecnológicos en el ejercicio y desarrollo de su profesión. ",
@@ -1168,9 +1151,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CG2
-          // ============================================================
           {
             id: "header_cg2",
             label: "CG2: Asume un rol activo como ciudadano y profesional, comprometiéndose de manera responsable con su medio social, natural y cultural.",
@@ -1200,9 +1181,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CG3
-          // ============================================================
           {
             id: "header_cg3",
             label: "CG3: Establece relaciones dialogantes para el intercambio de aportes constructivos con otras disciplinas y actúa éticamente en su profesión, trabajando de manera asociativa en la consecución de objetivos.",
@@ -1232,9 +1211,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CG4
-          // ============================================================
           {
             id: "header_cg4",
             label: "CG4: Comunica ideas y sentimientos en forma oral y escrita para interactuar efectivamente en el entorno social y profesional en su lengua materna y en un nivel inicial en un segundo idioma.",
@@ -1256,9 +1233,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CE1
-          // ============================================================
           {
             id: "header_ce1",
             label: "CE1: Gestiona sistemas computacionales para responder de forma óptima a los requerimientos de los usuarios evaluando su desempeño en base a los recursos disponibles.",
@@ -1304,9 +1279,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CE2
-          // ============================================================
           {
             id: "header_ce2",
             label: "CE2: Desarrolla software efectivo y eficiente, para diversos dominios, siguiendo un enfoque de ingeniería.",
@@ -1352,9 +1325,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CE3
-          // ============================================================
           {
             id: "header_ce3",
             label: "CE3: Construye bases de datos que permitan satisfacer las necesidades de información de las organizaciones o individuos, mediante el uso de diversas técnicas de modelado.",
@@ -1384,9 +1355,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CE4
-          // ============================================================
           {
             id: "header_ce4",
             label: "CE4: Gestiona los recursos informáticos, de manera de apoyar y dar soporte a los procesos y estrategias de negocio de las organizaciones que permitan el mejoramiento continuo de las mismas.",
@@ -1432,9 +1401,7 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
           // COMPETENCIA CE5
-          // ============================================================
           {
             id: "header_ce5",
             label: "CE5: Aplica conocimientos de las ciencias básicas y de la ingeniería para resolver problemas usando pensamiento lógico racional y capacidades analíticas y de abstracción.",
@@ -1464,16 +1431,14 @@ async function seedFormularios() {
             fillBy: "empresa",
             required: true
           },
-          // ============================================================
-          // OTRAS COMPETENCIAS 
-          // ============================================================
+          // OTRAS COMPETENCIAS
           {
             id: "header_otras_competencias",
             label: "OTRAS COMPETENCIAS: Describa competencias observadas que no han sido mencionadas",
             tipo: "header"
           },
 
-          // --- ACTIVIDAD EXTRA 1 ---
+          // ACTIVIDAD EXTRA 1
           {
             id: "otra_competencia_1_desc",
             label: "1. Descripción de la Actividad / Competencia",
@@ -1491,7 +1456,7 @@ async function seedFormularios() {
             required: false
           },
 
-          // --- ACTIVIDAD EXTRA 2 ---
+          // ACTIVIDAD EXTRA 2
           {
             id: "otra_competencia_2_desc",
             label: "2. Descripción de la Actividad / Competencia",
@@ -1509,7 +1474,7 @@ async function seedFormularios() {
             required: false
           },
 
-          // --- ACTIVIDAD EXTRA 3 ---
+          // ACTIVIDAD EXTRA 3
           {
             id: "otra_competencia_3_desc",
             label: "3. Descripción de la Actividad / Competencia",
@@ -1563,20 +1528,21 @@ async function seedFormularios() {
       },
     ];
 
-    // Insertamos
+    /**
+     * 3. PROCESO DE INSERCIÓN/ACTUALIZACIÓN (Upsert)
+     * Recorremos el array. Si el formulario no existe, se crea
+     * Si ya existe, se actualiza su esquema
+     */
     for (const plantilla of plantillasPorDefecto) {
-      // Buscamos si existe por el tipo
       const existe = await plantillaRepository.findOne({
         where: { tipo: plantilla.tipo }
       });
 
       if (!existe) {
-        // Si no existe, la creamos
         const nuevaPlantilla = plantillaRepository.create(plantilla);
         await plantillaRepository.save(nuevaPlantilla);
         console.log(`Plantilla creada: ${plantilla.titulo}`);
       } else {
-        // Si ya existe, la actualizamos, esto forzará a que la base de datos tome tus cambios en el json
         await plantillaRepository.update(existe.id, { esquema: plantilla.esquema });
         console.log(`Plantilla actualizada: ${plantilla.titulo}`);
       }
@@ -1587,9 +1553,8 @@ async function seedFormularios() {
 
   } catch (error) {
     console.error("Error en el Seeder:", error);
-    process.exit(1); // Salir con error
+    process.exit(1);
   }
 }
 
-// Ejecutar la función
 seedFormularios();

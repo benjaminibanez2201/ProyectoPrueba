@@ -1,24 +1,29 @@
+/**
+ * SERVICIO DE USUARIOS
+ * Maneja la lógica de negocio para la gestión de cuentas, perfiles y expedientes detallados de alumnos
+ */
 import { AppDataSource } from "../config/configDb.js";
 import { User } from "../entities/user.entity.js";
 import bcrypt from "bcrypt";
 
 const userRepository = AppDataSource.getRepository(User);
 
+/**
+ * CREAR USUARIO
+ * Registra un nuevo usuario en el sistema con contraseña encriptada
+ */
 export async function createUser(data) {
-  // VALIDAR CAMPOS REQUERIDOS EN EL SERVICIO
-  if (!data.name || !data.email || !data.password || !data.role) {//añadi role
+  if (!data.name || !data.email || !data.password || !data.role) {
     throw new Error("Nombre, email, rol y contraseña son requeridos");
   }
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
-
-  // INCLUIR TODOS LOS CAMPOS NECESARIOS
   const newUser = userRepository.create({
-    name: data.name,        // ¡ESTE ERA EL PROBLEMA!
+    name: data.name, 
     email: data.email,
     password: hashedPassword,
     role: data.role || 'alumno',
-    tipo_practica: data.tipo_practica || null,//como en el req puse tipo de practica
+    tipo_practica: data.tipo_practica || null,
   });
 
   try {
@@ -32,6 +37,9 @@ export async function createUser(data) {
 
 }
 
+/**
+ * BÚSQUEDAS BÁSICAS
+ */
 export async function findUserByEmail(email) {
   return await userRepository.findOneBy({ email });
 }
@@ -57,16 +65,22 @@ export async function deleteUser(id) {
   return await userRepository.remove(user);
 }
 
-//para buscar los usarios alumnos (¡ESTA ES LA FUNCIÓN ARREGLADA!)
+/**
+ * GESTIÓN DE ALUMNOS (Para el Coordinador)
+ * Recupera usuarios con rol 'alumno' e incluye sus prácticas y documentos asociados
+ */
 export async function findAlumnos() {
-  // Le decimos a TypeORM que cargue la relación
   return await userRepository.find({ 
     where: { role: 'alumno' }, 
-    relations: ['practicasComoAlumno', 'practicasComoAlumno.documentos'] // le agrego la relación de documentos
+    relations: ['practicasComoAlumno', 'practicasComoAlumno.documentos']
   });
 }
 
-// para obtener los detalles completos de un alumno por su ID
+/**
+ * 4. OBTENER DETALLES COMPLETOS (Expediente unificado)
+ * Esta función es el motor detrás de la vista de "Detalles del Alumno"
+ * Recopila datos de múltiples tablas y los organiza en un solo objeto
+ */
 export async function getDetallesAlumnos(id = null, rol=null) {
     // 1. OBTENER ALUMNOS CON TODAS LAS RELACIONES ANIDADAS
     const alumnos = await userRepository.find({

@@ -1,8 +1,12 @@
+/**
+ * SERVICIO DE PRÁCTICAS
+ * Gestiona la lógica principal del sistema, incluyendo postulaciones,
+ * estados de flujo y la integración con correos y formularios
+ */
 import { AppDataSource } from "../config/configDb.js";
 import { Practica } from "../entities/practica.entity.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { User } from "../entities/user.entity.js";
-
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
 import { FormularioPlantilla } from "../entities/FormularioPlantilla.entity.js";
 import { sendTokenEmail, sendSolicitudEvaluacionEmail } from "./email.service.js";
@@ -12,16 +16,24 @@ import { In } from "typeorm";
 const practicaRepository = AppDataSource.getRepository(Practica);
 const tokenRepository = AppDataSource.getRepository(EmpresaToken);
 const userRepository = AppDataSource.getRepository(User);
-
 const respuestaRepository = AppDataSource.getRepository(FormularioRespuesta);
 const plantillaRepository = AppDataSource.getRepository(FormularioPlantilla);
 
+/**
+ * OBTENER TODAS LAS PRÁCTICAS
+ * Recupera la lista completa con relaciones clave para el panel del coordinador
+ */
 export async function findPracticas() {
   return await practicaRepository.find({
     relations: ['student', 'empresaToken', 'formularioRespuestas', 'formularioRespuestas.plantilla']
   });
 }
 
+/**
+ * OBTENER PRÁCTICA POR ID (CON UNIFICACIÓN DE DOCUMENTOS)
+ * Recupera una práctica y transforma las respuestas de bitácoras y evaluaciones 
+ * en objetos tipo "documento" para que el frontend los muestre en una sola lista
+ */
 export async function findPracticaById(id) {
   const practica = await practicaRepository.findOne({ 
     where: { id },
@@ -30,6 +42,7 @@ export async function findPracticaById(id) {
   if (!practica) throw new Error("Práctica no encontrada");
   const documentosArchivos = practica.documentos || [];
   
+  // Transformamos respuestas de formularios en formato compatible con documentos
   const bitacoraRespuestas = practica.formularioRespuestas
       .filter(respuesta => respuesta.plantilla?.tipo === 'bitacora')
       .map(respuesta => ({
@@ -51,8 +64,9 @@ export async function findPracticaById(id) {
           es_respuesta_formulario: true
       }));
 
-  practica.documentos = [...documentosArchivos, ...bitacoraRespuestas, ...evaluacionRespuestas]; 
-  return practica;
+      // Unificamos archivos físicos (.pdf, .docx) con las respuestas dinámicas
+      practica.documentos = [...documentosArchivos, ...bitacoraRespuestas, ...evaluacionRespuestas]; 
+      return practica;
 }
 
 // Crear nueva práctica (Admin)
@@ -67,8 +81,12 @@ export async function updatePractica(id, changes) {
   return await practicaRepository.save(practica);
 }
 
+/**
+ * CREAR POSTULACIÓN (Proceso crítico)
+ * Valida que el alumno no tenga prácticas activas, crea el registro, 
+ * genera el token de empresa y envía el correo inicial
+ */
 export async function createPostulacion(data, studentId) {
-  
   const estadosActivos = [
       "enviada_a_empresa", 
       "pendiente_validacion", 
@@ -82,6 +100,7 @@ export async function createPostulacion(data, studentId) {
       estado: In(estadosActivos)
     }
   });
+  // Un alumno no puede postular si ya tiene un proceso en curso
   if (existingPractica) {
     throw new Error(`Ya tienes una práctica activa (Estado: ${existingPractica.estado}).`);
   }
@@ -92,7 +111,7 @@ export async function createPostulacion(data, studentId) {
   const plantillaPostulacion = await plantillaRepository.findOne({ where: { tipo: 'postulacion' } });
   
   if (!plantillaPostulacion) {
-     throw new Error("Error del sistema: No existe la plantilla de 'postulacion'. Contacte al soporte.");
+    throw new Error("Error del sistema: No existe la plantilla de 'postulacion'. Contacte al soporte.");
   }
 
   const practicaData = practicaRepository.create({
@@ -178,7 +197,11 @@ export async function findPracticaByStudentId(studentId) {
   return practica; 
 }
 
-// Actualizar estado de una práctica (incluye lógica especial para "pendiente")
+/**
+ * ACTUALIZAR ESTADO (Con limpieza en cascada)
+ * Si el coordinador devuelve a "pendiente", el sistema borra el rastro de la práctica 
+ * para que el alumno pueda corregir desde cero
+ */
 export async function actualizarEstadoPractica(id, nuevoEstado) {
   const practica = await practicaRepository.findOne({ where: { id } });
 
