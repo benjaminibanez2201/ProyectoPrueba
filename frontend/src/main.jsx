@@ -1,144 +1,147 @@
-import ReactDOM from 'react-dom/client';
+import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Login from '@pages/Login';
-import Panel from './pages/Panel';
-import Error404 from '@pages/Error404';
-import Root from '@pages/Root';
-import Register from '@pages/Register';
-import Access from '@pages/Access';
-import ProtectedRoute from '@components/ProtectedRoute';
-import CrearFormulario from './pages/CrearFormulario';
+import Login from "@pages/Login";
+import Panel from "./pages/Panel";
+import Error404 from "@pages/Error404";
+import Root from "@pages/Root";
+import Register from "@pages/Register";
+import Access from "@pages/Access";
+import ProtectedRoute from "@components/ProtectedRoute";
+import CrearFormulario from "./pages/CrearFormulario";
 
-import PostularPractica from '@pages/PostularPractica';
-import GestionFormularios from '@pages/GestionFormularios';
-import VistaPrevia from './pages/VistaPrevia';
-import EditarFormulario from './pages/EditarFormulario';
+import PostularPractica from "@pages/PostularPractica";
+import GestionFormularios from "@pages/GestionFormularios";
+import VistaPrevia from "./pages/VistaPrevia";
+import EditarFormulario from "./pages/EditarFormulario";
 
-import SubirDocumento from  '@pages/SubirDocumento';
+import SubirDocumento from "@pages/SubirDocumento";
 
-import AprobarPracticas from '@pages/AprobarPracticas';
-import FormResponder from '@pages/ResponderBitacora';
-import VistaPreviaAlumno from '@pages/VistaPreviaAlumno';
-import AlumnoCorreccion from '@pages/AlumnoCorreccion';
+import AprobarPracticas from "@pages/AprobarPracticas";
+import FormResponder from "@pages/ResponderBitacora";
+import VistaPreviaAlumno from "@pages/VistaPreviaAlumno";
+import AlumnoCorreccion from "@pages/AlumnoCorreccion";
 
-import '@styles/styles.css';
+import "@styles/styles.css";
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Root />,
     errorElement: <Error404 />,
     children: [
       {
-        path: '/',
-        element: <Login />
+        path: "/",
+        element: <Login />,
       },
       {
-        path: '/auth',
-        element: <Login />
+        path: "/auth",
+        element: <Login />,
       },
       {
-        path: '/login',
-        element: <Login />
+        path: "/login",
+        element: <Login />,
       },
       {
-        path: '/register',
-        element: <Register />
+        path: "/register",
+        element: <Register />,
       },
       {
-        path: '/empresa/acceso/:token',
-        element: <Access />
+        path: "/empresa/acceso/:token",
+        element: <Access />,
       },
       {
-        path: '/admin/formularios/nuevo',
-        element: <ProtectedRoute><CrearFormulario /></ProtectedRoute>
-        },
-      {
-
-        path: '/panel',
-        element: ( <ProtectedRoute>
-          <Panel />
-        </ProtectedRoute>
-        )
+        path: "/admin/formularios/nuevo",
+        element: (
+          <ProtectedRoute>
+            <CrearFormulario />
+          </ProtectedRoute>
+        ),
       },
       {
-        path: '/postular',
+        path: "/panel",
+        element: (
+          <ProtectedRoute>
+            <Panel />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/postular",
         element: (
           <ProtectedRoute>
             <PostularPractica />
           </ProtectedRoute>
-        )
+        ),
       },
       {
-        path: '/admin/formularios',
+        path: "/admin/formularios",
         element: (
           <ProtectedRoute>
             <GestionFormularios />
           </ProtectedRoute>
-        )
+        ),
       },
       {
-        path: '/admin/formularios/preview/:tipo', 
+        path: "/admin/formularios/preview/:tipo",
         element: (
           <ProtectedRoute>
             <VistaPrevia />
           </ProtectedRoute>
-        )
+        ),
       },
       {
-        path: '/admin/formularios/editar/:id',
+        path: "/admin/formularios/editar/:id",
         element: (
           <ProtectedRoute>
-          <EditarFormulario />
+            <EditarFormulario />
           </ProtectedRoute>
-        )
+        ),
       },
       {
-        path: '/upload-document',
-        element: (
-        <ProtectedRoute>
-        <SubirDocumento />
-        </ProtectedRoute>
-        )
-      },
-      {
-        path: '/coordinador/aprobar-practicas',
+        path: "/upload-document",
         element: (
           <ProtectedRoute>
-          <AprobarPracticas />
+            <SubirDocumento />
           </ProtectedRoute>
-        )
+        ),
       },
       {
-        path: '/forms/responder/bitacora', 
+        path: "/coordinador/aprobar-practicas",
         element: (
           <ProtectedRoute>
-            <FormResponder /> 
+            <AprobarPracticas />
           </ProtectedRoute>
-        )
+        ),
+      },
+      {
+        path: "/forms/responder/bitacora",
+        element: (
+          <ProtectedRoute>
+            <FormResponder />
+          </ProtectedRoute>
+        ),
       },
 
       {
-        path: '/revision-formulario/:id',
+        path: "/revision-formulario/:id",
         element: (
-          <ProtectedRoute allowedRoles={['alumno', 'coordinador']}>
+          <ProtectedRoute allowedRoles={["alumno", "coordinador"]}>
             <VistaPreviaAlumno />
           </ProtectedRoute>
-        )
+        ),
       },
       {
-        path: '/alumno/correccion/:id',
+        path: "/alumno/correccion/:id",
         element: (
-          <ProtectedRoute allowedRoles={['alumno']}>
+          <ProtectedRoute allowedRoles={["alumno"]}>
             <AlumnoCorreccion />
           </ProtectedRoute>
-        )
+        ),
       },
-
-    ]
-  }
+    ],
+  },
 ]);
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <RouterProvider router={router} />
 );

@@ -1,24 +1,22 @@
-// 1. Importamos la instancia de Axios que ya tiene el token
-import instance from './root.service.js';
-
+import instance from "./root.service.js";
 
 export const getAlumnos = async () => {
   try {
     // 2. Usamos 'instance' para llamar a la ruta
-    const response = await instance.get('/users/alumnos');
-    
-    // 3. Devuelve los datos (tu handleSuccess los envuelve en 'data')
-    return response.data.data; 
+    const response = await instance.get("/users/alumnos");
+
+    // 3. Devuelve los datos
+    return response.data.data;
   } catch (error) {
-    console.error('Error al obtener alumnos:', error);
+    console.error("Error al obtener alumnos:", error);
     // 4. Propaga el error para que el componente lo atrape
-    throw error.response?.data || error; 
+    throw error.response?.data || error;
   }
 };
 
 // 1. Para obtener TODOS los alumnos (sin ID)
 export const getAllAlumnosDetalles = async () => {
-  const response = await instance.get('/users/alumnos/detalles');
+  const response = await instance.get("/users/alumnos/detalles");
   return response.data.data;
 };
 
