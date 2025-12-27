@@ -1,3 +1,7 @@
+/**
+ * CONTROLADOR DE EVALUACIÓN DE SOLICITUDES
+ * Maneja el flujo de validación de prácticas por parte del coordinador.
+ */
 import { AppDataSource } from "../config/configDb.js";
 import { Practica } from "../entities/practica.entity.js";
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
@@ -5,13 +9,18 @@ import { handleErrorClient, handleSuccess, handleErrorServer } from "../Handlers
 import { enviarNotificacionEvaluacion } from "../services/email.service.js";
 import { enviarMensajeService } from "../services/comunicacion.service.js";
 
-// 1. Obtener lista de prácticas pendientes de validación
+/**
+ * 1. OBTENER PENDIENTES
+ * Recupera todas las prácticas que están esperando la revisión del coordinador.
+ */
 export const getPendientes = async (req, res) => {
     try {
         const practicaRepo = AppDataSource.getRepository(Practica);
-        
+
+        // Buscamos registros cuyo estado sea específicamente para revisión
         const pendientes = await practicaRepo.find({
-            where: { estado: "pendiente_validacion" }, // Filtrar por estado pendiente de validación
+            where: { estado: "pendiente_validacion" }, 
+            // Traemos relaciones para mostrar quién es el alumno y qué empresa es
             relations: ["student", "empresaToken", "formularioRespuestas", "formularioRespuestas.plantilla"],
             order: { fecha_actualizacion: "DESC" }
         });
@@ -22,16 +31,19 @@ export const getPendientes = async (req, res) => {
     }
 };
 
-// 2. Acción de Aprobar o Rechazar
+/**
+ * 2. EVALUAR SOLICITUD (Aprobar o Rechazar)
+ * Cambia el estado de la práctica y dispara acciones automáticas (emails/mensajes).
+ */
 export const evaluarSolicitud = async (req, res) => {
     try {
-        const { id } = req.params; // ID de la práctica
+        const { id } = req.params; // ID de la práctica a evaluar
         const { decision, observaciones, destinatario } = req.body; // decision: 'aprobar' | 'rechazar'
 
         const practicaRepo = AppDataSource.getRepository(Practica);
         const respuestaRepo = AppDataSource.getRepository(FormularioRespuesta);
 
-        // Buscar la práctica
+        // Obtenemos la práctica con toda su información de contacto
         const practica = await practicaRepo.findOne({
             where: { id },
             relations: [
@@ -44,13 +56,17 @@ export const evaluarSolicitud = async (req, res) => {
 
         if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
 
-        // Buscar la respuesta del formulario asociada (Postulación)
+        // Obtenemos el formulario de postulación asociado a esta práctica
         // Asumimos que es la primera o filtramos por tipo si es necesario
         const respuestaForm = practica.formularioRespuestas[0]; 
 
+        /**
+         * LÓGICA SEGÚN LA DECISIÓN
+         */
         if (decision === 'aprobar') {
-            practica.estado = "en_curso"; // O el estado que siga en tu flujo
-            practica.fecha_inicio = new Date(); // Marcamos inicio oficial
+            // CASO APROBADO: La práctica inicia oficialmente
+            practica.estado = "en_curso"; 
+            practica.fecha_inicio = new Date(); 
             
             if (respuestaForm) {
                 respuestaForm.estado = "aprobado"; // Actualizamos estado del formulario
@@ -59,27 +75,35 @@ export const evaluarSolicitud = async (req, res) => {
             }
 
         } else if (decision === 'rechazar') {
-            practica.estado = "rechazada"; // Vuelve al alumno/empresa según destinatario
-            practica.correccion_destinatario = destinatario || null;
+            // CASO RECHAZADO: Se requiere corrección
+            practica.estado = "rechazada"; 
+            practica.correccion_destinatario = destinatario || null; // Quién debe corregir: 'alumno', 'empresa' o 'ambos'
             practica.correccion_alumno_hecha = false;
             practica.correccion_empresa_hecha = false;
             
             if (respuestaForm) {
                 respuestaForm.estado = "rechazado";
-                respuestaForm.comentario_coordinador = observaciones; // ¡Obligatorio!
+                respuestaForm.comentario_coordinador = observaciones; // Feedback para el usuario
                 await respuestaRepo.save(respuestaForm);
             }
         } else {
             return handleErrorClient(res, 400, "Decisión inválida");
         }
 
+        // Guardamos los cambios en la práctica
         await practicaRepo.save(practica);
 
-        // 3. Envío de correo (Después de guardar todo)
-        // No ponemos await para que el response sea rápido y el correo se envíe en segundo plano
+        /**
+         * 3. NOTIFICACIONES AUTOMÁTICAS (POST-EVALUACIÓN)
+         */
+        
+        // Envío de Email: Se dispara sin await para no bloquear la respuesta al usuario
         enviarNotificacionEvaluacion(practica, decision, observaciones, destinatario);
 
-        // 4. Mensaje interno automático a empresa cuando se rechaza
+        /**
+         * 4. MENSAJERÍA INTERNA AUTOMÁTICA
+         * Si es un rechazo hacia la empresa, creamos un hilo en el chat automáticamente
+         */
         try {
             if (decision === 'rechazar' && (destinatario === 'empresa' || destinatario === 'ambos')) {
                 const asunto = "Observación de práctica – correcciones requeridas";
@@ -89,7 +113,7 @@ export const evaluarSolicitud = async (req, res) => {
                 const destinatarioEmail = practica.empresa?.email || practica.empresaToken?.empresaCorreo;
 
                 if (destinatarioEmail) {
-                    // No esperamos a que termine; se ejecuta en segundo plano
+                    // Crea el registro en la tabla de mensajes para que aparezca en el chat
                     enviarMensajeService({
                         practicaId: practica.id,
                         asunto,
@@ -105,7 +129,7 @@ export const evaluarSolicitud = async (req, res) => {
                 }
             }
         } catch (e) {
-            // Evitamos romper la respuesta si falla el envío del mensaje interno
+            // Error silencioso: si falla el mensaje de chat, no queremos que falle toda la aprobación
             console.warn('No se pudo crear mensaje interno automático:', e?.message);
         }
 

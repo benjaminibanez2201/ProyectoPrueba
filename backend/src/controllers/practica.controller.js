@@ -1,3 +1,7 @@
+/**
+ * CONTROLADOR PRINCIPAL DE PRÁCTICAS
+ * Gestiona el ciclo de vida completo: Postulación, Estados, Finalización y Cierre.
+ */
 import {
   findPracticas,
   findPracticaById,
@@ -13,10 +17,13 @@ import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { FormularioRespuesta } from "../entities/FormularioRespuesta.entity.js";
 import { sendTokenEmail, sendSolicitudEvaluacionEmail } from "../services/email.service.js";
 import crypto from "crypto";
-
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 
 export class PracticaController {
+
+  /**
+   * Obtiene todas las prácticas del sistema (Vista para el Coordinador).
+   */
   async getAll(req, res) {
     try {
       const practicas = await findPracticas();
@@ -26,54 +33,63 @@ export class PracticaController {
     }
   }
 
-async getMyPractica(req, res) {
-    try {
-      const studentId = req.user.id || req.user.sub; 
-      if (!studentId) {
-        return handleErrorClient(res, 400, "No se pudo identificar al usuario");
-      }
-      const practica = await findPracticaByStudentId(studentId);
-      
-      if (!practica) {
-        return handleSuccess(res, 200, "El alumno aún no tiene una práctica inscrita", null);
-      }
-      
-      handleSuccess(res, 200, "Práctica del alumno obtenida", practica);
+  /**
+   * Obtiene la práctica específica del alumno logueado.
+   * Usa req.user.id (o .sub para compatibilidad con diferentes proveedores de JWT).
+   */
+  async getMyPractica(req, res) {
+      try {
+        const studentId = req.user.id || req.user.sub; 
+        if (!studentId) {
+          return handleErrorClient(res, 400, "No se pudo identificar al usuario");
+        }
+        const practica = await findPracticaByStudentId(studentId);
 
-    } catch (error) {
-      handleErrorServer(res, 500, "Error al obtener la práctica del alumno", error.message);
+        if (!practica) {
+          return handleSuccess(res, 200, "El alumno aún no tiene una práctica inscrita", null);
+        }
+
+        handleSuccess(res, 200, "Práctica del alumno obtenida", practica);
+      } catch (error) {
+        handleErrorServer(res, 500, "Error al obtener la práctica del alumno", error.message);
+      }
     }
-  }
-async postularPractica(req, res) {
-    try {
-      // --- CORRECCIÓN CRÍTICA AQUÍ ---
-      // Antes: const studentId = req.user.id;
-      const studentId = req.user.id || req.user.sub; 
-      // -------------------------------
 
+  /**
+   * PROCESO DE POSTULACIÓN
+   * Crea el registro inicial de la práctica y genera el token para la empresa.
+   */
+  async postularPractica(req, res) {
+    try {
+      const studentId = req.user.id || req.user.sub; 
       const data = req.body; 
 
       if (!studentId) {
         return handleErrorClient(res, 400, "Error de identidad: No se pudo obtener tu ID.");
       }
 
-      // Validamos datos (simple)
+      // Validación básica de campos requeridos para la empresa
       if (!data.nombreEmpresa || !data.emailEmpresa || !data.nombreRepresentante) {
         return handleErrorClient(res, 400, "Faltan datos de la empresa (nombre, email y representante)");
       }
       
+      // El servicio createPostulacion encapsula la lógica de crear la entidad y el token
       const nuevaPractica = await createPostulacion(data, studentId);
       
       handleSuccess(res, 201, "Postulación enviada. El token se ha generado.", nuevaPractica);
-
     } catch (error) {
-      if (error.message.includes("Ya tienes una práctica")) { // Ajusta el mensaje si es necesario
+      // Manejo de conflicto: Un alumno no puede tener dos prácticas activas
+      if (error.message.includes("Ya tienes una práctica")) { 
         return handleErrorClient(res, 409, error.message); 
       }
       handleErrorServer(res, 500, "Error al crear la postulación", error.message);
     }
   }
 
+  /**
+   * Obtiene una práctica por su ID.
+   * Usado principalmente por el Coordinador para ver detalles específicos.
+   */
   async getById(req, res) {
     try {
       const { id } = req.params;
@@ -84,6 +100,9 @@ async postularPractica(req, res) {
     }
   }
 
+  /**
+   * Crea una nueva práctica (uso interno o administrativo).
+   */
   async create(req, res) {
     try {
       const data = req.body;
@@ -97,6 +116,9 @@ async postularPractica(req, res) {
     }
   }
 
+  /**
+   * Actualiza una práctica existente.
+   */
   async update(req, res) {
     try {
       const { id } = req.params;
@@ -108,6 +130,9 @@ async postularPractica(req, res) {
     }
   }
 
+  /**
+   * Elimina una práctica por su ID.
+   */
   async delete(req, res) {
     try {
       const { id } = req.params;
@@ -118,7 +143,11 @@ async postularPractica(req, res) {
     }
   }
 
-async actualizarEstado(req, res) { 
+  /**
+   * ACTUALIZAR ESTADO (Flujo del Coordinador)
+   * Incluye una lógica especial de "Reinicio": Si el estado vuelve a 'pendiente', se borra todo.
+   */
+  async actualizarEstado(req, res) { 
     try {
       const { id } = req.params;
       const { nuevoEstado } = req.body;
@@ -135,42 +164,43 @@ async actualizarEstado(req, res) {
         return handleErrorClient(res, 404, "Práctica no encontrada");
       }
 
-      // ---  LÓGICA DE REINICIO TOTAL (DELETE) ---
-      // Si el coordinador elige "Pendiente", ELIMINAMOS la práctica para que el alumno empiece de cero.
+      /**
+       * LÓGICA DE REINICIO CRÍTICO:
+       * Si el coordinador selecciona 'pendiente', se eliminan todos los rastros para 
+       * permitir que el alumno empiece de cero.
+       */
       if (nuevoEstado === 'pendiente') {
-          console.log(`Eliminando práctica ID ${id} para reinicio completo...`);
-          
-          // 1. Borrar Token de Empresa
+          // 1. Eliminar Tokens asociados
           const tokenRepo = AppDataSource.getRepository(EmpresaToken);
           const token = await tokenRepo.findOne({ where: { practica: { id } } });
           if (token) await tokenRepo.remove(token);
 
-          // 2. Borrar Respuestas
+          // 2. Eliminar respuestas de formularios (Postulaciones, bitácoras)
           const respuestasRepo = AppDataSource.getRepository(FormularioRespuesta);
           const respuestas = await respuestasRepo.find({ where: { practica: { id } } });
           if (respuestas.length > 0) await respuestasRepo.remove(respuestas);
 
-          // 3. ¡AQUÍ EL CAMBIO! Borramos la práctica completa
+          // 3. Eliminar la práctica
           await practicaRepo.remove(practica);
 
           return handleSuccess(res, 200, "Práctica reiniciada y eliminada. El alumno puede postular nuevamente.", null);
       }
-      // -------------------------------------
-
-      // Si NO es pendiente, actualizamos el estado normalmente
+      // Si no es reinicio, solo actualizamos el estado
       practica.estado = nuevoEstado;
       const updated = await practicaRepo.save(practica);
-
       handleSuccess(res, 200, "Estado de práctica actualizado correctamente", updated);
     } catch (error) {
       handleErrorServer(res, 500, "Error al actualizar estado de práctica", error.message);
     }
   }
 
-  async cerrarPractica(req, res) { // valida el rol, el estado previo y guarda la fecha del cierre para trazabilidad.
+  /**
+   * CERRAR PRÁCTICA (Acción del Coordinador)
+   */
+  async cerrarPractica(req, res) { 
     try {
       const { id } = req.params;
-      const userRole = req.user?.role; // Se obtiene desde el middleware de autenticación
+      const userRole = req.user?.role; 
 
       if (userRole !== "coordinador") {
         return handleErrorClient(res, 403, "Solo el coordinador puede cerrar prácticas");
@@ -185,7 +215,6 @@ async actualizarEstado(req, res) {
         return handleErrorClient(res, 400, "Solo se pueden cerrar prácticas que ya estén evaluadas");
       }
 
-      // Marcar cierre definitivo y auditar
       practica.estado = "cerrada";
       practica.fecha_cierre = new Date();
       practica.cerrado_por = req.user?.name || req.user?.email || "Coordinador";
@@ -203,16 +232,20 @@ async actualizarEstado(req, res) {
     }
   }
   
-  // Alumno: Finaliza su práctica para solicitar evaluación a la empresa
+  /**
+   * FINALIZAR PRÁCTICA (Acción del Alumno)
+   * Marca el fin de horas de trabajo y solicita la evaluación a la empresa vía email.
+   */
   async finalizarPractica(req, res) {
     try {
-      const { id } = req.params; // id de práctica
+      const { id } = req.params; 
       const alumnoId = req.user?.id || req.user?.sub;
       if (!alumnoId) return handleErrorClient(res, 401, "No autenticado");
 
       const practicaRepo = AppDataSource.getRepository(Practica);
       const tokenRepo = AppDataSource.getRepository(EmpresaToken);
 
+      // Cargamos relaciones para identificar al supervisor y nivel de práctica
       const practica = await practicaRepo.findOne({ where: { id }, relations: ["student", "empresaToken", "formularioRespuestas", "formularioRespuestas.plantilla"] });
       if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
       if (practica.student?.id !== alumnoId) return handleErrorClient(res, 403, "No autorizado");
@@ -221,16 +254,15 @@ async actualizarEstado(req, res) {
         return handleErrorClient(res, 400, "La práctica debe estar en curso para finalizar.");
       }
 
-      // Determinar nivel (PR1/PR2) desde la postulación
+      // Identificamos el nivel (Profesional I o II) para personalizar el correo de evaluación
       const postResp = practica.formularioRespuestas?.find(r => r.plantilla?.tipo === 'postulacion');
       const tipoPractica = postResp?.datos?.tipo_practica; // "Profesional I" | "Profesional II"
       practica.nivel = (tipoPractica === 'Profesional II') ? 'pr2' : 'pr1';
 
-      // Marcar finalizada y crear solicitud de evaluación
       practica.estado = 'finalizada';
       practica.evaluacion_pendiente = true;
 
-      // Asegurar token de empresa existente o crear uno nuevo
+      // Recuperamos o generamos un token de acceso para el supervisor
       let tokenValue = practica.empresaToken?.token;
       if (!tokenValue) {
         tokenValue = crypto.randomBytes(20).toString('hex');
@@ -278,7 +310,11 @@ async actualizarEstado(req, res) {
       return handleErrorServer(res, 500, "Error al finalizar práctica", error.message);
     }
   }
-  // Aprobar práctica (Paso de "pendiente_validacion" a "en_curso")
+
+  /**
+   * APROBAR INICIO DE PRÁCTICA (Acción del Coordinador)
+   * Marca el inicio de la práctica como aprobado.
+   */
   async aprobarInicioPractica(req, res) {
     try {
       const { id } = req.params;
@@ -291,11 +327,8 @@ async actualizarEstado(req, res) {
       const practica = await findPracticaById(id);
       if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
 
-      // Cambiamos al estado oficial de inicio
+      // Actualizamos el estado a 'en_curso'
       practica.estado = "en_curso";
-      
-      // Opcional: Podrías guardar la fecha real de inicio aquí si quisieras
-      // practica.fecha_inicio = new Date();
 
       const updated = await updatePractica(id, practica);
       handleSuccess(res, 200, "Práctica aprobada y puesta En Curso.", updated);
@@ -304,7 +337,9 @@ async actualizarEstado(req, res) {
     }
   }
 
-  // Observar/Rechazar práctica (Devuelve la pelota al alumno)
+  /**
+   * OBSERVAR PRÁCTICA (Acción del Coordinador)
+   */
   async observarPractica(req, res) {
     try {
       const { id } = req.params;
@@ -315,7 +350,6 @@ async actualizarEstado(req, res) {
       const practica = await findPracticaById(id);
       if (!practica) return handleErrorClient(res, 404, "Práctica no encontrada");
 
-      // Cambiamos al estado que definimos para correcciones
       practica.estado = "rechazada"; 
       
       const updated = await updatePractica(id, practica);

@@ -1,30 +1,41 @@
+/**
+ * CONTROLADOR DE DETALLES DE ALUMNOS
+ * Proporciona vistas resumidas y detalladas de los estudiantes y sus procesos de práctica.
+ */
 import { getDetallesAlumnos, findAlumnos } from "../services/user.service.js";
 import { handleSuccess, handleErrorClient, handleErrorServer } from "../Handlers/responseHandlers.js";
 import { AppDataSource } from "../config/configDb.js";
 import { Practica } from "../entities/practica.entity.js";
-import path from 'path';
 
-//para revisar el listado de alumnos(funcion del coordinador de practica)
+/**
+ * 1. LISTADO SIMPLE DE ALUMNOS
+ * Retorna una lista básica de todos los usuarios con rol de alumno.
+ */
 export async function getAlumnos(req, res) {
-  try {
-    const alumnos = await findAlumnos();
-    handleSuccess(res, 200, "Lista de alumnos obtenida exitosamente", alumnos);
-  } catch (error) {
-    handleErrorServer(res, 500, "Error al obtener la lista de alumnos", error.message);
-  }
+    try {
+        const alumnos = await findAlumnos();
+        handleSuccess(res, 200, "Lista de alumnos obtenida exitosamente", alumnos);
+    } catch (error) {
+        handleErrorServer(res, 500, "Error al obtener la lista de alumnos", error.message);
+    }
 }
 
-//manejar lista completa Y alumno individual
+/**
+ * 2. VISTA DETALLADA (LISTA O INDIVIDUAL)
+ * Este endpoint es híbrido: si recibe un ID, entrega todo sobre ese alumno; 
+ * si no, entrega un resumen de todos los alumnos para la tabla principal.
+ */
 export const verDetallesAlumnos = async (req, res) => {
     try {
         const id = req.params.id; // Puede ser undefined
         const rol = req.user?.role;
 
+        // El servicio central recupera los datos crudos de la BD
         const detalles = await getDetallesAlumnos(id || null, rol);
 
-        // --- CASO 1: Lista completa de alumnos (sin ID) ---
+        // Caso 1: Lista completa de alumnos (sin ID)
         if (!id) {
-            // detalles es un ARRAY de alumnos
+            // detalles es un ARRAY. Mapeamos para enviar solo lo necesario y evitar sobrecarga de datos.
             const listaAlumnos = detalles.map(alumno => {
                 const practicaActiva = alumno.practicasComoAlumno?.[0] || {};
                 
@@ -34,19 +45,19 @@ export const verDetallesAlumnos = async (req, res) => {
                     email: alumno.email,
                     tipo_practica: alumno.tipo_practica || 'N/A',
                     estado_practica: practicaActiva.estado || 'pendiente',
-                    practicasComoAlumno: alumno.practicasComoAlumno || [] // Para compatibilidad con tu frontend
+                    practicasComoAlumno: alumno.practicasComoAlumno || [] 
                 };
             });
 
             return handleSuccess(res, 200, "Lista de alumnos obtenida exitosamente", listaAlumnos);
         }
 
-        // --- CASO 2: Alumno específico (con ID) ---
+        // Caso 2: Alumno específico (con ID) 
         if (!detalles) {
             return handleErrorClient(res, 404, "Alumno no encontrado");
         }
 
-        // detalles es un OBJETO (un solo alumno)
+        // Tomamos la práctica más reciente (activa)
         const practicaActiva = detalles.practicasComoAlumno[0] || {};
 
         // Datos básicos del alumno
@@ -61,6 +72,7 @@ export const verDetallesAlumnos = async (req, res) => {
         const practicaInfo = {
             id: practicaActiva.id, 
             estado: practicaActiva.estado || 'No Iniciada',
+            // Formateo de fecha para que el frontend no tenga problemas de zona horaria
             fechaInicio: (practicaActiva.fecha_inicio && practicaActiva.fecha_inicio instanceof Date) 
                 ? practicaActiva.fecha_inicio.toISOString().split('T')[0] 
                 : (typeof practicaActiva.fecha_inicio === 'string' 
@@ -81,12 +93,13 @@ export const verDetallesAlumnos = async (req, res) => {
             const extension = ruta ? path.extname(ruta).toLowerCase() : '.N/A';
             const nombreBase = ruta ? path.basename(ruta) : doc.tipo; 
 
+            // Determinar la fecha de actividad del documento
             let fecha = 'Sin fecha';
             if (doc.fecha_creacion) {
-              fecha = new Date(doc.fecha_creacion).toISOString().split('T')[0];
+                fecha = new Date(doc.fecha_creacion).toISOString().split('T')[0];
             } 
             if (doc.fecha_envio) {
-              fecha = new Date(doc.fecha_envio).toISOString().split('T')[0];
+                fecha = new Date(doc.fecha_envio).toISOString().split('T')[0];
             } 
 
             return {
@@ -95,6 +108,7 @@ export const verDetallesAlumnos = async (req, res) => {
                 estado: doc.estado,
                 extension: extension, 
                 nombre_archivo: nombreBase,
+                // Generamos la URL de revisión para que el coordinador haga clic directo
                 urlRevision: doc.ruta_archivo ? `/api/documentos/revisar/${doc.id}` : null,
                 documentoId: doc.id, 
                 datosFormulario: doc.datos_json
@@ -106,7 +120,7 @@ export const verDetallesAlumnos = async (req, res) => {
         const formulariosInfo = formulariosRespuestas
             .filter(r => 
                 ['postulacion', 'evaluacion_pr1', 'evaluacion_pr2'].includes(r.plantilla?.tipo) &&
-                ['enviado', 'aprobado'].includes(r.estado) // Formularios ya completados
+                ['enviado', 'aprobado'].includes(r.estado) 
             )
             .map(r => ({
                 id: r.id,
@@ -118,6 +132,7 @@ export const verDetallesAlumnos = async (req, res) => {
                     : 'N/A'
             }));
 
+        // Consolidación final del expediente
         const detallesCompletos = {
             alumno: alumnoInfo,
             practica: practicaInfo,
@@ -128,15 +143,13 @@ export const verDetallesAlumnos = async (req, res) => {
         return handleSuccess(res, 200, "Información completa de alumno obtenida exitosamente", detallesCompletos);
 
     } catch (error) {
-        // Manejo de errores
+        // Manejo de errores de seguridad y existencia
         if (error.message.includes("Acceso denegado")) {
             return handleErrorClient(res, 403, error.message);
         }
-
         if (error.message.includes("No encontrado") || error.message.includes("No es un alumno")) {
             return handleErrorClient(res, 404, error.message);
         }
-
         return handleErrorServer(res, 500, "Error interno al obtener los detalles.", error.message);
     }
 };

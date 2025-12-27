@@ -1,4 +1,3 @@
-// mensaje.entity.js
 import { EntitySchema } from "typeorm";
 
 export const Mensaje = new EntitySchema({

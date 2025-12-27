@@ -1,3 +1,7 @@
+/**
+ * CONTROLADOR DE INTERACCIÓN CON EMPRESAS EXTERNAS
+ * Maneja el acceso seguro mediante tokens JWT para representantes de empresas.
+ */
 import { AppDataSource } from "../config/configDb.js";
 import { EmpresaToken } from "../entities/empresaToken.entity.js";
 import { Practica } from "../entities/practica.entity.js";
@@ -5,25 +9,30 @@ import jwt from "jsonwebtoken";
 import { handleSuccess, handleErrorServer, handleErrorClient } from "../Handlers/responseHandlers.js";
 import { validarTokenEmpresa, confirmarInicioPracticaService, guardarEvaluacionEmpresa } from "../services/empresa.service.js";
 
-// --- Generar Token ---
+/**
+ * 1. GENERAR TOKEN EMPRESA
+ * Crea un acceso único y duradero para que la empresa gestione la práctica del alumno.
+ */
 export const generarTokenEmpresa = async (req, res) => {
   try {
     const { empresaNombre, empresaCorreo, alumnoId } = req.body;
 
-    // Generar token único con JWT
+    /// Se firma un JWT que identifica al alumno y el rol 'empresa'
     const token = jwt.sign(
       { alumnoId, tipo: "empresa" },
       process.env.JWT_SECRET,
-      { expiresIn: "180d" } // dura 6 meses aprox
+      { expiresIn: "180d" } // El acceso es válido por 6 meses
     );
 
     const repo = AppDataSource.getRepository(EmpresaToken);
+
+    // Guardamos el token en la base de datos para auditoría y control de expiración
     const nuevoToken = repo.create({
       token,
       empresaNombre,
       empresaCorreo,
       alumnoId,
-      expiracion: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+      expiracion: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000), 
     });
 
     await repo.save(nuevoToken);
@@ -38,7 +47,10 @@ export const generarTokenEmpresa = async (req, res) => {
   }
 };
 
-// --- Ver Formulario (empresa) ---
+/**
+ * 2. VER FORMULARIO
+ * Permite a la empresa visualizar el formulario asignado al alumno.
+ */
 export const verFormulario = async (req, res) => {
   try {
     // más adelante traeremos el formulario del alumno
@@ -49,12 +61,16 @@ export const verFormulario = async (req, res) => {
   }
 };
 
-// --- Enviar Evaluación (empresa) ---
+/**
+ * 3. ENVIAR EVALUACIÓN
+ * Permite a la empresa guardar los resultados de la evaluación del desempeño del alumno.
+ */
 export const enviarEvaluacion = async (req, res) => {
   try {
     const { token, respuestas } = req.body;
     if (!token) return handleErrorClient(res, 400, "Falta token." );
 
+    // El servicio se encarga de buscar la práctica asociada al token y guardar las respuestas
     const resultado = await guardarEvaluacionEmpresa(token, respuestas);
     return handleSuccess(res, 200, "Evaluación registrada.", resultado);
   } catch (error) {
@@ -63,14 +79,18 @@ export const enviarEvaluacion = async (req, res) => {
   }
 };
 
-//Validar Token (empresa)
+/**
+ * 3. VALIDAR TOKEN
+ * Endpoint que usa el frontend de la empresa al cargar la página para verificar si el link es válido.
+ */
 export const validarToken = async (req, res) => {
   try {
     const { token } = req.params;
 
-    // tokenData viene del servicio -> NO tiene practica, NO tiene student
+    // Verifica que el token no haya expirado y que exista en la bdd
     const tokenData = await validarTokenEmpresa(token);
 
+    // Retorna información esencial para que la empresa sepa qué alumno está evaluando
     return handleSuccess(res, 200, "Token de empresa validado.", {
       practicaId: tokenData.practicaId,
       alumnoNombre: tokenData.alumnoNombre,
@@ -85,19 +105,20 @@ export const validarToken = async (req, res) => {
   }
 };
 
-//confirmar inicio de práctica
+/**
+ * 4. CONFIRMAR INICIO DE PRÁCTICA
+ * Paso donde la empresa valida que el alumno efectivamente comenzó su práctica.
+ */
 export const confirmarInicioPractica = async (req, res) => {
   try {
     // El frontend envía: { token: '...', confirmacion: true, respuestas: { ... } }
     const { token, confirmacion, respuestas } = req.body; 
 
-    console.log("DATOS RECIBIDOS DESDE FRONTEND (EMPRESA):", respuestas);
-
     if (!token) {
         return handleErrorClient(res, 400, "Falta el token de acceso.");
     }
 
-    // Llamamos al servicio que maneja la confirmación
+    // Cambia el estado de la práctica y registra los datos iniciales (fechas, supervisor, etc.)
     const resultado = await confirmarInicioPracticaService(token, confirmacion, respuestas);
 
     return handleSuccess(res, 200, "Confirmación exitosa.", resultado);
@@ -108,17 +129,21 @@ export const confirmarInicioPractica = async (req, res) => {
   }
 };
 
-// Obtener formulario específico de la práctica por token de empresa
+/**
+ * 5. OBTENER FORMULARIO POR TOKEN
+ * Recupera el contenido de formularios específicos (Postulación o Evaluaciones) usando el token.
+ * Es vital para que la empresa pueda "ver" lo que el alumno envió antes de evaluarlo.
+ */
 export const getFormularioByToken = async (req, res) => {
   try {
     const { token } = req.params;
-    const { tipo } = req.query; // tipo: 'postulacion', 'evaluacion_pr1', 'evaluacion_pr2'
+    const { tipo } = req.query; // Ej: 'postulacion', 'evaluacion_pr1', 'evaluacion_pr2'
 
     if (!token) {
       return handleErrorClient(res, 400, "Token requerido.");
     }
 
-    // Validamos el token y obtenemos la práctica
+    // Validación del token y su relación con la práctica
     const tokenRepo = AppDataSource.getRepository(EmpresaToken);
     const practicaRepo = AppDataSource.getRepository(Practica);
 
@@ -135,7 +160,7 @@ export const getFormularioByToken = async (req, res) => {
       return handleErrorClient(res, 401, "Token expirado.");
     }
 
-    // Cargamos la práctica con sus respuestas de formulario
+    // Obtenemos la práctica completa con sus respuestas
     const practica = await practicaRepo.findOne({
       where: { id: tokenData.practica.id },
       relations: ["formularioRespuestas", "formularioRespuestas.plantilla", "student"]
@@ -145,7 +170,8 @@ export const getFormularioByToken = async (req, res) => {
       return handleErrorClient(res, 404, "Práctica no encontrada.");
     }
 
-    // Si no se especifica tipo, devolvemos todos los formularios disponibles (solo los enviados/aprobados)
+    // LÓGICA DE FILTRADO:
+    // Si no se pide un tipo específico, devolvemos un resumen de todos los formularios completados.
     if (!tipo) {
       const formularios = (practica.formularioRespuestas || [])
         .filter(r => 
@@ -163,7 +189,7 @@ export const getFormularioByToken = async (req, res) => {
       return handleSuccess(res, 200, "Formularios de la práctica", { formularios });
     }
 
-    // Buscamos el formulario del tipo especificado
+    // Si se pide un tipo (ej. 'postulacion'), buscamos ese formulario específico
     const respuesta = practica.formularioRespuestas?.find(r => r.plantilla?.tipo === tipo);
 
     if (!respuesta) {
