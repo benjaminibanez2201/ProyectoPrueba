@@ -30,7 +30,6 @@ export const Mensaje = new EntitySchema({
             nullable: false,
             comment: "coordinador o empresa"
         },
-        // 👇 NUEVO: Guardamos el nombre del remitente/destinatario
         remitente_nombre: {
             type: "varchar",
             length: 255,
@@ -80,7 +79,6 @@ export const Mensaje = new EntitySchema({
             nullable: false,
             onDelete: "CASCADE",
         },
-        // 👇 Solo guardamos referencia al coordinador (User)
         coordinador: {
             target: "User",
             type: "many-to-one",

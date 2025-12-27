@@ -1,3 +1,7 @@
+/**
+ * ENRUTADOR DE COMUNICACIÓN
+ * Define los endpoints para el sistema de mensajería interna entre Coordinadores y Empresas
+ */
 import { Router } from "express";
 import { 
     enviarMensaje, 
@@ -12,26 +16,45 @@ import { checkAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-// Enviar mensaje (abierta para empresa con token o coordinador con auth)
+/**
+ * 1. ENVIAR MENSAJE
+ * POST /api/comunicacion/enviar
+ * No tiene middleware restrictivo aquí porque la lógica interna del controlador
+ * verifica si viene un 'token' (empresa) o si hay una sesión activa (coordinador)
+ */
 router.post("/enviar", enviarMensaje);
 
-// Obtener conversación de una práctica (requiere autenticación)
-//router.get("/practica/:practicaId", checkAuth, getConversacion);
-// Cambia la ruta de obtención de conversación por esta:
+/**
+ * 2. OBTENER CONVERSACIÓN DE UNA PRÁCTICA
+ * GET /api/comunicacion/practica/:practicaId
+ * - Si hay un token en la URL, se permite el paso al controlador (la empresa)
+ * - Si no hay token, se ejecuta 'checkAuth' para verificar que sea un coordinador logueado
+ */
 router.get("/practica/:practicaId", (req, res, next) => {
     if (req.query.token) {
-        return next();
+        return next(); // Es una empresa con acceso directo
     }
-    return checkAuth(req, res, next);
+    return checkAuth(req, res, next); // Es un usuario del sistema, requiere login
 }, getConversacion);
 
-// Bandeja de entrada (requiere autenticación)
+/**
+ * 3. BANDEJA DE ENTRADA (Coordinador)
+ * GET /api/comunicacion/bandeja
+ * Solo accesible para coordinadores autenticados
+ */
 router.get("/bandeja", checkAuth, getBandejaEntrada);
 
-// Mensajes enviados (requiere autenticación)
+/**
+ * 4. MENSAJES ENVIADOS (Coordinador)
+ * GET /api/comunicacion/enviados
+ */
 router.get("/enviados", checkAuth, getMensajesEnviados);
 
-// Marcar como leído (requiere autenticación o token)
+/**
+ * 5. MARCAR MENSAJE COMO LEÍDO
+ * PATCH /api/comunicacion/:id/leido
+ * Permite marcar como leído si la empresa tiene su token o si el coordinador está en su sesión
+ */
 router.patch("/:id/leido", (req, res, next) => {
     if (req.query.token) {
         return next();
@@ -39,10 +62,17 @@ router.patch("/:id/leido", (req, res, next) => {
     return checkAuth(req, res, next);
 }, marcarLeido);
 
-// Cantidad de no leídos (requiere autenticación)
+/**
+ * 6. CONTADOR DE NO LEÍDOS (Coordinador)
+ * GET /api/comunicacion/no-leidos
+ */
 router.get("/no-leidos", checkAuth, getNoLeidos);
 
-// Cantidad de no leídos para empresa (con token)
+/**
+ * 7. CONTADOR DE NO LEÍDOS PARA EMPRESA
+ * GET /api/comunicacion/no-leidos-empresa/:practicaId
+ * Se accede mediante el token de la empresa para mostrar notificaciones en su vista externa
+ */
 router.get("/no-leidos-empresa/:practicaId", getNoLeidosEmpresa);
 
 export default router;

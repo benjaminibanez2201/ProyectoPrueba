@@ -1,5 +1,5 @@
 import { EntitySchema } from "typeorm";
-import { Practica } from "./practica.entity.js"; // 👈 IMPORTANTE: SIN ESTO NO SE CARGAN LAS RELACIONES
+import { Practica } from "./practica.entity.js"; 
 
 export const User = new EntitySchema({
   name: "User",

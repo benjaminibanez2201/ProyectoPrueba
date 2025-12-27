@@ -13,15 +13,14 @@ export const EmpresaToken = new EntitySchema({
       type: "varchar",
       unique: true,
     },
-    empresaNombre: { // Mantenemos esto por si el Coordinador lo crea (RF7)
+    empresaNombre: { 
       type: "varchar",
       nullable: true,
     },
-    empresaCorreo: { // Mantenemos esto por si el Coordinador lo crea (RF7)
+    empresaCorreo: { 
       type: "varchar",
       nullable: true,
     },
-    // ¡CAMBIO CLAVE! 'alumnoId' se va.
     expiracion: {
       type: "timestamp",
     },
@@ -31,8 +30,6 @@ export const EmpresaToken = new EntitySchema({
     },
   },
   relations: {
-    // ¡NUEVA RELACIÓN!
-    // Un token pertenece a UNA Práctica.
     practica: {
       type: "one-to-one",
       target: "Practica",
