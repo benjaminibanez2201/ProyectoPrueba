@@ -13,6 +13,7 @@ import {
   Plus,
   Trash2,
   ArrowLeft,
+  Download,
 } from "lucide-react";
 import {
   showSuccessAlert,
@@ -165,6 +166,19 @@ const GestionFormularios = () => {
                     title="Vista Previa"
                   >
                     <Eye size={20} />
+                  </button>
+
+                  {/* Botón Descargar PDF */}
+                  <button
+                    onClick={() =>
+                      navigate(
+                        `/admin/formularios/preview/${plantilla.tipo}?download=true`
+                      )
+                    }
+                    className="p-2 text-gray-400 hover:text-green-600 rounded-lg hover:bg-green-50"
+                    title="Descargar PDF"
+                  >
+                    <Download size={20} />
                   </button>
 
                   {/* BOTÓN ELIMINAR (Solo si NO es protegido) */}

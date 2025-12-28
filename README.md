@@ -14,7 +14,6 @@ Esta aplicación permite la gestión del proceso de prácticas profesionales, in
 ### Funcionalidades para Coordinadores
 - 👥 Gestión de usuarios (estudiantes)
 - ✅ Aprobación de prácticas
-- 🔑 Generación de tokens de empresa para acceso externo
 - 📊 Creación y edición de formularios dinámicos
 - 📁 Gestión de recursos y documentos
 - 💬 Sistema de comunicación con empresas
@@ -171,7 +170,6 @@ npm run dev
 ### Empresa (`/api/empresa`)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/generar-token` | Generar token de acceso (Coordinador) |
 | GET | `/ver-formulario` | Acceder a formulario con token |
 | POST | `/enviar-evaluacion` | Enviar evaluación de práctica |
 | GET | `/validar-acceso/:token` | Validar token de acceso |
@@ -193,7 +191,6 @@ npm run dev
 | GET | `/enviados` | Obtener mensajes enviados |
 | PATCH | `/:id/leido` | Marcar mensaje como leído |
 | GET | `/no-leidos` | Obtener cantidad de mensajes no leídos |
-| GET | `/no-leidos-empresa/:practicaId` | Obtener no leídos para empresa |
 
 ### Recursos (`/api/recursos`)
 | Método | Endpoint | Descripción |
