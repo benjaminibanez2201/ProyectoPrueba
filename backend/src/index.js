@@ -13,7 +13,7 @@ app.use(morgan("dev"));
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // Permite peticiones solo desde el frontend
+    origin: ['http://localhost:5173', 'http://146.83.198.35:1360'], // Permite peticiones solo desde el frontend
     credentials: true,
   })
 );
