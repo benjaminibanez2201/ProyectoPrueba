@@ -18,20 +18,24 @@ const FormularioPreviewAlumno = () => {
   // Función para descargar PDF
   const handleDownloadPDF = async () => {
     if (!formContainerRef.current || !plantilla) return;
-    
+
     setDownloading(true);
     try {
-      const cleanFilename = plantilla.titulo
-        .toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/[^a-z0-9_áéíóúñ]/gi, '') || 'formulario';
+      const cleanFilename =
+        plantilla.titulo
+          .toLowerCase()
+          .replace(/\s+/g, "_")
+          .replace(/[^a-z0-9_áéíóúñ]/gi, "") || "formulario";
 
       await generatePDF(formContainerRef.current, cleanFilename);
-      
-      showSuccessAlert('PDF Generado', `El archivo "${cleanFilename}.pdf" se ha descargado correctamente.`);
+
+      showSuccessAlert(
+        "PDF Generado",
+        `El archivo "${cleanFilename}.pdf" se ha descargado correctamente.`
+      );
     } catch (error) {
-      console.error('Error al generar PDF:', error);
-      showErrorAlert('Error', 'No se pudo generar el PDF. Intenta nuevamente.');
+      console.error("Error al generar PDF:", error);
+      showErrorAlert("Error", "No se pudo generar el PDF. Intenta nuevamente.");
     } finally {
       setDownloading(false);
     }
@@ -53,7 +57,7 @@ const FormularioPreviewAlumno = () => {
 
   // Auto-descarga si viene el parámetro download=true
   useEffect(() => {
-    const shouldDownload = searchParams.get('download') === 'true';
+    const shouldDownload = searchParams.get("download") === "true";
     if (shouldDownload && plantilla && !loading && formContainerRef.current) {
       const timer = setTimeout(() => {
         handleDownloadPDF();
@@ -62,32 +66,33 @@ const FormularioPreviewAlumno = () => {
     }
   }, [plantilla, loading, searchParams]);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <Loader className="animate-spin text-green-600" size={40} />
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <Loader className="animate-spin text-green-600" size={40} />
+      </div>
+    );
 
-  if (!plantilla) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <p className="text-red-500 text-lg mb-4">Formulario no encontrado</p>
-      <button 
-        onClick={() => navigate('/panel')} 
-        className="text-blue-600 hover:underline flex items-center gap-2"
-      >
-        <ArrowLeft size={18} /> Volver al panel
-      </button>
-    </div>
-  );
+  if (!plantilla)
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+        <p className="text-red-500 text-lg mb-4">Formulario no encontrado</p>
+        <button
+          onClick={() => navigate("/panel")}
+          className="text-blue-600 hover:underline flex items-center gap-2"
+        >
+          <ArrowLeft size={18} /> Volver al panel
+        </button>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-8">
       <div className="max-w-5xl mx-auto">
-        
         {/* Barra superior con botones */}
         <div className="mb-6 flex justify-between items-center">
-          <button 
-            onClick={() => navigate('/panel')} 
+          <button
+            onClick={() => navigate("/panel")}
             className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
           >
             <ArrowLeft size={20} />
@@ -116,14 +121,15 @@ const FormularioPreviewAlumno = () => {
 
         <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded shadow-sm">
           <p className="text-green-800 font-medium">
-            Vista del formulario: Puedes descargarlo en PDF para imprimirlo o guardarlo.
+            Vista del formulario: Puedes descargarlo en PDF para imprimirlo o
+            guardarlo.
           </p>
         </div>
 
         {/* Renderizamos el formulario en modo Solo Lectura */}
         <div ref={formContainerRef}>
-          <FormRender 
-            esquema={plantilla.esquema} 
+          <FormRender
+            esquema={plantilla.esquema}
             titulo={plantilla.titulo}
             readOnly={true}
             onSubmit={() => {}}
