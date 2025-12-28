@@ -1,8 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { showErrorAlert } from "../helpers/sweetAlert.js";
-import { validarRut, validarEmail, validarTelefono, validarNombre, validarTexto } from "../helpers/formValidators";
+import {
+  validarRut,
+  validarEmail,
+  validarTelefono,
+  validarNombre,
+  validarTexto,
+} from "../helpers/formValidators";
 
-// --- 1. HEADER (INTACTO) ---
+// --- 1. HEADER ---
 const DocumentHeader = () => {
   const logoIzquierdo = "/images/ubb.png";
   const logoDerecho = "/images/Imagen5.png";
@@ -14,13 +20,15 @@ const DocumentHeader = () => {
           src={logoIzquierdo}
           alt="Logo UBB"
           className="w-full h-auto object-contain"
-          onError={(e) => e.target.style.display = 'none'}
+          onError={(e) => (e.target.style.display = "none")}
         />
       </div>
 
       <div className="text-center flex-1">
         <h2 className="text-sm md:text-base font-extrabold text-gray-900 uppercase tracking-wide leading-snug">
-          FACULTAD DE CIENCIAS EMPRESARIALES<br />ESCUELA INGENIERÍA CIVIL INFORMÁTICA
+          FACULTAD DE CIENCIAS EMPRESARIALES
+          <br />
+          ESCUELA INGENIERÍA CIVIL INFORMÁTICA
         </h2>
       </div>
 
@@ -29,18 +37,22 @@ const DocumentHeader = () => {
           src={logoDerecho}
           alt="Logo Facultad"
           className="w-full h-auto object-contain"
-          onError={(e) => e.target.style.display = 'none'}
+          onError={(e) => (e.target.style.display = "none")}
         />
       </div>
     </div>
   );
 };
 
-// --- 2. SCHEDULE INPUT (INTACTO) ---
+// --- 2. HORARIO ---
 const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
   const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-  const horas = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
-  const minutos = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0"));
+  const horas = Array.from({ length: 24 }, (_, i) =>
+    i.toString().padStart(2, "0")
+  );
+  const minutos = Array.from({ length: 60 }, (_, i) =>
+    i.toString().padStart(2, "0")
+  );
 
   const handleChangeHora = (dia, momento, campo, valor) => {
     const nuevoHorario = { ...value };
@@ -51,7 +63,8 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
 
     const h = nuevoHorario[dia];
     const toMinutes = (obj) => {
-      if (!obj?.horaInicio || !obj?.minInicio || !obj?.horaFin || !obj?.minFin) return null;
+      if (!obj?.horaInicio || !obj?.minInicio || !obj?.horaFin || !obj?.minFin)
+        return null;
       const inicio = Number(obj.horaInicio) * 60 + Number(obj.minInicio);
       const fin = Number(obj.horaFin) * 60 + Number(obj.minFin);
       return { inicio, fin };
@@ -60,7 +73,10 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
     if (h.manana) {
       const m = toMinutes(h.manana);
       if (m && m.inicio >= m.fin) {
-        showErrorAlert('Horario inválido', `En ${dia}: la hora de inicio debe ser menor que la de fin.`);
+        showErrorAlert(
+          "Horario inválido",
+          `En ${dia}: la hora de inicio debe ser menor que la de fin.`
+        );
         return;
       }
     }
@@ -68,7 +84,10 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
     if (h.tarde) {
       const t = toMinutes(h.tarde);
       if (t && t.inicio >= t.fin) {
-        showErrorAlert('Horario inválido', `En ${dia}: la hora de inicio de la tarde debe ser menor que la de fin.`);
+        showErrorAlert(
+          "Horario inválido",
+          `En ${dia}: la hora de inicio de la tarde debe ser menor que la de fin.`
+        );
         return;
       }
     }
@@ -96,13 +115,25 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
               <tr key={dia} className="bg-white border-b">
                 <td className="px-4 py-2 font-medium">{dia}</td>
                 <td className="px-4 py-2">
-                  {value[dia]?.manana?.horaInicio ? 
-                    `${formatTime(value[dia].manana.horaInicio, value[dia].manana.minInicio)} - ${formatTime(value[dia].manana.horaFin, value[dia].manana.minFin)}` 
+                  {value[dia]?.manana?.horaInicio
+                    ? `${formatTime(
+                        value[dia].manana.horaInicio,
+                        value[dia].manana.minInicio
+                      )} - ${formatTime(
+                        value[dia].manana.horaFin,
+                        value[dia].manana.minFin
+                      )}`
                     : "-"}
                 </td>
                 <td className="px-4 py-2">
-                  {value[dia]?.tarde?.horaInicio ? 
-                    `${formatTime(value[dia].tarde.horaInicio, value[dia].tarde.minInicio)} - ${formatTime(value[dia].tarde.horaFin, value[dia].tarde.minFin)}` 
+                  {value[dia]?.tarde?.horaInicio
+                    ? `${formatTime(
+                        value[dia].tarde.horaInicio,
+                        value[dia].tarde.minInicio
+                      )} - ${formatTime(
+                        value[dia].tarde.horaFin,
+                        value[dia].tarde.minFin
+                      )}`
                     : "-"}
                 </td>
               </tr>
@@ -129,19 +160,141 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
               <td className="px-4 py-2 font-medium">{dia}</td>
               <td className="px-4 py-2">
                 <div className="flex items-center gap-2">
-                  <select disabled={readOnly} value={value[dia]?.manana?.horaInicio || ""} onChange={(e) => handleChangeHora(dia, "manana", "horaInicio", e.target.value)} className="border rounded px-2 py-1"><option value="">HH</option>{horas.map(h => <option key={h} value={h}>{h}</option>)}</select>
-                  <select disabled={readOnly} value={value[dia]?.manana?.minInicio || ""} onChange={(e) => handleChangeHora(dia, "manana", "minInicio", e.target.value)} className="border rounded px-2 py-1"><option value="">MM</option>{minutos.map(m => <option key={m} value={m}>{m}</option>)}</select>
+                  <select
+                    disabled={readOnly}
+                    value={value[dia]?.manana?.horaInicio || ""}
+                    onChange={(e) =>
+                      handleChangeHora(
+                        dia,
+                        "manana",
+                        "horaInicio",
+                        e.target.value
+                      )
+                    }
+                    className="border rounded px-2 py-1"
+                  >
+                    <option value="">HH</option>
+                    {horas.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    disabled={readOnly}
+                    value={value[dia]?.manana?.minInicio || ""}
+                    onChange={(e) =>
+                      handleChangeHora(
+                        dia,
+                        "manana",
+                        "minInicio",
+                        e.target.value
+                      )
+                    }
+                    className="border rounded px-2 py-1"
+                  >
+                    <option value="">MM</option>
+                    {minutos.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
                   <span>-</span>
-                  <select disabled={readOnly} value={value[dia]?.manana?.horaFin || ""} onChange={(e) => handleChangeHora(dia, "manana", "horaFin", e.target.value)} className="border rounded px-2 py-1"><option value="">HH</option>{horas.map(h => <option key={h} value={h}>{h}</option>)}</select>
-                  <select disabled={readOnly} value={value[dia]?.manana?.minFin || ""} onChange={(e) => handleChangeHora(dia, "manana", "minFin", e.target.value)} className="border rounded px-2 py-1"><option value="">MM</option>{minutos.map(m => <option key={m} value={m}>{m}</option>)}</select>
+                  <select
+                    disabled={readOnly}
+                    value={value[dia]?.manana?.horaFin || ""}
+                    onChange={(e) =>
+                      handleChangeHora(dia, "manana", "horaFin", e.target.value)
+                    }
+                    className="border rounded px-2 py-1"
+                  >
+                    <option value="">HH</option>
+                    {horas.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    disabled={readOnly}
+                    value={value[dia]?.manana?.minFin || ""}
+                    onChange={(e) =>
+                      handleChangeHora(dia, "manana", "minFin", e.target.value)
+                    }
+                    className="border rounded px-2 py-1"
+                  >
+                    <option value="">MM</option>
+                    {minutos.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </td>
               <td className="px-4 py-2 flex gap-2">
-                <select disabled={readOnly} value={value[dia]?.tarde?.horaInicio || ""} onChange={(e) => handleChangeHora(dia, "tarde", "horaInicio", e.target.value)} className="border rounded px-2 py-1"><option value="">HH</option>{horas.map(h => <option key={h} value={h}>{h}</option>)}</select>
-                <select disabled={readOnly} value={value[dia]?.tarde?.minInicio || ""} onChange={(e) => handleChangeHora(dia, "tarde", "minInicio", e.target.value)} className="border rounded px-2 py-1"><option value="">MM</option>{minutos.map(m => <option key={m} value={m}>{m}</option>)}</select>
+                <select
+                  disabled={readOnly}
+                  value={value[dia]?.tarde?.horaInicio || ""}
+                  onChange={(e) =>
+                    handleChangeHora(dia, "tarde", "horaInicio", e.target.value)
+                  }
+                  className="border rounded px-2 py-1"
+                >
+                  <option value="">HH</option>
+                  {horas.map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  disabled={readOnly}
+                  value={value[dia]?.tarde?.minInicio || ""}
+                  onChange={(e) =>
+                    handleChangeHora(dia, "tarde", "minInicio", e.target.value)
+                  }
+                  className="border rounded px-2 py-1"
+                >
+                  <option value="">MM</option>
+                  {minutos.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
                 <span>-</span>
-                <select disabled={readOnly} value={value[dia]?.tarde?.horaFin || ""} onChange={(e) => handleChangeHora(dia, "tarde", "horaFin", e.target.value)} className="border rounded px-2 py-1"><option value="">HH</option>{horas.map(h => <option key={h} value={h}>{h}</option>)}</select>
-                <select disabled={readOnly} value={value[dia]?.tarde?.minFin || ""} onChange={(e) => handleChangeHora(dia, "tarde", "minFin", e.target.value)} className="border rounded px-2 py-1"><option value="">MM</option>{minutos.map(m => <option key={m} value={m}>{m}</option>)}</select>
+                <select
+                  disabled={readOnly}
+                  value={value[dia]?.tarde?.horaFin || ""}
+                  onChange={(e) =>
+                    handleChangeHora(dia, "tarde", "horaFin", e.target.value)
+                  }
+                  className="border rounded px-2 py-1"
+                >
+                  <option value="">HH</option>
+                  {horas.map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  disabled={readOnly}
+                  value={value[dia]?.tarde?.minFin || ""}
+                  onChange={(e) =>
+                    handleChangeHora(dia, "tarde", "minFin", e.target.value)
+                  }
+                  className="border rounded px-2 py-1"
+                >
+                  <option value="">MM</option>
+                  {minutos.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
               </td>
             </tr>
           ))}
@@ -152,8 +305,16 @@ const ScheduleInput = ({ value = {}, onChange, readOnly }) => {
 };
 
 // --- 3. FORM RENDER PRINCIPAL ---
-// Ahora aceptamos 'respuestasIniciales' (o 'valores') y 'userType'
-const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit, readOnly = false, userType = "alumno", titulo, buttonText }) => {
+const FormRender = ({
+  esquema,
+  valores = {},
+  respuestasIniciales = {},
+  onSubmit,
+  readOnly = false,
+  userType = "alumno",
+  titulo,
+  buttonText,
+}) => {
   // Fusionamos valores y respuestasIniciales por compatibilidad
   const datosEntrada = { ...valores, ...respuestasIniciales };
   const [respuestas, setRespuestas] = useState(datosEntrada);
@@ -164,7 +325,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
 
   useEffect(() => {
     if (valores || respuestasIniciales) {
-      setRespuestas(prev => {
+      setRespuestas((prev) => {
         const nuevosDatos = { ...prev, ...valores, ...respuestasIniciales };
 
         if (JSON.stringify(prev) === JSON.stringify(nuevosDatos)) {
@@ -172,7 +333,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
         }
 
         //  Validamos todos los campos que tengan 'validation'
-        esquema.forEach(campo => {
+        esquema.forEach((campo) => {
           if (campo.validation) {
             validateField(campo.id, nuevosDatos[campo.id], campo.validation);
           }
@@ -183,11 +344,8 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     }
   }, [JSON.stringify(valores), JSON.stringify(respuestasIniciales)]);
 
-
-  // ----------------------------------------
-  // ----------------------------------------------------
-
-  const handleChange = (id, value, validationType) => { // se llama al cambiar un campo
+  const handleChange = (id, value, validationType) => {
+    // se llama al cambiar un campo
 
     // Guardamos el valor
     setRespuestas((prev) => ({
@@ -199,10 +357,9 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     if (validationType && !readOnly) {
       validateField(id, value, validationType);
     }
-
   };
 
-  // --- LÓGICA DE CANVAS (INTACTA) ---
+  // --- LÓGICA DE CANVAS ---
   const startDrawing = (e, id) => {
     if (readOnly) return;
     const canvas = canvasRefs.current[id];
@@ -217,8 +374,8 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     ctx.strokeStyle = "#111";
 
     const rect = canvas.getBoundingClientRect();
-    const clientX = (e.clientX != null) ? e.clientX : e.touches[0].clientX;
-    const clientY = (e.clientY != null) ? e.clientY : e.touches[0].clientY;
+    const clientX = e.clientX != null ? e.clientX : e.touches[0].clientX;
+    const clientY = e.clientY != null ? e.clientY : e.touches[0].clientY;
 
     // escala entre coordenadas de CSS y coordenadas internas del canvas
     const scaleX = canvas.width / rect.width;
@@ -242,8 +399,8 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
 
     const ctx = canvas.getContext("2d");
     const rect = canvas.getBoundingClientRect();
-    const clientX = (e.clientX != null) ? e.clientX : e.touches[0].clientX;
-    const clientY = (e.clientY != null) ? e.clientY : e.touches[0].clientY;
+    const clientX = e.clientX != null ? e.clientX : e.touches[0].clientX;
+    const clientY = e.clientY != null ? e.clientY : e.touches[0].clientY;
 
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -260,7 +417,6 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     setIsDrawing(false);
     const canvas = canvasRefs.current[id];
     if (canvas) {
-      // opcional: cerrar path y asegurar un trazo final
       const ctx = canvas.getContext("2d");
       ctx.closePath();
       handleChange(id, "firmado_pendiente_procesar");
@@ -274,9 +430,9 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       handleChange(id, "");
     }
-  }
-  
-  const handleSubmit = (e) => { 
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault(); // Evita que el formulario recargue la página
 
     // === Validación cruzada de fechas ===
@@ -286,8 +442,8 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     if (respuestas["fecha_inicio"] && respuestas["fecha_termino"]) {
       if (fechaInicio > fechaTermino) {
         showErrorAlert(
-          'Fechas inválidas',
-          'La fecha de inicio debe ser menor que la fecha de término.'
+          "Fechas inválidas",
+          "La fecha de inicio debe ser menor que la fecha de término."
         );
         return; // Detiene el envío
       }
@@ -308,7 +464,7 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     6: "md:col-span-6",
     4: "md:col-span-4",
     3: "md:col-span-3",
-    2: "md:col-span-2"
+    2: "md:col-span-2",
   };
 
   const validateField = (name, value, validationType) => {
@@ -324,29 +480,40 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
       if (!validarTelefono(value)) errorMsg = "Solo números y '+'";
     }
     if (validationType === "nombre" && value) {
-      if (!validarNombre(value)) errorMsg = "Nombre inválido. Solo letras y espacios.";
+      if (!validarNombre(value))
+        errorMsg = "Nombre inválido. Solo letras y espacios.";
     }
     if (validationType === "text" && value) {
       if (!validarTexto(value)) errorMsg = "Solo letras y espacios.";
     }
     // Actualizamos el objeto de errores
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      [name]: errorMsg
+      [name]: errorMsg,
     }));
   };
 
   // Reemplaza TU renderField por esta versión (no define componentes inline)
   const renderField = (campo) => {
     const {
-      id, label, tipo, required, options, placeholder,
-      min, max, readOnly: fieldReadOnly, fillBy,
-      cols = 12, validation // por defecto
+      id,
+      label,
+      tipo,
+      required,
+      options,
+      placeholder,
+      min,
+      max,
+      readOnly: fieldReadOnly,
+      fillBy,
+      cols = 12,
+      validation, // por defecto
     } = campo;
 
     let isReadOnly = readOnly || fieldReadOnly;
     if (userType === "alumno" && fillBy === "empresa") isReadOnly = true;
-    if (userType === "empresa" && (fillBy === "alumno" || !fillBy)) isReadOnly = true;
+    if (userType === "empresa" && (fillBy === "alumno" || !fillBy))
+      isReadOnly = true;
 
     let displayPlaceholder = placeholder;
     if (isReadOnly && !respuestas[id]) displayPlaceholder = "";
@@ -356,7 +523,11 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
     // Header especial (retornamos DIV normal con key fijo)
     if (campo.tipo === "header") {
       return (
-        <div key={campo.id} className={`col-span-12 mt-8 mb-4 border-b-2 border-blue-200 pb-2`} style={{ pageBreakAfter: 'avoid' }}>
+        <div
+          key={campo.id}
+          className={`col-span-12 mt-8 mb-4 border-b-2 border-blue-200 pb-2`}
+          style={{ pageBreakAfter: "avoid" }}
+        >
           <h2 className="text-xl font-bold text-blue-800">{campo.label}</h2>
         </div>
       );
@@ -368,11 +539,16 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
         return (
           <div className="mb-4">
             <label className="block text-sm font-semibold text-gray-700 mb-1">
-              {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
+              {label}{" "}
+              {required && !isReadOnly && (
+                <span className="text-red-500">*</span>
+              )}
             </label>
             {isReadOnly ? (
               <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 min-h-[40px]">
-                <span className="text-gray-900 font-medium">{respuestas[id] || ''}</span>
+                <span className="text-gray-900 font-medium">
+                  {respuestas[id] || ""}
+                </span>
               </div>
             ) : (
               <input
@@ -382,11 +558,14 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
                 disabled={isReadOnly}
                 required={required && !isReadOnly}
                 placeholder={displayPlaceholder}
-                min={min} max={max}
+                min={min}
+                max={max}
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 font-medium"
               />
             )}
-            {errors[id] && <p className="text-red-500 text-xs mt-1">{errors[id]}</p>}
+            {errors[id] && (
+              <p className="text-red-500 text-xs mt-1">{errors[id]}</p>
+            )}
           </div>
         );
       }
@@ -395,11 +574,16 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
         return (
           <div className="mb-4">
             <label className="block text-sm font-semibold text-gray-700 mb-1">
-              {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
+              {label}{" "}
+              {required && !isReadOnly && (
+                <span className="text-red-500">*</span>
+              )}
             </label>
             {isReadOnly ? (
               <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 min-h-[80px]">
-                <span className="text-gray-900 font-medium whitespace-pre-wrap">{respuestas[id] || ''}</span>
+                <span className="text-gray-900 font-medium whitespace-pre-wrap">
+                  {respuestas[id] || ""}
+                </span>
               </div>
             ) : (
               <textarea
@@ -412,7 +596,9 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
               />
             )}
-            {errors[id] && <p className="text-red-500 text-xs mt-1">{errors[id]}</p>}
+            {errors[id] && (
+              <p className="text-red-500 text-xs mt-1">{errors[id]}</p>
+            )}
           </div>
         );
       }
@@ -421,11 +607,16 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
         return (
           <div className="mb-4">
             <label className="block text-sm font-semibold text-gray-700 mb-1">
-              {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
+              {label}{" "}
+              {required && !isReadOnly && (
+                <span className="text-red-500">*</span>
+              )}
             </label>
             {isReadOnly ? (
               <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 min-h-[40px]">
-                <span className="text-gray-900 font-medium">{respuestas[id] || ''}</span>
+                <span className="text-gray-900 font-medium">
+                  {respuestas[id] || ""}
+                </span>
               </div>
             ) : (
               <select
@@ -437,11 +628,15 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
               >
                 <option value="">Seleccione una opción...</option>
                 {options?.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
                 ))}
               </select>
             )}
-            {errors[id] && <p className="text-red-500 text-xs mt-1">{errors[id]}</p>}
+            {errors[id] && (
+              <p className="text-red-500 text-xs mt-1">{errors[id]}</p>
+            )}
           </div>
         );
       }
@@ -450,7 +645,10 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
         return (
           <div className="mb-6">
             <label className="block text-sm font-bold text-gray-800 mb-2">
-              {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
+              {label}{" "}
+              {required && !isReadOnly && (
+                <span className="text-red-500">*</span>
+              )}
             </label>
             <ScheduleInput
               value={respuestas[id] || {}}
@@ -465,22 +663,31 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
         return (
           <div className="mb-6">
             <label className="block text-sm font-bold text-gray-800 mb-2">
-              {label} {required && !isReadOnly && <span className="text-red-500">*</span>}
+              {label}{" "}
+              {required && !isReadOnly && (
+                <span className="text-red-500">*</span>
+              )}
             </label>
 
             {isReadOnly ? (
               respuestas[id] && !respuestas[id].includes("pendiente") ? (
                 <div className="border border-gray-300 rounded-lg p-3 bg-white">
-                  <img 
-                    src={respuestas[id]} 
-                    alt="Firma" 
+                  <img
+                    src={respuestas[id]}
+                    alt="Firma"
                     crossOrigin="anonymous"
-                    style={{ maxHeight: '120px', width: 'auto', display: 'block' }}
+                    style={{
+                      maxHeight: "120px",
+                      width: "auto",
+                      display: "block",
+                    }}
                   />
                 </div>
               ) : (
                 <div className="border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
-                  <span className="text-gray-400 italic text-sm">Sin firma registrada</span>
+                  <span className="text-gray-400 italic text-sm">
+                    Sin firma registrada
+                  </span>
                 </div>
               )
             ) : (
@@ -501,7 +708,13 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
                 />
 
                 <div className="bg-gray-100 p-2 text-right text-xs border-t">
-                  <button type="button" className="text-red-600 hover:text-red-800 underline font-medium" onClick={() => clearCanvas(id)}>Borrar Firma</button>
+                  <button
+                    type="button"
+                    className="text-red-600 hover:text-red-800 underline font-medium"
+                    onClick={() => clearCanvas(id)}
+                  >
+                    Borrar Firma
+                  </button>
                 </div>
               </div>
             )}
@@ -514,12 +727,15 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
 
     // Finalmente devolvemos el wrapper DIV (con key si renderField se usa fuera del map)
     return (
-      <div key={id} className={`col-span-12 ${spanClass}`} style={{ pageBreakInside: 'avoid' }}>
+      <div
+        key={id}
+        className={`col-span-12 ${spanClass}`}
+        style={{ pageBreakInside: "avoid" }}
+      >
         {fieldContent}
       </div>
     );
   };
-
 
   return (
     <div className="bg-white p-4 md:p-10 rounded-lg shadow-lg border border-gray-200 max-w-5xl mx-auto">
@@ -531,27 +747,24 @@ const FormRender = ({ esquema, valores = {}, respuestasIniciales = {}, onSubmit,
           </h1>
         </div>
       )}
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-12 gap-6"
-      >
-        {esquema && esquema.map((campo) => (
-          <React.Fragment key={campo.id || campo.nombre}>
-            {renderField(campo)} 
-          </React.Fragment>
-        ))}
+      <form onSubmit={handleSubmit} className="grid grid-cols-12 gap-6">
+        {esquema &&
+          esquema.map((campo) => (
+            <React.Fragment key={campo.id || campo.nombre}>
+              {renderField(campo)}
+            </React.Fragment>
+          ))}
         {!readOnly && (
           <div className="col-span-12 mt-12 pt-6 border-t border-gray-200 flex justify-end">
             <button
               type="submit"
-              disabled={Object.values(errors).some(msg => msg !== "")}
-              className="bg-blue-800 hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"            >
+              disabled={Object.values(errors).some((msg) => msg !== "")}
+              className="bg-blue-800 hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+            >
               {buttonText || "Guardar Documento"}
             </button>
           </div>
-
         )}
-
       </form>
     </div>
   );

@@ -1,22 +1,22 @@
-import axios from 'axios';
-import cookies from 'js-cookie';
+import axios from "axios";
+import cookies from "js-cookie";
 
-const API_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_BASE_URL || "http://localhost:3000/api";
 
 const instance = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   withCredentials: true,
 });
 
 instance.interceptors.request.use(
   (config) => {
-    let token = cookies.get('jwt-auth', { path: '/' });
+    let token = cookies.get("jwt-auth", { path: "/" });
     if (!token) {
       try {
-        token = sessionStorage.getItem('jwt-token');
+        token = sessionStorage.getItem("jwt-token");
       } catch {}
     }
     if (token) {

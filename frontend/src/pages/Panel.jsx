@@ -1,8 +1,8 @@
-import React from 'react';
-import { useAuth } from '../context/AuthContext';
-import DashboardCoordinador from '../components/DashboardCoordinador';
-import DashboardAlumno from '../components/DashboardAlumno';
-import { Navigate } from 'react-router-dom';
+import React from "react";
+import { useAuth } from "../context/AuthContext";
+import DashboardCoordinador from "../components/DashboardCoordinador";
+import DashboardAlumno from "../components/DashboardAlumno";
+import { Navigate } from "react-router-dom";
 
 const Panel = () => {
   const { user, logoutContext } = useAuth();
@@ -20,15 +20,17 @@ const Panel = () => {
 
   const renderDashboard = () => {
     switch (user.role) {
-      case 'coordinador':
+      case "coordinador":
         return <DashboardCoordinador user={user} />;
-      case 'alumno':
+      case "alumno":
         return <DashboardAlumno user={user} />;
       default:
         // Si el rol no es ni alumno ni coordinador
         return (
           <div className="text-center p-8">
-            <h1 className="text-2xl font-bold text-red-600">Rol no reconocido</h1>
+            <h1 className="text-2xl font-bold text-red-600">
+              Rol no reconocido
+            </h1>
             <p>Tu rol ({user.role}) no tiene un panel asignado.</p>
           </div>
         );
@@ -40,7 +42,9 @@ const Panel = () => {
       <nav className="bg-white shadow-md p-4 flex justify-between items-center">
         <h1 className="text-xl font-bold text-blue-700">Portal de Prácticas</h1>
         <div>
-          <span className="mr-4">Hola, <span className="font-semibold">{user.name}</span></span>
+          <span className="mr-4">
+            Hola, <span className="font-semibold">{user.name}</span>
+          </span>
           <button
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-all"
@@ -50,9 +54,7 @@ const Panel = () => {
         </div>
       </nav>
 
-      <main className="p-8">
-        {renderDashboard()}
-      </main>
+      <main className="p-8">{renderDashboard()}</main>
     </div>
   );
 };

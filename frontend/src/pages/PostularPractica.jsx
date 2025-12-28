@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import FormRender from "../components/FormRender";
 import { getPlantilla } from "../services/formulario.service.js";
-import { postularPractica } from "../services/practica.service.js"; // Usamos tu servicio existente
+import { postularPractica } from "../services/practica.service.js"; 
 import { showSuccessAlert, showErrorAlert } from "../helpers/sweetAlert.js";
 import { useAuth } from "../context/AuthContext";
 
@@ -19,7 +19,10 @@ const PostularPractica = () => {
         const data = await getPlantilla("postulacion");
         setPlantilla(data);
       } catch (error) {
-        showErrorAlert("Error", "No se pudo cargar el formulario de postulación.");
+        showErrorAlert(
+          "Error",
+          "No se pudo cargar el formulario de postulación."
+        );
         console.error(error);
       } finally {
         setLoading(false);
@@ -39,41 +42,46 @@ const PostularPractica = () => {
   // 3. Manejar el envío del formulario
   const handleSubmit = async (respuestas) => {
     try {
-      // Aquí combinamos las respuestas del formulario dinámico
-      // con la lógica de negocio de "crear práctica"
-      
+      // Aquí combinamos las respuestas del formulario dinámico con la lógica de negocio de "crear práctica"
+
       // Mapeamos los campos del formulario a lo que espera tu backend (practica.service)
       const datosParaBackend = {
         nombreEmpresa: respuestas.nombre_empresa,
-        emailEmpresa: respuestas.correo_supervisor, // Ojo con el ID que usaste en el JSON
+        emailEmpresa: respuestas.correo_supervisor, 
         nombreRepresentante: respuestas.nombre_supervisor,
-        // ... puedes enviar todo el objeto 'respuestas' también si quieres guardarlo como JSON
-        datosFormulario: respuestas 
+        datosFormulario: respuestas,
       };
 
       await postularPractica(datosParaBackend);
-      
-      showSuccessAlert("¡Éxito!", "Tu postulación ha sido enviada correctamente.");
+
+      showSuccessAlert(
+        "¡Éxito!",
+        "Tu postulación ha sido enviada correctamente."
+      );
       navigate("/panel"); // Volver al panel del alumno
-      
     } catch (error) {
       showErrorAlert("Error", "No se pudo enviar la postulación.");
     }
   };
 
-if (loading) return <div className="p-12 text-center">Cargando formulario...</div>;
-  if (!plantilla) return <div className="p-12 text-center text-red-500">Error al cargar la plantilla.</div>;
+  if (loading)
+    return <div className="p-12 text-center">Cargando formulario...</div>;
+  if (!plantilla)
+    return (
+      <div className="p-12 text-center text-red-500">
+        Error al cargar la plantilla.
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <FormRender 
-        esquema={plantilla.esquema} 
-        valores={valoresIniciales} 
+      <FormRender
+        esquema={plantilla.esquema}
+        valores={valoresIniciales}
         onSubmit={handleSubmit}
         userType="alumno"
-        titulo={plantilla.titulo} // <--- AQUÍ PASAMOS EL TÍTULO
+        titulo={plantilla.titulo} 
       />
-      
     </div>
   );
 };

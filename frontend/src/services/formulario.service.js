@@ -1,12 +1,12 @@
-import instance from './root.service.js';
-//Puente
+import instance from "./root.service.js";
+
 // Obtener una plantilla por su tipo
 export const getPlantilla = async (tipo) => {
   try {
     const response = await instance.get(`/formularios/plantilla/${tipo}`);
-    
+
     // Devolvemos el objeto 'data' que contiene la plantilla
-    return response.data.data; 
+    return response.data.data;
   } catch (error) {
     console.error(`Error al obtener plantilla ${tipo}:`, error);
     throw error.response?.data || error;
@@ -34,20 +34,19 @@ export const actualizarPlantilla = async (id, datos) => {
   }
 };
 
-
 export const guardarRespuesta = async (datos) => {
-    try {
-        const response = await instance.post('/formularios/responder', datos);
-        return response.data.data;
-    } catch (error) {
-        console.error("Error al guardar respuesta:", error);
-        throw error.response?.data || error;
-     }
+  try {
+    const response = await instance.post("/formularios/responder", datos);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error al guardar respuesta:", error);
+    throw error.response?.data || error;
+  }
 };
 
 export const crearPlantilla = async (datos) => {
   try {
-    const response = await instance.post('/formularios', datos);
+    const response = await instance.post("/formularios", datos);
     return response.data.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -63,29 +62,32 @@ export const eliminarPlantilla = async (id) => {
   }
 };
 
-// --- NUEVA FUNCIÓN: Envía la Bitácora a la ruta dedicada ---
+// --- Envía la Bitácora a la ruta dedicada ---
 export const postBitacora = async (data) => {
-    try {
-        // Llama al endpoint específico que creaste en el Backend (router.post('/bitacora'))
-        const response = await instance.post('/formularios/bitacora', data); 
-        
-        // Devolvemos la respuesta
-        return response.data; 
-    } catch (error) {
-        console.error("Error al guardar Bitácora:", error);
-        // Usa la misma lógica de tu archivo para propagar el error
-        throw error.response?.data || error;
-    }
+  try {
+    // Llama al endpoint específico que creaste en el Backend (router.post('/bitacora'))
+    const response = await instance.post("/formularios/bitacora", data);
+
+    // Devolvemos la respuesta
+    return response.data;
+  } catch (error) {
+    console.error("Error al guardar Bitácora:", error);
+    // Usa la misma lógica de tu archivo para propagar el error
+    throw error.response?.data || error;
+  }
 };
 
 export const getRespuesta = async (id) => {
-    const response = await instance.get(`/formularios/respuesta/${id}`);
-    return response.data;
+  const response = await instance.get(`/formularios/respuesta/${id}`);
+  return response.data;
 };
 
 // Alumno corrige su postulación rechazada
 export const corregirPostulacionRespuesta = async (id, respuestas) => {
-  const response = await instance.put(`/formularios/respuesta/${id}/correccion`, { respuestas });
+  const response = await instance.put(
+    `/formularios/respuesta/${id}/correccion`,
+    { respuestas }
+  );
   return response.data;
 };
 
