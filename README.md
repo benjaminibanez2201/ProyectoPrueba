@@ -14,7 +14,6 @@ Esta aplicación permite la gestión del proceso de prácticas profesionales, in
 ### Funcionalidades para Coordinadores
 - 👥 Gestión de usuarios (estudiantes)
 - ✅ Aprobación de prácticas
-- 🔑 Generación de tokens de empresa para acceso externo
 - 📊 Creación y edición de formularios dinámicos
 - 📁 Gestión de recursos y documentos
 - 💬 Sistema de comunicación con empresas
