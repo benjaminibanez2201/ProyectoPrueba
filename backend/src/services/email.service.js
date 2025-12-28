@@ -49,7 +49,8 @@ export const sendTokenEmail = async (
   token,
   nombreAlumno
 ) => {
-  const linkAcceso = `http://localhost:5173/empresa/acceso/${token}`;
+  //const linkAcceso = `http://localhost:5173/empresa/acceso/${token}`;
+  const linkAcceso = `${process.env.FRONTEND_URL}/empresa/acceso/${token}`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: #0056b3; padding: 20px; text-align: center;">
@@ -137,12 +138,12 @@ export const enviarNotificacionEvaluacion = async (
       : null;
     const respuestaId = respuestaPostulacion?.id;
     const linkAlumno = respuestaId
-      ? `http://localhost:5173/alumno/correccion/${respuestaId}`
+      ? `${process.env.FRONTEND_URL}/empresa/correccion/${respuestaId}`
       : null;
     // Link para empresa (token)
     const tokenEmpresa = practica?.empresaToken?.token;
     const linkEmpresa = tokenEmpresa
-      ? `http://localhost:5173/empresa/acceso/${tokenEmpresa}`
+      ? `${process.env.FRONTEND_URL}/empresa/acceso/${tokenEmpresa}`
       : null;
 
     // Lógica de a quién culpar (quién recibe el correo)
@@ -275,7 +276,7 @@ export const sendSolicitudEvaluacionEmail = async (
   nombreAlumno,
   nivelTexto = "Profesional"
 ) => {
-  const linkAcceso = `http://localhost:5173/empresa/acceso/${token}`;
+  const linkAcceso = `${process.env.FRONTEND_URL}/empresa/acceso/${token}`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: #6f42c1; padding: 20px; text-align: center;">
