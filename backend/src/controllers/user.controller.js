@@ -3,6 +3,7 @@
  * Proporciona vistas resumidas y detalladas de los estudiantes y sus procesos de práctica
  */
 import { getDetallesAlumnos, findAlumnos } from "../services/user.service.js";
+import path from "path";
 import {
   handleSuccess,
   handleErrorClient,
