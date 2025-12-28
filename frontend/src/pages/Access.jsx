@@ -6,8 +6,8 @@ import {
   enviarEvaluacionEmpresa,
   getFormularioEmpresa,
 } from "../services/empresa.service.js";
-import { getPlantilla } from "../services/formulario.service.js"; 
-import FormRender from "../components/FormRender"; 
+import { getPlantilla } from "../services/formulario.service.js";
+import FormRender from "../components/FormRender";
 import { showSuccessAlert, showErrorAlert } from "../helpers/sweetAlert.js";
 import {
   CheckCircle,
@@ -24,7 +24,7 @@ import {
   Eye,
 } from "lucide-react";
 import ChatMensajeria from "../components/ChatMensajeria";
-import html2pdf from "html2pdf.js";
+import { generatePDF } from "../helpers/pdfGenerator";
 
 const Access = () => {
   const { token } = useParams();
@@ -98,9 +98,35 @@ const Access = () => {
     // 1. Validamos que exista el array
     if (!data || !data.formularioRespuestas) return {};
 
+<<<<<<< HEAD
+        const filename = `${nombreTipo[formularioVisualizando?.tipo] || 'Formulario'}_${data?.alumnoNombre || 'Alumno'}`;
+        
+        await generatePDF(element, filename);
+    };
+
+    // Nombre legible de formulario
+    const getNombreFormulario = (tipo) => {
+        const nombres = {
+            'postulacion': 'Formulario de Postulación',
+            'evaluacion_pr1': 'Evaluación Profesional I',
+            'evaluacion_pr2': 'Evaluación Profesional II'
+        };
+        return nombres[tipo] || tipo;
+    };
+
+    const handleCerrarSesion = () => navigate('/auth');
+
+    // --- RENDERIZADO ---
+
+    if (loading) return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <Loader2 className="w-16 h-16 text-blue-700 animate-spin" />
+        </div>
+=======
     // 2. Buscamos la respuesta de postulación
     const respuestaEncontrada = data.formularioRespuestas.find(
       (r) => r.plantilla?.tipo === "postulacion"
+>>>>>>> origin/javii4
     );
 
     if (!respuestaEncontrada) return {};

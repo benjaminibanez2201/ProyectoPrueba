@@ -20,6 +20,8 @@ import {
   Download,
   BookOpen,
   Check,
+  Layout,
+  Eye,
 } from "lucide-react";
 import {
   getMyPractica,
@@ -32,7 +34,7 @@ import {
 } from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
 import { deleteDocumento } from "../services/documento.service.js";
-import { deleteBitacora } from "../services/formulario.service.js";
+import { deleteBitacora, getTodasLasPlantillas } from "../services/formulario.service.js";
 import instance from "../services/root.service.js";
 // BADGE
 const EstadoBadge = ({ estado }) => {
@@ -157,6 +159,9 @@ const DashboardAlumno = ({ user }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showDocsModal, setShowDocsModal] = useState(false);
   const [recursosGlobales, setRecursosGlobales] = useState([]);
+  const [plantillasPublicadas, setPlantillasPublicadas] = useState([]);
+  const [activeResourceTab, setActiveResourceTab] = useState("archivos"); // 'archivos' o 'formularios'
+
   const getPostulacionRespuestaId = () => {
     // Si 'practica' es null, regresa null
     if (!practica) return null;
@@ -211,6 +216,16 @@ const DashboardAlumno = ({ user }) => {
     }
   };
 
+  // Cargar plantillas de formularios publicados
+  const fetchPlantillasPublicadas = async () => {
+    try {
+      const data = await getTodasLasPlantillas();
+      setPlantillasPublicadas(data || []);
+    } catch (error) {
+      console.error("Error al cargar plantillas:", error);
+    }
+  };
+
   // DESCARGAR ARCHIVO
   const handleDownloadRecurso = (urlRecurso) => {
     //1 se obtiene variable actual (http://localhost:3000/api)
@@ -229,7 +244,7 @@ const DashboardAlumno = ({ user }) => {
   useEffect(() => {
     const init = async () => {
       setIsLoading(true);
-      await Promise.all([fetchMiPractica(), fetchRecursosGlobales()]);
+      await Promise.all([fetchMiPractica(), fetchRecursosGlobales(), fetchPlantillasPublicadas()]);
       setIsLoading(false);
     };
     init();
@@ -454,36 +469,118 @@ const DashboardAlumno = ({ user }) => {
 
           {/* --- FILA 3: RECURSOS Y REPOSITORIO --- */}
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Recursos (Pautas) */}
+            {/* Recursos (Pautas) - Con pestañas */}
             <div className="bg-purple-50 p-6 rounded-xl shadow-sm border border-purple-100 flex flex-col h-full">
               <h3 className="text-lg font-bold text-purple-800 mb-4 flex items-center gap-2">
                 <FileText size={20} /> Recursos y Pautas
               </h3>
 
-              <div className="space-y-2 grow">
-                {recursosGlobales.length > 0 ? (
-                  recursosGlobales.map((recurso) => (
-                    <button
-                      key={recurso.id}
-                      onClick={() => handleDownloadRecurso(recurso.url)}
-                      className="w-full flex items-center gap-2 text-left text-sm p-3 bg-white border border-purple-100 rounded-lg hover:bg-purple-100 hover:border-purple-300 text-purple-800 transition shadow-sm group"
-                    >
-                      <Download
-                        size={18}
-                        className="text-purple-400 group-hover:text-purple-700 shrink-0"
-                      />
-                      <span className="truncate font-medium">
-                        {recurso.nombre}
-                      </span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-center bg-white/50 rounded-lg border border-purple-100 border-dashed">
-                    <FileText size={24} className="text-purple-200 mb-2" />
-                    <p className="text-sm text-gray-500 italic">
-                      No hay documentos disponibles aún.
-                    </p>
-                  </div>
+              {/* Pestañas */}
+              <div className="flex border-b border-purple-200 mb-4">
+                <button
+                  onClick={() => setActiveResourceTab("archivos")}
+                  className={`flex-1 py-2 text-sm font-bold flex items-center justify-center gap-1 transition-all ${
+                    activeResourceTab === "archivos"
+                      ? "text-purple-700 border-b-2 border-purple-600"
+                      : "text-gray-500 hover:text-purple-600"
+                  }`}
+                >
+                  <FileText size={14} /> Archivos
+                </button>
+                <button
+                  onClick={() => setActiveResourceTab("formularios")}
+                  className={`flex-1 py-2 text-sm font-bold flex items-center justify-center gap-1 transition-all ${
+                    activeResourceTab === "formularios"
+                      ? "text-green-600 border-b-2 border-green-500"
+                      : "text-gray-500 hover:text-green-600"
+                  }`}
+                >
+                  <Layout size={14} /> Formularios
+                </button>
+              </div>
+
+              <div className="space-y-2 grow overflow-y-auto max-h-64">
+                {/* Tab de Archivos */}
+                {activeResourceTab === "archivos" && (
+                  <>
+                    {recursosGlobales.length > 0 ? (
+                      recursosGlobales.map((recurso) => (
+                        <button
+                          key={recurso.id}
+                          onClick={() => handleDownloadRecurso(recurso.url)}
+                          className="w-full flex items-center gap-2 text-left text-sm p-3 bg-white border border-purple-100 rounded-lg hover:bg-purple-100 hover:border-purple-300 text-purple-800 transition shadow-sm group"
+                        >
+                          <Download
+                            size={18}
+                            className="text-purple-400 group-hover:text-purple-700 shrink-0"
+                          />
+                          <span className="truncate font-medium">
+                            {recurso.nombre}
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 text-center bg-white/50 rounded-lg border border-purple-100 border-dashed">
+                        <FileText size={24} className="text-purple-200 mb-2" />
+                        <p className="text-sm text-gray-500 italic">
+                          No hay documentos disponibles aún.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Tab de Formularios */}
+                {activeResourceTab === "formularios" && (
+                  <>
+                    {plantillasPublicadas.length > 0 ? (
+                      plantillasPublicadas.map((plantilla) => (
+                        <div
+                          key={plantilla.id}
+                          className="w-full flex items-center gap-2 text-left text-sm p-3 bg-white border border-green-100 rounded-lg text-green-800 shadow-sm"
+                        >
+                          <Layout
+                            size={18}
+                            className="text-green-400 shrink-0"
+                          />
+                          <span className="truncate font-medium flex-1">
+                            {plantilla.titulo}
+                          </span>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/alumno/formulario/preview/${plantilla.tipo}`
+                                )
+                              }
+                              className="p-1.5 hover:bg-green-50 rounded-full text-gray-400 hover:text-green-600 transition"
+                              title="Ver formulario"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/alumno/formulario/preview/${plantilla.tipo}?download=true`
+                                )
+                              }
+                              className="p-1.5 hover:bg-green-50 rounded-full text-gray-400 hover:text-green-600 transition"
+                              title="Descargar PDF"
+                            >
+                              <Download size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 text-center bg-white/50 rounded-lg border border-green-100 border-dashed">
+                        <Layout size={24} className="text-green-200 mb-2" />
+                        <p className="text-sm text-gray-500 italic">
+                          No hay formularios disponibles.
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

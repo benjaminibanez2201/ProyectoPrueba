@@ -8,6 +8,7 @@ import {
   FolderOpen,
   AlertCircle,
   Eye,
+  Download,
 } from "lucide-react";
 import instance from "../services/root.service.js";
 import { useNavigate } from "react-router-dom";
@@ -186,7 +187,7 @@ const GestionRecursosModal = ({ isOpen, onClose }) => {
                   <input
                     type="file"
                     onChange={(e) => setFile(e.target.files[0])}
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.zip"
+                    accept=".pdf,.doc,.docx,.zip"
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 border border-gray-200 rounded-lg cursor-pointer bg-white py-2"
                   />
                   <button
@@ -198,7 +199,7 @@ const GestionRecursosModal = ({ isOpen, onClose }) => {
                   </button>
                 </form>
                 <p className="text-xs text-gray-400 mt-2 ml-1">
-                  Formatos permitidos: PDF, Word, Excel, ZIP. (Máx 10MB)
+                  Formatos permitidos: PDF, Word, ZIP. (Máx 10MB)
                 </p>
               </div>
 
@@ -280,18 +281,32 @@ const GestionRecursosModal = ({ isOpen, onClose }) => {
                         {plantilla.tipo || "Personalizado"}
                       </span>
                     </div>
-                    <button
-                      onClick={() => {
-                        onClose(); // Cerramos el modal primero para que no estorbe
-                        navigate(
-                          `/admin/formularios/preview/${plantilla.tipo}`
-                        );
-                      }}
-                      className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-blue-600 transition"
-                      title="Vista Previa"
-                    >
-                      <Eye size={20} />
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          onClose(); // Cerramos el modal primero para que no estorbe
+                          navigate(
+                            `/admin/formularios/preview/${plantilla.tipo}`
+                          );
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-blue-600 transition"
+                        title="Vista Previa"
+                      >
+                        <Eye size={20} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          onClose();
+                          navigate(
+                            `/admin/formularios/preview/${plantilla.tipo}?download=true`
+                          );
+                        }}
+                        className="p-2 hover:bg-green-50 rounded-full text-gray-400 hover:text-green-600 transition"
+                        title="Descargar PDF"
+                      >
+                        <Download size={20} />
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {plantillas.length === 0 && (
