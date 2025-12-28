@@ -62,8 +62,8 @@ export class PracticaController {
         );
       }
 
-      handleSuccess(res, 200, "Práctica del alumno obtenida", practica);
-      return;
+      // Enviar la práctica encontrada una sola vez
+      return handleSuccess(res, 200, "Práctica del alumno obtenida", practica);
     } catch (error) {
       handleErrorServer(
         res,
