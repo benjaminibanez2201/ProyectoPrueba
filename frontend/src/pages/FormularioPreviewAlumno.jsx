@@ -6,8 +6,8 @@ import { ArrowLeft, Download, Loader } from "lucide-react";
 import { generatePDF } from "../helpers/pdfGenerator";
 import { showSuccessAlert, showErrorAlert } from "../helpers/sweetAlert";
 
-const VistaPrevia = () => {
-  const { tipo } = useParams(); // Leemos el tipo desde la URL
+const FormularioPreviewAlumno = () => {
+  const { tipo } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [plantilla, setPlantilla] = useState(null);
@@ -40,11 +40,10 @@ const VistaPrevia = () => {
   useEffect(() => {
     const cargar = async () => {
       try {
-        // Pedimos la plantilla específica (postulacion, bitacora, etc.)
         const data = await getPlantilla(tipo);
         setPlantilla(data);
       } catch (error) {
-        console.error("Error cargando vista previa", error);
+        console.error("Error cargando formulario", error);
       } finally {
         setLoading(false);
       }
@@ -56,7 +55,6 @@ const VistaPrevia = () => {
   useEffect(() => {
     const shouldDownload = searchParams.get('download') === 'true';
     if (shouldDownload && plantilla && !loading && formContainerRef.current) {
-      // Pequeño delay para asegurar que el DOM esté completamente renderizado
       const timer = setTimeout(() => {
         handleDownloadPDF();
       }, 500);
@@ -64,21 +62,36 @@ const VistaPrevia = () => {
     }
   }, [plantilla, loading, searchParams]);
 
-  if (loading) return <div className="p-10 text-center">Cargando vista previa...</div>;
-  if (!plantilla) return <div className="p-10 text-center text-red-500">Formulario no encontrado</div>;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <Loader className="animate-spin text-green-600" size={40} />
+    </div>
+  );
+
+  if (!plantilla) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+      <p className="text-red-500 text-lg mb-4">Formulario no encontrado</p>
+      <button 
+        onClick={() => navigate('/panel')} 
+        className="text-blue-600 hover:underline flex items-center gap-2"
+      >
+        <ArrowLeft size={18} /> Volver al panel
+      </button>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-8">
       <div className="max-w-5xl mx-auto">
         
         {/* Barra superior con botones */}
         <div className="mb-6 flex justify-between items-center">
           <button 
-            onClick={() => navigate(-1)} 
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+            onClick={() => navigate('/panel')} 
+            className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
           >
             <ArrowLeft size={20} />
-            Volver a Gestión
+            Volver al Panel
           </button>
 
           {/* Botón Descargar PDF */}
@@ -101,9 +114,9 @@ const VistaPrevia = () => {
           </button>
         </div>
 
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded shadow-sm">
-          <p className="text-yellow-800 font-medium">
-                Modo Vista Previa: Así es como verán el formulario los usuarios.
+        <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded shadow-sm">
+          <p className="text-green-800 font-medium">
+            Vista del formulario: Puedes descargarlo en PDF para imprimirlo o guardarlo.
           </p>
         </div>
 
@@ -112,9 +125,9 @@ const VistaPrevia = () => {
           <FormRender 
             esquema={plantilla.esquema} 
             titulo={plantilla.titulo}
-            readOnly={true} // <--- IMPORTANTE: Bloqueado
-            onSubmit={() => {}} // No hace nada
-            userType="coordinador" // Para que vea todos los campos
+            readOnly={true}
+            onSubmit={() => {}}
+            userType="alumno"
           />
         </div>
       </div>
@@ -122,4 +135,4 @@ const VistaPrevia = () => {
   );
 };
 
-export default VistaPrevia;
+export default FormularioPreviewAlumno;

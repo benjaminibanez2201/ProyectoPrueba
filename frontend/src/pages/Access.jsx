@@ -6,7 +6,7 @@ import FormRender from '../components/FormRender'; // 2. Traer tu componente est
 import { showSuccessAlert, showErrorAlert } from '../helpers/sweetAlert.js'; 
 import { CheckCircle, XCircle, Loader2, Building2, User, LogOut, FileText, ClipboardList, Clock, MessageCircle, Download, Eye } from 'lucide-react';
 import ChatMensajeria from '../components/ChatMensajeria';
-import html2pdf from 'html2pdf.js';
+import { generatePDF } from '../helpers/pdfGenerator';
 
 const Access = () => {
     const { token } = useParams();
@@ -195,21 +195,9 @@ const handleFormSubmit = async (respuestas) => {
             'evaluacion_pr2': 'Evaluacion_Profesional_II'
         };
 
-        const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `${nombreTipo[formularioVisualizando?.tipo] || 'Formulario'}_${data?.alumnoNombre || 'Alumno'}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                allowTaint: true, 
-                logging: false,
-                backgroundColor: '#ffffff'
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        };
-
-        await html2pdf().set(opt).from(element).save();
+        const filename = `${nombreTipo[formularioVisualizando?.tipo] || 'Formulario'}_${data?.alumnoNombre || 'Alumno'}`;
+        
+        await generatePDF(element, filename);
     };
 
     // Nombre legible de formulario
