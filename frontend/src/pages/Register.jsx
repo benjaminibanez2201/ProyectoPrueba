@@ -16,7 +16,7 @@ const Register = () => {
   });
   //ojo de la contraseña
   const [showPassword, setShowPassword] = useState(false);
-  // ojo de la confirmación (NUEVO)
+  // ojo de la confirmación
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   //para validacion de contraseña
@@ -123,8 +123,8 @@ const Register = () => {
 
   // --- NUEVA LÓGICA DE VALIDACIÓN DE MATCH CONTRASEÑA ---
   const passwordsMatch = formData.password === formData.confirmPassword;
-  const shouldShowMatchCheck = formData.confirmPassword.length > 0 && formData.password.length > 0;
-  
+  const shouldShowMatchCheck =
+    formData.confirmPassword.length > 0 && formData.password.length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center p-4">
@@ -223,7 +223,7 @@ const Register = () => {
             )}
           </div>
 
-          {/* --- CAMPO CONFIRMAR CONTRASEÑA (CORREGIDO) --- */}
+          {/* --- CAMPO CONFIRMAR CONTRASEÑA --- */}
           <div className="space-y-2">
             <label
               htmlFor="confirmPassword"
@@ -233,7 +233,7 @@ const Register = () => {
             </label>
             <div className="relative">
               <input
-                type={showConfirmPassword ? "text" : "password"} //ARREGLADO
+                type={showConfirmPassword ? "text" : "password"} 
                 id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
@@ -244,7 +244,7 @@ const Register = () => {
               />
               <button
                 type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)} //ARREGLADO
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
                 className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-blue-600"
               >
                 {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -252,11 +252,12 @@ const Register = () => {
             </div>
             {shouldShowMatchCheck && (
               <ul className="mt-2 space-y-1 pl-1">
-                <ValidationCheck 
-                  isMet={passwordsMatch} 
-                  text={passwordsMatch 
-                    ? " ¡Contraseñas coinciden!" 
-                    : " Las contraseñas no coinciden"
+                <ValidationCheck
+                  isMet={passwordsMatch}
+                  text={
+                    passwordsMatch
+                      ? " ¡Contraseñas coinciden!"
+                      : " Las contraseñas no coinciden"
                   }
                 />
               </ul>

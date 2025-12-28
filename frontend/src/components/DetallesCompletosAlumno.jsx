@@ -1,530 +1,618 @@
-import React, { useState, useEffect } from 'react';
-import { X, Eye, CheckCircle, Clock, XCircle, Folder, Download, FileText, Calendar, Award } from 'lucide-react';
-import { getDocsAlumno } from '../services/documento.service.js';
-import { getRespuesta } from '../services/formulario.service.js';
-import FormRender from './FormRender';
-import axios from '../services/root.service.js';
-import html2pdf from 'html2pdf.js';
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  Eye,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Folder,
+  Download,
+  FileText,
+  Calendar,
+  Award,
+} from "lucide-react";
+import { getDocsAlumno } from "../services/documento.service.js";
+import { getRespuesta } from "../services/formulario.service.js";
+import FormRender from "./FormRender";
+import axios from "../services/root.service.js";
+import html2pdf from "html2pdf.js";
 
-const HOST_URL = 'http://localhost:3000';
+const HOST_URL = "http://localhost:3000";
 
 //SOLO PDF ES PREVISUALIZABLE EN EL NAVEGADOR
-const PREVIEW_EXTENSIONS = ['.pdf'];
+const PREVIEW_EXTENSIONS = [".pdf"];
 
 // Escala de conversión de letras a notas (escala chilena 1-7)
 const ESCALA_NOTAS = {
-    'A': 7.0,  // Sobresaliente
-    'B': 6.0,  // Bueno
-    'C': 5.0,  // Moderado
-    'D': 4.0,  // Suficiente
-    'E': 2.0,  // Insuficiente
-    'F': null  // No aplica - se excluye del cálculo
+  A: 7.0, // Sobresaliente
+  B: 6.0, // Bueno
+  C: 5.0, // Moderado
+  D: 4.0, // Suficiente
+  E: 2.0, // Insuficiente
+  F: null, // No aplica - se excluye del cálculo
 };
 
 // IDs de campos que son evaluaciones con letras A-F
 const CAMPOS_EVALUACION = [
-    // CG1
-    'cg1_autonomia', 'cg1_tendencias',
-    // CG2
-    'cg2_horario', 'cg2_efectividad', 'cg2_instrucciones',
-    // CG3
-    'cg3_relacion', 'cg3_colaborativo', 'cg3_comportamiento',
-    // CG4
-    'cg4_lm', 'cg4_si',
-    // CE1
-    'ce1_soporte', 'ce1_instala', 'ce1_redes', 'ce1_evaluacion', 'ce1_funcionamiento',
-    // CE2
-    'ce2_levantamiento', 'ce2_documentacion', 'ce2_metodos', 'ce2_modulos', 'ce2_diseno',
-    // CE3
-    'ce3_diseno', 'ce3_conocimientos', 'ce3_tecnicas',
-    // CE4
-    'ce4_conocimientos', 'ce4_tecnicas', 'ce4_negocios', 'ce4_plan', 'ce4_auditoria',
-    // CE5
-    'ce5_autogestion', 'ce5_conocimientos', 'ce5_capacidad',
-    // Otras competencias (opcionales)
-    'otra_competencia_1_eval', 'otra_competencia_2_eval', 'otra_competencia_3_eval'
+  // CG1
+  "cg1_autonomia",
+  "cg1_tendencias",
+  // CG2
+  "cg2_horario",
+  "cg2_efectividad",
+  "cg2_instrucciones",
+  // CG3
+  "cg3_relacion",
+  "cg3_colaborativo",
+  "cg3_comportamiento",
+  // CG4
+  "cg4_lm",
+  "cg4_si",
+  // CE1
+  "ce1_soporte",
+  "ce1_instala",
+  "ce1_redes",
+  "ce1_evaluacion",
+  "ce1_funcionamiento",
+  // CE2
+  "ce2_levantamiento",
+  "ce2_documentacion",
+  "ce2_metodos",
+  "ce2_modulos",
+  "ce2_diseno",
+  // CE3
+  "ce3_diseno",
+  "ce3_conocimientos",
+  "ce3_tecnicas",
+  // CE4
+  "ce4_conocimientos",
+  "ce4_tecnicas",
+  "ce4_negocios",
+  "ce4_plan",
+  "ce4_auditoria",
+  // CE5
+  "ce5_autogestion",
+  "ce5_conocimientos",
+  "ce5_capacidad",
+  // Otras competencias (opcionales)
+  "otra_competencia_1_eval",
+  "otra_competencia_2_eval",
+  "otra_competencia_3_eval",
 ];
 
 /**
  * Calcula la nota final de una evaluación basada en las respuestas A-F
- * @param {Object} datos - Los datos del formulario de evaluación
- * @returns {Object} - { nota: number|null, totalEvaluadas: number, detalle: string }
  */
 const calcularNotaEvaluacion = (datos) => {
-    if (!datos) return { nota: null, totalEvaluadas: 0, detalle: 'Sin datos' };
+  if (!datos) return { nota: null, totalEvaluadas: 0, detalle: "Sin datos" };
 
-    let suma = 0;
-    let conteo = 0;
+  let suma = 0;
+  let conteo = 0;
 
-    CAMPOS_EVALUACION.forEach(campo => {
-        const valor = datos[campo];
-        if (valor && ESCALA_NOTAS[valor] !== undefined && ESCALA_NOTAS[valor] !== null) {
-            suma += ESCALA_NOTAS[valor];
-            conteo++;
-        }
-    });
+  CAMPOS_EVALUACION.forEach((campo) => {
+    const valor = datos[campo];
+    if (
+      valor &&
+      ESCALA_NOTAS[valor] !== undefined &&
+      ESCALA_NOTAS[valor] !== null
+    ) {
+      suma += ESCALA_NOTAS[valor];
+      conteo++;
+    }
+  });
 
-    if (conteo === 0) return { nota: null, totalEvaluadas: 0, detalle: 'Sin evaluaciones' };
+  if (conteo === 0)
+    return { nota: null, totalEvaluadas: 0, detalle: "Sin evaluaciones" };
 
-    const nota = suma / conteo;
-    return { 
-        nota: Math.round(nota * 10) / 10, // Redondear a 1 decimal
-        totalEvaluadas: conteo,
-        detalle: `Promedio de ${conteo} competencias evaluadas`
-    };
+  const nota = suma / conteo;
+  return {
+    nota: Math.round(nota * 10) / 10, // Redondear a 1 decimal
+    totalEvaluadas: conteo,
+    detalle: `Promedio de ${conteo} competencias evaluadas`,
+  };
 };
 
 // Componente para mostrar el estado del documento
 const EstadoDocumento = ({ estado }) => {
-    let style = 'bg-gray-100 text-gray-700';
-    let Icon = Clock;
+  let style = "bg-gray-100 text-gray-700";
+  let Icon = Clock;
 
-    if (estado?.includes('Aprobado')) { // Usa includes para mayor flexibilidad
-        style = 'bg-green-100 text-green-700';
-        Icon = CheckCircle;
-    } else if (estado?.includes('Pendiente')) {
-        style = 'bg-yellow-100 text-yellow-700';
-        Icon = Clock;
-    } else if (estado?.includes('Rechazado')) {
-        style = 'bg-red-100 text-red-700';
-        Icon = XCircle;
-    }
+  if (estado?.includes("Aprobado")) {
+    // Usa includes para mayor flexibilidad
+    style = "bg-green-100 text-green-700";
+    Icon = CheckCircle;
+  } else if (estado?.includes("Pendiente")) {
+    style = "bg-yellow-100 text-yellow-700";
+    Icon = Clock;
+  } else if (estado?.includes("Rechazado")) {
+    style = "bg-red-100 text-red-700";
+    Icon = XCircle;
+  }
 
-    return (
-        <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${style}`}> 
-            <Icon size={14} className="mr-1" /> {estado}
-        </span>
-    );
+  return (
+    <span
+      className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${style}`}
+    >
+      <Icon size={14} className="mr-1" /> {estado}
+    </span>
+  );
 };
 
 const DetallesCompletosAlumno = ({ alumnoId, onClose }) => {
-    const [expediente, setExpediente] = useState(null); // Estado para almacenar los datos del expediente
-    const [isLoading, setIsLoading] = useState(true); // Estado de carga
-    const [error, setError] = useState(null); // Estado de error
-    const [docToProcess, setDocToProcess] = useState(null); // Documento a procesar (descargar)
-    const [formularioVisualizando, setFormularioVisualizando] = useState(null); // Formulario en modal
+  const [expediente, setExpediente] = useState(null); // Estado para almacenar los datos del expediente
+  const [isLoading, setIsLoading] = useState(true); // Estado de carga
+  const [error, setError] = useState(null); // Estado de error
+  const [docToProcess, setDocToProcess] = useState(null); // Documento a procesar (descargar)
+  const [formularioVisualizando, setFormularioVisualizando] = useState(null); // Formulario en modal
 
-        //FUNCIÓN DE EJECUCIÓN (Vista Previa o Descarga)
-    const executeFileAction = async (doc, actionType) => {
-        try {
-            const { urlRevision, extension, tipo } = doc; // Desestructuramos para mayor claridad
-            const urlCompleta = `${HOST_URL}${urlRevision}`; // Construimos la URL completa
+  //FUNCIÓN DE EJECUCIÓN (Vista Previa o Descarga)
+  const executeFileAction = async (doc, actionType) => {
+    try {
+      const { urlRevision, extension, tipo } = doc; // Desestructuramos para mayor claridad
+      const urlCompleta = `${HOST_URL}${urlRevision}`; // Construimos la URL completa
 
-            // Realizamos la solicitud para obtener el archivo
-            const response = await axios.get(urlCompleta, {
-                responseType: 'blob',
-            });
+      // Realizamos la solicitud para obtener el archivo
+      const response = await axios.get(urlCompleta, {
+        responseType: "blob",
+      });
 
-            // Creamos un Blob a partir de la respuesta
-            const blob = new Blob([response.data], { type: response.headers['content-type'] });
-            const fileURL = URL.createObjectURL(blob);
+      // Creamos un Blob a partir de la respuesta
+      const blob = new Blob([response.data], {
+        type: response.headers["content-type"],
+      });
+      const fileURL = URL.createObjectURL(blob);
 
-            // Ejecutar la acción
-            if (actionType === 'preview') {
-                window.open(fileURL, '_blank');
-            } else if (actionType === 'download') {
-                const link = document.createElement('a');
-                link.href = fileURL;
-                link.download = `${doc.tipo}_${doc.documentoId}${extension}`; 
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(fileURL);
-            }
+      // Ejecutar la acción
+      if (actionType === "preview") {
+        window.open(fileURL, "_blank");
+      } else if (actionType === "download") {
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.download = `${doc.tipo}_${doc.documentoId}${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(fileURL);
+      }
 
-            setDocToProcess(null);  // Cerramos el modal después de la acción
-
-        } catch (error) {
-            console.error("Error al procesar el documento:", error);
-            alert(`Error al procesar el documento ${doc.tipo}.`);
-            setDocToProcess(null);
-        }
-    };
-
-
-    useEffect(() => {
-        const loadDocs = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const data = await getDocsAlumno(alumnoId);
-                setExpediente(data.payload);
-            } catch (error) {
-                setError(error.message);
-                setExpediente(null);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        if (alumnoId) loadDocs();
-    }, [alumnoId]);
-
-    if (isLoading) {
-        return (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 flex justify-center items-center">
-                <div className="bg-white p-8 rounded-lg">
-                    <p className="text-lg">Cargando documentos...</p>
-                </div>
-            </div>
-        );
+      setDocToProcess(null); // Cerramos el modal después de la acción
+    } catch (error) {
+      console.error("Error al procesar el documento:", error);
+      alert(`Error al procesar el documento ${doc.tipo}.`);
+      setDocToProcess(null);
     }
+  };
 
-    if (error || !expediente) {
-        return (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 flex justify-center items-center">
-                <div className="bg-white p-8 rounded-lg max-w-lg">
-                    <p className="text-red-500 font-bold mb-4">
-                        {error || 'No se pudieron cargar los documentos completos.'}
-                    </p>
-                    <button 
-                        onClick={onClose} 
-                        className="mt-4 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-                    >
-                        Cerrar
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    const { alumno, practica, documentos, formularios } = expediente;
-
-    // Función para obtener el nombre legible del tipo de formulario
-    const getNombreFormulario = (tipo) => {
-        const nombres = {
-            'postulacion': 'Formulario de Postulación',
-            'evaluacion_pr1': 'Evaluación Profesional I',
-            'evaluacion_pr2': 'Evaluación Profesional II'
-        };
-        return nombres[tipo] || tipo;
+  useEffect(() => {
+    const loadDocs = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await getDocsAlumno(alumnoId);
+        setExpediente(data.payload);
+      } catch (error) {
+        setError(error.message);
+        setExpediente(null);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    // Función para ver formulario en modal
-    const handleVerFormulario = async (formularioId) => {
-        try {
-            const respuesta = await getRespuesta(formularioId);
-            setFormularioVisualizando(respuesta);
-        } catch (err) {
-            console.error('Error al cargar formulario:', err);
-            alert('No se pudo cargar el formulario.');
-        }
-    };
+    if (alumnoId) loadDocs();
+  }, [alumnoId]);
 
-    // Función para descargar PDF del formulario
-    const handleDescargarPDF = async () => {
-        const element = document.getElementById('formulario-coordinador-content');
-        if (!element) return;
-
-        const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `${getNombreFormulario(formularioVisualizando?.plantilla?.tipo)}_${alumno?.name?.replace(/\s+/g, '_') || 'Alumno'}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                allowTaint: true, 
-                logging: false,
-                backgroundColor: '#ffffff',
-                onclone: (clonedDoc) => {
-                    const sections = clonedDoc.querySelectorAll('.mb-4, .mb-6, table, h2');
-                    sections.forEach(el => {
-                        el.style.pageBreakInside = 'avoid';
-                    });
-                }
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        };
-
-        await html2pdf().set(opt).from(element).save();
-    };
-
-    if (docToProcess) {
+  if (isLoading) {
     return (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-70 z-50 flex justify-center items-center">
-            <div className="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full">
-                <h3 className="text-xl font-bold mb-3 text-gray-800 flex items-center">
-                    <Download className="mr-2 text-indigo-600" size={24} /> 
-                    Descargar Archivo {docToProcess.extension?.toUpperCase() || 'N/A'}
-                </h3>
-                <p className="text-gray-600 mb-4">
-                    El archivo {docToProcess.tipo} ({docToProcess.extension}) no tiene una vista previa disponible en el navegador. ¿Desea continuar con la descarga?
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 flex justify-center items-center">
+        <div className="bg-white p-8 rounded-lg">
+          <p className="text-lg">Cargando documentos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !expediente) {
+    return (
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 flex justify-center items-center">
+        <div className="bg-white p-8 rounded-lg max-w-lg">
+          <p className="text-red-500 font-bold mb-4">
+            {error || "No se pudieron cargar los documentos completos."}
+          </p>
+          <button
+            onClick={onClose}
+            className="mt-4 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { alumno, practica, documentos, formularios } = expediente;
+
+  // Función para obtener el nombre legible del tipo de formulario
+  const getNombreFormulario = (tipo) => {
+    const nombres = {
+      postulacion: "Formulario de Postulación",
+      evaluacion_pr1: "Evaluación Profesional I",
+      evaluacion_pr2: "Evaluación Profesional II",
+    };
+    return nombres[tipo] || tipo;
+  };
+
+  // Función para ver formulario en modal
+  const handleVerFormulario = async (formularioId) => {
+    try {
+      const respuesta = await getRespuesta(formularioId);
+      setFormularioVisualizando(respuesta);
+    } catch (err) {
+      console.error("Error al cargar formulario:", err);
+      alert("No se pudo cargar el formulario.");
+    }
+  };
+
+  // Función para descargar PDF del formulario
+  const handleDescargarPDF = async () => {
+    const element = document.getElementById("formulario-coordinador-content");
+    if (!element) return;
+
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: `${getNombreFormulario(
+        formularioVisualizando?.plantilla?.tipo
+      )}_${alumno?.name?.replace(/\s+/g, "_") || "Alumno"}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        onclone: (clonedDoc) => {
+          const sections = clonedDoc.querySelectorAll(
+            ".mb-4, .mb-6, table, h2"
+          );
+          sections.forEach((el) => {
+            el.style.pageBreakInside = "avoid";
+          });
+        },
+      },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    };
+
+    await html2pdf().set(opt).from(element).save();
+  };
+
+  if (docToProcess) {
+    return (
+      <div className="fixed inset-0 bg-gray-900 bg-opacity-70 z-50 flex justify-center items-center">
+        <div className="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full">
+          <h3 className="text-xl font-bold mb-3 text-gray-800 flex items-center">
+            <Download className="mr-2 text-indigo-600" size={24} />
+            Descargar Archivo {docToProcess.extension?.toUpperCase() || "N/A"}
+          </h3>
+          <p className="text-gray-600 mb-4">
+            El archivo {docToProcess.tipo} ({docToProcess.extension}) no tiene
+            una vista previa disponible en el navegador. ¿Desea continuar con la
+            descarga?
+          </p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setDocToProcess(null)}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-100"
+            >
+              Cancelar
+            </button>
+
+            <button
+              // Llama a la función central con la acción 'download'
+              onClick={() => executeFileAction(docToProcess, "download")}
+              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-semibold"
+            >
+              Descargar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 overflow-y-auto">
+      <div className="flex min-h-full items-start justify-center p-4 py-8">
+        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+          {/* ENCABEZADO */}
+          <div className="p-6 border-b flex justify-between items-center flex-shrink-0">
+            <h2 className="text-2xl font-bold text-gray-800">
+              Expediente de Alumno
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition"
+            >
+              <X size={24} />
+            </button>
+          </div>
+          {/* CONTENIDO CON SCROLL */}
+          <div className="flex-1 overflow-y-auto">
+            {/* INFORMACIÓN GENERAL */}
+            <div className="p-6 bg-indigo-50">
+              <p className="text-sm text-indigo-900">
+                <strong>Nombre:</strong> {alumno?.name}
+              </p>
+              <p className="text-sm text-indigo-900">
+                <strong>Correo Institucional:</strong> {alumno?.email}
+              </p>
+              <p className="text-sm text-indigo-900">
+                <strong>Tipo de Práctica:</strong> {alumno?.tipo_practica}
+              </p>
+
+              <div className="mt-4">
+                <p className="text-sm text-indigo-900">
+                  <strong>Empresa:</strong> {practica?.empresa?.nombre || "N/A"}
                 </p>
-                <div className="flex justify-end space-x-3">
-                    
-                    <button
-                        onClick={() => setDocToProcess(null)}
-                        className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-100"
-                    >
-                        Cancelar
-                    </button>
-
-                    <button
-                        // Llama a la función central con la acción 'download'
-                        onClick={() => executeFileAction(docToProcess, 'download')}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-semibold"
-                    >
-                        Descargar
-                    </button>
-                </div>
+                <p className="text-sm text-indigo-900">
+                  <strong>Correo Empresa:</strong>{" "}
+                  {practica?.empresa?.email || "N/A"}
+                </p>
+              </div>
             </div>
-        </div>
-    );
-}
 
-    return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 z-50 overflow-y-auto">
-            <div className="flex min-h-full items-start justify-center p-4 py-8">
-                <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+            {/* DOCUMENTOS */}
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                <Folder className="mr-2 text-indigo-600" /> Documentación
+              </h3>
 
-                {/* ENCABEZADO */}
-                <div className="p-6 border-b flex justify-between items-center flex-shrink-0">
-                    <h2 className="text-2xl font-bold text-gray-800">
-                        Expediente de Alumno
-                    </h2>
-                    <button 
-                        onClick={onClose} 
-                        className="text-gray-400 hover:text-gray-600 transition"
+              {documentos?.length > 0 ? (
+                <div className="grid gap-3">
+                  {documentos.map((doc, index) => (
+                    <div
+                      key={doc.id || doc.index || index}
+                      className="flex items-center justify-between bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200"
                     >
-                        <X size={24} />
-                    </button>
-                </div>
-
-                {/* CONTENIDO CON SCROLL */}
-                <div className="flex-1 overflow-y-auto">
-                    {/* INFORMACIÓN GENERAL */}
-                    <div className="p-6 bg-indigo-50">
-                        <p className="text-sm text-indigo-900"><strong>Nombre:</strong> {alumno?.name}</p>
-                        <p className="text-sm text-indigo-900"><strong>Correo Institucional:</strong> {alumno?.email}</p>
-                        <p className="text-sm text-indigo-900"><strong>Tipo de Práctica:</strong> {alumno?.tipo_practica}</p>
-
-                        <div className="mt-4">
-                            <p className="text-sm text-indigo-900"><strong>Empresa:</strong> {practica?.empresa?.nombre || 'N/A'}</p>
-                            <p className="text-sm text-indigo-900"><strong>Correo Empresa:</strong> {practica?.empresa?.email || 'N/A'}</p>
+                      <div className="flex items-center gap-4">
+                        {/* Icono del documento - Azul para todos los archivos */}
+                        <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
+                          <FileText size={22} />
                         </div>
+
+                        {/* Info del documento */}
+                        <div>
+                          <p className="font-semibold text-gray-800">
+                            {doc.tipo}
+                          </p>
+                          <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                            <Calendar size={12} />
+                            <span>{doc.fechaEnvio || "Sin fecha"}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Estado */}
+                      <EstadoDocumento estado={doc.estado} />
                     </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  <Folder className="mx-auto text-gray-300 mb-2" size={40} />
+                  <p className="text-gray-500">No hay documentos subidos aún</p>
+                </div>
+              )}
+            </div>
 
-                    {/* DOCUMENTOS */}
-                    <div className="p-6">
-                        <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-                            <Folder className="mr-2 text-indigo-600" /> Documentación
-                        </h3>
+            {/* FORMULARIOS (Postulación y Evaluación) */}
+            <div className="p-6 border-t">
+              <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                <FileText className="mr-2 text-green-600" /> Formularios
+              </h3>
 
-                        {documentos?.length > 0 ? (
-                            <div className="grid gap-3">
-                                {documentos.map((doc, index) => (
-                                    <div 
-                                        key={doc.id || doc.index || index}
-                                        className="flex items-center justify-between bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            {/* Icono del documento - Azul para todos los archivos */}
-                                            <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
-                                                <FileText size={22} />
-                                            </div>
-                                            
-                                            {/* Info del documento */}
-                                            <div>
-                                                <p className="font-semibold text-gray-800">{doc.tipo}</p>
-                                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                                                    <Calendar size={12} />
-                                                    <span>{doc.fechaEnvio || 'Sin fecha'}</span>
-                                                </div>
-                                            </div>
-                                        </div>
+              {formularios?.length > 0 ? (
+                <div className="grid gap-3">
+                  {formularios.map((form) => {
+                    // Calcular nota si es evaluación
+                    const esEvaluacion = form.tipo?.includes("evaluacion");
+                    const notaInfo = esEvaluacion
+                      ? calcularNotaEvaluacion(form.datos)
+                      : null;
 
-                                        {/* Estado */}
-                                        <EstadoDocumento estado={doc.estado} />
-                                    </div>
-                                ))}
+                    return (
+                      <div
+                        key={form.id}
+                        className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-full bg-green-100 text-green-600">
+                            <FileText size={20} />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              {getNombreFormulario(form.tipo)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Enviado: {form.fechaEnvio || "N/A"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {/* Badge de nota si es evaluación */}
+                          {esEvaluacion && notaInfo?.nota && (
+                            <div
+                              className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${
+                                notaInfo.nota >= 5.5
+                                  ? "bg-green-100 text-green-700"
+                                  : notaInfo.nota >= 4.0
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                              title={notaInfo.detalle}
+                            >
+                              <Award size={16} />
+                              Nota: {notaInfo.nota}
                             </div>
-                        ) : (
-                            <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                                <Folder className="mx-auto text-gray-300 mb-2" size={40} />
-                                <p className="text-gray-500">No hay documentos subidos aún</p>
-                            </div>
+                          )}
+                          <button
+                            onClick={() => handleVerFormulario(form.id)}
+                            className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition"
+                            title="Ver y descargar PDF"
+                          >
+                            <Eye size={16} />
+                            Ver / PDF
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-4">
+                  No hay formularios de postulación o evaluación registrados.
+                </p>
+              )}
+            </div>
+          </div>{" "}
+          {/* Cierre del contenedor con scroll */}
+          {/* PIE */}
+          <div className="p-4 border-t flex justify-end flex-shrink-0">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              Cerrar Expediente
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* MODAL PARA VISUALIZAR Y DESCARGAR FORMULARIO */}
+      {formularioVisualizando &&
+        (() => {
+          // Calcular nota si es evaluación
+          const esEvaluacionModal =
+            formularioVisualizando.plantilla?.tipo?.includes("evaluacion");
+          const notaInfoModal = esEvaluacionModal
+            ? calcularNotaEvaluacion(formularioVisualizando.datos)
+            : null;
+
+          return (
+            <div className="fixed inset-0 bg-black bg-opacity-70 z-[60] flex items-center justify-center p-4">
+              <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+                {/* Header del Modal */}
+                <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800">
+                      {formularioVisualizando.plantilla?.titulo ||
+                        getNombreFormulario(
+                          formularioVisualizando.plantilla?.tipo
                         )}
-                </div>
-
-                {/* FORMULARIOS (Postulación y Evaluación) */}
-                <div className="p-6 border-t">
-                    <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-                        <FileText className="mr-2 text-green-600" /> Formularios
                     </h3>
-
-                    {formularios?.length > 0 ? (
-                        <div className="grid gap-3">
-                            {formularios.map((form) => {
-                                // Calcular nota si es evaluación
-                                const esEvaluacion = form.tipo?.includes('evaluacion');
-                                const notaInfo = esEvaluacion ? calcularNotaEvaluacion(form.datos) : null;
-                                
-                                return (
-                                <div 
-                                    key={form.id} 
-                                    className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 rounded-full bg-green-100 text-green-600">
-                                            <FileText size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-gray-800">
-                                                {getNombreFormulario(form.tipo)}
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                Enviado: {form.fechaEnvio || 'N/A'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        {/* Badge de nota si es evaluación */}
-                                        {esEvaluacion && notaInfo?.nota && (
-                                            <div 
-                                                className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${
-                                                    notaInfo.nota >= 5.5 ? 'bg-green-100 text-green-700' :
-                                                    notaInfo.nota >= 4.0 ? 'bg-yellow-100 text-yellow-700' :
-                                                    'bg-red-100 text-red-700'
-                                                }`}
-                                                title={notaInfo.detalle}
-                                            >
-                                                <Award size={16} />
-                                                Nota: {notaInfo.nota}
-                                            </div>
-                                        )}
-                                        <button
-                                            onClick={() => handleVerFormulario(form.id)}
-                                            className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition"
-                                            title="Ver y descargar PDF"
-                                        >
-                                            <Eye size={16} />
-                                            Ver / PDF
-                                        </button>
-                                    </div>
-                                </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <p className="text-center text-gray-500 py-4">
-                            No hay formularios de postulación o evaluación registrados.
-                        </p>
+                    <p className="text-sm text-gray-500">
+                      Alumno: {alumno?.name}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {/* Badge de nota prominente si es evaluación */}
+                    {esEvaluacionModal && notaInfoModal?.nota && (
+                      <div
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-lg font-bold ${
+                          notaInfoModal.nota >= 5.5
+                            ? "bg-green-100 text-green-700 border border-green-300"
+                            : notaInfoModal.nota >= 4.0
+                            ? "bg-yellow-100 text-yellow-700 border border-yellow-300"
+                            : "bg-red-100 text-red-700 border border-red-300"
+                        }`}
+                        title={notaInfoModal.detalle}
+                      >
+                        <Award size={22} />
+                        <span>Nota: {notaInfoModal.nota}</span>
+                      </div>
                     )}
-                </div>
-                </div> {/* Cierre del contenedor con scroll */}
-
-                {/* PIE */}
-                <div className="p-4 border-t flex justify-end flex-shrink-0">
-                    <button 
-                        onClick={onClose} 
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    <button
+                      onClick={handleDescargarPDF}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
                     >
-                        Cerrar Expediente
+                      <Download size={18} />
+                      Descargar PDF
                     </button>
+                    <button
+                      onClick={() => setFormularioVisualizando(null)}
+                      className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-2 rounded-full transition"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
                 </div>
-            </div>
-            </div>
 
-            {/* MODAL PARA VISUALIZAR Y DESCARGAR FORMULARIO */}
-            {formularioVisualizando && (() => {
-                // Calcular nota si es evaluación
-                const esEvaluacionModal = formularioVisualizando.plantilla?.tipo?.includes('evaluacion');
-                const notaInfoModal = esEvaluacionModal ? calcularNotaEvaluacion(formularioVisualizando.datos) : null;
-
-                return (
-                <div className="fixed inset-0 bg-black bg-opacity-70 z-[60] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-                        {/* Header del Modal */}
-                        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-800">
-                                    {formularioVisualizando.plantilla?.titulo || getNombreFormulario(formularioVisualizando.plantilla?.tipo)}
-                                </h3>
-                                <p className="text-sm text-gray-500">
-                                    Alumno: {alumno?.name}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {/* Badge de nota prominente si es evaluación */}
-                                {esEvaluacionModal && notaInfoModal?.nota && (
-                                    <div 
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-lg font-bold ${
-                                            notaInfoModal.nota >= 5.5 ? 'bg-green-100 text-green-700 border border-green-300' :
-                                            notaInfoModal.nota >= 4.0 ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
-                                            'bg-red-100 text-red-700 border border-red-300'
-                                        }`}
-                                        title={notaInfoModal.detalle}
-                                    >
-                                        <Award size={22} />
-                                        <span>Nota: {notaInfoModal.nota}</span>
-                                    </div>
-                                )}
-                                <button
-                                    onClick={handleDescargarPDF}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
-                                >
-                                    <Download size={18} />
-                                    Descargar PDF
-                                </button>
-                                <button
-                                    onClick={() => setFormularioVisualizando(null)}
-                                    className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-2 rounded-full transition"
-                                >
-                                    <X size={24} />
-                                </button>
-                            </div>
+                {/* Contenido del Formulario */}
+                <div className="flex-1 overflow-y-auto p-6 bg-gray-100">
+                  {/* Banner de nota calculada para evaluaciones */}
+                  {esEvaluacionModal && notaInfoModal?.nota && (
+                    <div
+                      className={`mb-4 p-4 rounded-lg flex items-center justify-between ${
+                        notaInfoModal.nota >= 5.5
+                          ? "bg-green-50 border border-green-200"
+                          : notaInfoModal.nota >= 4.0
+                          ? "bg-yellow-50 border border-yellow-200"
+                          : "bg-red-50 border border-red-200"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Award
+                          size={32}
+                          className={
+                            notaInfoModal.nota >= 5.5
+                              ? "text-green-600"
+                              : notaInfoModal.nota >= 4.0
+                              ? "text-yellow-600"
+                              : "text-red-600"
+                          }
+                        />
+                        <div>
+                          <p className="text-sm text-gray-600">
+                            Nota calculada automáticamente
+                          </p>
+                          <p className="text-2xl font-bold text-gray-800">
+                            {notaInfoModal.nota}
+                          </p>
                         </div>
-
-                        {/* Contenido del Formulario */}
-                        <div className="flex-1 overflow-y-auto p-6 bg-gray-100">
-                            {/* Banner de nota calculada para evaluaciones */}
-                            {esEvaluacionModal && notaInfoModal?.nota && (
-                                <div className={`mb-4 p-4 rounded-lg flex items-center justify-between ${
-                                    notaInfoModal.nota >= 5.5 ? 'bg-green-50 border border-green-200' :
-                                    notaInfoModal.nota >= 4.0 ? 'bg-yellow-50 border border-yellow-200' :
-                                    'bg-red-50 border border-red-200'
-                                }`}>
-                                    <div className="flex items-center gap-3">
-                                        <Award size={32} className={
-                                            notaInfoModal.nota >= 5.5 ? 'text-green-600' :
-                                            notaInfoModal.nota >= 4.0 ? 'text-yellow-600' :
-                                            'text-red-600'
-                                        } />
-                                        <div>
-                                            <p className="text-sm text-gray-600">Nota calculada automáticamente</p>
-                                            <p className="text-2xl font-bold text-gray-800">{notaInfoModal.nota}</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right text-sm text-gray-500">
-                                        <p>{notaInfoModal.detalle}</p>
-                                        <p className="text-xs">Escala: A(7) - B(6) - C(5) - D(4) - E(2)</p>
-                                    </div>
-                                </div>
-                            )}
-                            
-                            <div id="formulario-coordinador-content" className="bg-white rounded-lg p-6 shadow">
-                                {formularioVisualizando.plantilla ? (
-                                    <FormRender 
-                                        esquema={formularioVisualizando.plantilla.esquema}
-                                        valores={formularioVisualizando.datos} 
-                                        respuestasIniciales={formularioVisualizando.datos}
-                                        readOnly={true}
-                                        buttonText=""
-                                        onSubmit={() => {}} 
-                                    />
-                                ) : (
-                                    <p className="text-center text-gray-500 py-8">
-                                        No se pudo cargar el formulario.
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+                      </div>
+                      <div className="text-right text-sm text-gray-500">
+                        <p>{notaInfoModal.detalle}</p>
+                        <p className="text-xs">
+                          Escala: A(7) - B(6) - C(5) - D(4) - E(2)
+                        </p>
+                      </div>
                     </div>
+                  )}
+
+                  <div
+                    id="formulario-coordinador-content"
+                    className="bg-white rounded-lg p-6 shadow"
+                  >
+                    {formularioVisualizando.plantilla ? (
+                      <FormRender
+                        esquema={formularioVisualizando.plantilla.esquema}
+                        valores={formularioVisualizando.datos}
+                        respuestasIniciales={formularioVisualizando.datos}
+                        readOnly={true}
+                        buttonText=""
+                        onSubmit={() => {}}
+                      />
+                    ) : (
+                      <p className="text-center text-gray-500 py-8">
+                        No se pudo cargar el formulario.
+                      </p>
+                    )}
+                  </div>
                 </div>
-                );
-            })()}
-        </div>
-    );
+              </div>
+            </div>
+          );
+        })()}
+    </div>
+  );
 };
 
 export default DetallesCompletosAlumno;

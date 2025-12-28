@@ -26,7 +26,7 @@ const GestionFormularios = () => {
   const [plantillas, setPlantillas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Lista de formularios que NO se pueden borrar
+  // Lista de formularios que no se pueden borrar
   const protegidos = [
     "postulacion",
     "bitacora",
@@ -34,7 +34,7 @@ const GestionFormularios = () => {
     "evaluacion_pr2",
   ];
 
-  // 1. Definimos la función AFUERA para poder usarla en el useEffect y en el handleDelete
+  // 1. Definimos la función afuera para poder usarla en el useEffect y en el handleDelete
   const cargarDatos = async () => {
     try {
       const data = await getTodasLasPlantillas();
@@ -60,7 +60,7 @@ const GestionFormularios = () => {
           "Eliminado",
           `El formulario "${titulo}" ha sido borrado.`
         );
-        cargarDatos(); // Ahora sí funciona porque la función está afuera
+        cargarDatos(); 
       } catch (error) {
         showErrorAlert("Error", error.message || "No se pudo eliminar.");
       }
@@ -113,7 +113,7 @@ const GestionFormularios = () => {
         {/* Grid de tarjetas */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plantillas.map((plantilla) => {
-            // --- CORRECCIÓN CRÍTICA: Calculamos si es protegido aquí ---
+            // --- Calculamos si es protegido ---
             const esProtegido = protegidos.includes(plantilla.tipo);
 
             return (
@@ -171,7 +171,9 @@ const GestionFormularios = () => {
                   {/* Botón Descargar PDF */}
                   <button
                     onClick={() =>
-                      navigate(`/admin/formularios/preview/${plantilla.tipo}?download=true`)
+                      navigate(
+                        `/admin/formularios/preview/${plantilla.tipo}?download=true`
+                      )
                     }
                     className="p-2 text-gray-400 hover:text-green-600 rounded-lg hover:bg-green-50"
                     title="Descargar PDF"
@@ -179,7 +181,7 @@ const GestionFormularios = () => {
                     <Download size={20} />
                   </button>
 
-                  {/* 🔴 BOTÓN ELIMINAR (Solo si NO es protegido) */}
+                  {/* BOTÓN ELIMINAR (Solo si NO es protegido) */}
                   {!esProtegido && (
                     <button
                       onClick={() =>

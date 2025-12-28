@@ -1,7 +1,32 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import {Upload,FileText,Activity,Send,PlusCircle,Ticket,Info,AlertCircle,Mail,Clock,AlertTriangle,CheckCircle2,Flag,ClipboardCheck,Lock,FileCheck,Download,BookOpen,Check,Layout,Eye,} from "lucide-react";
-import { getMyPractica, finalizarPractica } from "../services/practica.service.js";
+import {
+  Upload,
+  FileText,
+  Activity,
+  Send,
+  PlusCircle,
+  Ticket,
+  Info,
+  AlertCircle,
+  Mail,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  Flag,
+  ClipboardCheck,
+  Lock,
+  FileCheck,
+  Download,
+  BookOpen,
+  Check,
+  Layout,
+  Eye,
+} from "lucide-react";
+import {
+  getMyPractica,
+  finalizarPractica,
+} from "../services/practica.service.js";
 import {
   showErrorAlert,
   showSuccessAlert,
@@ -11,7 +36,7 @@ import DocumentsModal from "./DocumentsModal";
 import { deleteDocumento } from "../services/documento.service.js";
 import { deleteBitacora, getTodasLasPlantillas } from "../services/formulario.service.js";
 import instance from "../services/root.service.js";
-// --- 1. BADGE ---
+// BADGE
 const EstadoBadge = ({ estado }) => {
   // Si no hay estado (ej. no tiene práctica), mostramos "Sin Inscripción"
   if (!estado)
@@ -64,7 +89,7 @@ const EstadoBadge = ({ estado }) => {
   );
 };
 
-// --- 2. FUNCIÓN PARA EL MENSAJE DE AYUDA ---
+// FUNCIÓN PARA EL MENSAJE DE AYUDA
 const getMensajeAyuda = (estado) => {
   switch (estado) {
     case "enviada_a_empresa":
@@ -85,10 +110,13 @@ const getMensajeAyuda = (estado) => {
       return "Estado de tu solicitud.";
   }
 };
-//LUEGO HAY QUE MODIFICAR ESTA FUNCION PORQUE CUENTA POR D.TIPO Y TIENE QUE SER POR LOS FORM QUE HIZO EL BENJA
-// --- 2. TRACKER DE BITÁCORAS ---
+
+// TRACKER DE BITÁCORAS
 const BitacoraTracker = ({ documentos }) => {
-  const bitacoras = documentos?.filter((d) => d.tipo === "bitacora" && d.es_respuesta_formulario === true) || [];
+  const bitacoras =
+    documentos?.filter(
+      (d) => d.tipo === "bitacora" && d.es_respuesta_formulario === true
+    ) || [];
   const count = bitacoras.length;
   const maxObligatorias = 5;
 
@@ -124,7 +152,7 @@ const BitacoraTracker = ({ documentos }) => {
   );
 };
 
-// --- 3. DASHBOARD PRINCIPAL ---
+// DASHBOARD PRINCIPAL
 const DashboardAlumno = ({ user }) => {
   const navigate = useNavigate();
   const [practica, setPractica] = useState(null);
@@ -132,18 +160,18 @@ const DashboardAlumno = ({ user }) => {
   const [showDocsModal, setShowDocsModal] = useState(false);
   const [recursosGlobales, setRecursosGlobales] = useState([]);
   const [plantillasPublicadas, setPlantillasPublicadas] = useState([]);
-  const [activeResourceTab, setActiveResourceTab] = useState('archivos'); // 'archivos' o 'formularios'
-  
- const getPostulacionRespuestaId = () => {
+  const [activeResourceTab, setActiveResourceTab] = useState("archivos"); // 'archivos' o 'formularios'
+
+  const getPostulacionRespuestaId = () => {
     // Si 'practica' es null, regresa null
-    if (!practica) return null; 
-    
-    // Aseguramos que 'formularioRespuestas' exista antes de buscar.
-    const respuesta = practica.formularioRespuestas?.find( 
-        r => r.plantilla?.tipo === 'postulacion'
+    if (!practica) return null;
+
+    // Aseguramos que 'formularioRespuestas' exista antes de buscar
+    const respuesta = practica.formularioRespuestas?.find(
+      (r) => r.plantilla?.tipo === "postulacion"
     );
-    
-    return respuesta?.id || null; 
+
+    return respuesta?.id || null;
   };
 
   const postulacionId = getPostulacionRespuestaId();
@@ -166,17 +194,20 @@ const DashboardAlumno = ({ user }) => {
     if (!practica) return;
     try {
       await finalizarPractica(practica.id);
-      await showSuccessAlert("Práctica finalizada", "Se envió la evaluación a la empresa.");
+      await showSuccessAlert(
+        "Práctica finalizada",
+        "Se envió la evaluación a la empresa."
+      );
       await fetchMiPractica();
     } catch (e) {
       showErrorAlert("No se pudo finalizar", e.message || "Intenta nuevamente");
     }
   };
 
-  //caragar recursos publicos globales
+  //cargar recursos publicos globales
   const fetchRecursosGlobales = async () => {
     try {
-      const response = await instance.get('/recursos');
+      const response = await instance.get("/recursos");
       //prueba
       console.log("🔍 DATOS DEL BACKEND:", response.data.data);
       setRecursosGlobales(response.data.data);
@@ -195,20 +226,19 @@ const DashboardAlumno = ({ user }) => {
     }
   };
 
-  // --- NUEVA FUNCIÓN: DESCARGAR ARCHIVO ---
+  // DESCARGAR ARCHIVO
   const handleDownloadRecurso = (urlRecurso) => {
     //1 se obtiene variable actual (http://localhost:3000/api)
-    const apiAddress = import.meta.env.VITE_BASE_URL || 'http://localhost:3000';
+    const apiAddress = import.meta.env.VITE_BASE_URL || "http://localhost:3000";
     // 2 se crea un objeto URL
     const urlObj = new URL(apiAddress);
-  
+
     // 3 extraemos solo el "origin" (protocolo + dominio + puerto)
-    // De "http://localhost:3000/api" -> obtiene automáticamente "http://localhost:3000"
     const raizServidor = urlObj.origin;
 
     // 4 construye la ruta final limpia
     const finalUrl = `${raizServidor}${urlRecurso}`;
-    window.open(finalUrl, '_blank');
+    window.open(finalUrl, "_blank");
   };
 
   useEffect(() => {
@@ -242,7 +272,7 @@ const DashboardAlumno = ({ user }) => {
   if (isLoading)
     return <div className="p-12 text-center text-gray-600">Cargando...</div>;
 
-  // --- RENDERIZADO (DISEÑO HÍBRIDO) ---
+  // RENDERIZADO (DISEÑO HÍBRIDO)
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-8">
       <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-green-100">
@@ -290,7 +320,7 @@ const DashboardAlumno = ({ user }) => {
                 )}
               </div>
               {/* Botón Finalizar práctica (cuando está en curso) */}
-              {practica?.estado === 'en_curso' && (
+              {practica?.estado === "en_curso" && (
                 <div className="mt-4">
                   <button
                     onClick={onFinalizarPractica}
@@ -359,21 +389,23 @@ const DashboardAlumno = ({ user }) => {
                       : "-"}
                   </p>
                 </div>
-                  {postulacionId ? (
-                    <button
-                        onClick={() => navigate(`/revision-formulario/${postulacionId}`)}
-                        className="w-full mt-2 border border-blue-600 text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-md"
-                    >
-                        <FileCheck size={16} /> Ver Formulario de Postulación
-                    </button>
-                  ) : (
-                    <button
-                        disabled={!practica}
-                        className="w-full mt-2 border border-blue-200 text-blue-600 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Download size={16} /> Comprobante No Disponible
-                    </button>
-                  )}
+                {postulacionId ? (
+                  <button
+                    onClick={() =>
+                      navigate(`/revision-formulario/${postulacionId}`)
+                    }
+                    className="w-full mt-2 border border-blue-600 text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <FileCheck size={16} /> Ver Formulario de Postulación
+                  </button>
+                ) : (
+                  <button
+                    disabled={!practica}
+                    className="w-full mt-2 border border-blue-200 text-blue-600 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Download size={16} /> Comprobante No Disponible
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -394,28 +426,39 @@ const DashboardAlumno = ({ user }) => {
                 </p>
 
                 {/* Usamos practica?.documentos para evitar el crash */}
-                <BitacoraTracker documentos={practica?.documentos?.filter(doc => doc.tipo === 'bitacora')} />
-                {/*DESPUES HAY QUE CAMBIAR ESTO PORQUE CUENTA LOS DOCS CON NOMBRE BITACORA */}
+                <BitacoraTracker
+                  documentos={practica?.documentos?.filter(
+                    (doc) => doc.tipo === "bitacora"
+                  )}
+                />
               </div>
               {/* Contenedor de ACCIONES (Derecha) */}
               <div className="flex gap-3 mt-4 md:mt-0">
                 {/* 1. BOTÓN: COMPLETAR BITÁCORA (El formulario en la página) */}
                 <button
-                  disabled={!practica || practica?.estado === 'cerrada'}
+                  disabled={!practica || practica?.estado === "cerrada"}
                   onClick={() => navigate("/forms/responder/bitacora")}
-                  title={practica?.estado === 'cerrada' ? 'La práctica está cerrada. No se pueden crear bitácoras.' : undefined}
+                  title={
+                    practica?.estado === "cerrada"
+                      ? "La práctica está cerrada. No se pueden crear bitácoras."
+                      : undefined
+                  }
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   <BookOpen size={18} /> Completar Bitácora
                 </button>
                 <button
-                  disabled={!practica || practica?.estado === 'cerrada'}
+                  disabled={!practica || practica?.estado === "cerrada"}
                   onClick={() =>
                     navigate("/upload-document", {
                       state: { practicaId: practica?.id },
                     })
                   }
-                  title={practica?.estado === 'cerrada' ? 'La práctica está cerrada. No se pueden subir documentos.' : undefined}
+                  title={
+                    practica?.estado === "cerrada"
+                      ? "La práctica está cerrada. No se pueden subir documentos."
+                      : undefined
+                  }
                   className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex items-center gap-2 whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   <Upload size={18} /> Subir Documentos
@@ -431,25 +474,25 @@ const DashboardAlumno = ({ user }) => {
               <h3 className="text-lg font-bold text-purple-800 mb-4 flex items-center gap-2">
                 <FileText size={20} /> Recursos y Pautas
               </h3>
-              
+
               {/* Pestañas */}
               <div className="flex border-b border-purple-200 mb-4">
                 <button
-                  onClick={() => setActiveResourceTab('archivos')}
+                  onClick={() => setActiveResourceTab("archivos")}
                   className={`flex-1 py-2 text-sm font-bold flex items-center justify-center gap-1 transition-all ${
-                    activeResourceTab === 'archivos'
-                      ? 'text-purple-700 border-b-2 border-purple-600'
-                      : 'text-gray-500 hover:text-purple-600'
+                    activeResourceTab === "archivos"
+                      ? "text-purple-700 border-b-2 border-purple-600"
+                      : "text-gray-500 hover:text-purple-600"
                   }`}
                 >
                   <FileText size={14} /> Archivos
                 </button>
                 <button
-                  onClick={() => setActiveResourceTab('formularios')}
+                  onClick={() => setActiveResourceTab("formularios")}
                   className={`flex-1 py-2 text-sm font-bold flex items-center justify-center gap-1 transition-all ${
-                    activeResourceTab === 'formularios'
-                      ? 'text-green-600 border-b-2 border-green-500'
-                      : 'text-gray-500 hover:text-green-600'
+                    activeResourceTab === "formularios"
+                      ? "text-green-600 border-b-2 border-green-500"
+                      : "text-gray-500 hover:text-green-600"
                   }`}
                 >
                   <Layout size={14} /> Formularios
@@ -458,49 +501,69 @@ const DashboardAlumno = ({ user }) => {
 
               <div className="space-y-2 grow overflow-y-auto max-h-64">
                 {/* Tab de Archivos */}
-                {activeResourceTab === 'archivos' && (
+                {activeResourceTab === "archivos" && (
                   <>
                     {recursosGlobales.length > 0 ? (
                       recursosGlobales.map((recurso) => (
-                        <button 
+                        <button
                           key={recurso.id}
                           onClick={() => handleDownloadRecurso(recurso.url)}
                           className="w-full flex items-center gap-2 text-left text-sm p-3 bg-white border border-purple-100 rounded-lg hover:bg-purple-100 hover:border-purple-300 text-purple-800 transition shadow-sm group"
                         >
-                          <Download size={18} className="text-purple-400 group-hover:text-purple-700 shrink-0"/> 
-                          <span className="truncate font-medium">{recurso.nombre}</span>
+                          <Download
+                            size={18}
+                            className="text-purple-400 group-hover:text-purple-700 shrink-0"
+                          />
+                          <span className="truncate font-medium">
+                            {recurso.nombre}
+                          </span>
                         </button>
                       ))
                     ) : (
                       <div className="flex flex-col items-center justify-center py-8 text-center bg-white/50 rounded-lg border border-purple-100 border-dashed">
-                        <FileText size={24} className="text-purple-200 mb-2"/>
-                        <p className="text-sm text-gray-500 italic">No hay documentos disponibles aún.</p>
+                        <FileText size={24} className="text-purple-200 mb-2" />
+                        <p className="text-sm text-gray-500 italic">
+                          No hay documentos disponibles aún.
+                        </p>
                       </div>
                     )}
                   </>
                 )}
 
                 {/* Tab de Formularios */}
-                {activeResourceTab === 'formularios' && (
+                {activeResourceTab === "formularios" && (
                   <>
                     {plantillasPublicadas.length > 0 ? (
                       plantillasPublicadas.map((plantilla) => (
-                        <div 
+                        <div
                           key={plantilla.id}
                           className="w-full flex items-center gap-2 text-left text-sm p-3 bg-white border border-green-100 rounded-lg text-green-800 shadow-sm"
                         >
-                          <Layout size={18} className="text-green-400 shrink-0"/> 
-                          <span className="truncate font-medium flex-1">{plantilla.titulo}</span>
+                          <Layout
+                            size={18}
+                            className="text-green-400 shrink-0"
+                          />
+                          <span className="truncate font-medium flex-1">
+                            {plantilla.titulo}
+                          </span>
                           <div className="flex gap-1">
                             <button
-                              onClick={() => navigate(`/alumno/formulario/preview/${plantilla.tipo}`)}
+                              onClick={() =>
+                                navigate(
+                                  `/alumno/formulario/preview/${plantilla.tipo}`
+                                )
+                              }
                               className="p-1.5 hover:bg-green-50 rounded-full text-gray-400 hover:text-green-600 transition"
                               title="Ver formulario"
                             >
                               <Eye size={16} />
                             </button>
                             <button
-                              onClick={() => navigate(`/alumno/formulario/preview/${plantilla.tipo}?download=true`)}
+                              onClick={() =>
+                                navigate(
+                                  `/alumno/formulario/preview/${plantilla.tipo}?download=true`
+                                )
+                              }
                               className="p-1.5 hover:bg-green-50 rounded-full text-gray-400 hover:text-green-600 transition"
                               title="Descargar PDF"
                             >
@@ -511,8 +574,10 @@ const DashboardAlumno = ({ user }) => {
                       ))
                     ) : (
                       <div className="flex flex-col items-center justify-center py-8 text-center bg-white/50 rounded-lg border border-green-100 border-dashed">
-                        <Layout size={24} className="text-green-200 mb-2"/>
-                        <p className="text-sm text-gray-500 italic">No hay formularios disponibles.</p>
+                        <Layout size={24} className="text-green-200 mb-2" />
+                        <p className="text-sm text-gray-500 italic">
+                          No hay formularios disponibles.
+                        </p>
                       </div>
                     )}
                   </>

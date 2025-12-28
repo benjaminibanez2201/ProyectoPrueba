@@ -10,7 +10,7 @@ export const AppDataSource = new DataSource({
   password: `${PASSWORD}`,
   database: `${DATABASE}`,
   entities: ["src/entities/**/*.js"],
-  synchronize: true, 
+  synchronize: true,
   logging: false,
 });
 

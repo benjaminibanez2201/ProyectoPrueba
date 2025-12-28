@@ -1,20 +1,45 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { CSVLink } from "react-csv";
 import { useNavigate } from "react-router-dom";
-import { Users, Key, FileText, ClipboardList, Eye, Edit, FileCog, AlertCircle, Mail, Clock, AlertTriangle, Activity, Flag, ClipboardCheck, Lock, MessageCircle } from "lucide-react";
-// ✅ CORRECCIÓN: Importar solo getAllAlumnosDetalles (sin el duplicado)
+import {
+  Users,
+  Key,
+  FileText,
+  ClipboardList,
+  Eye,
+  Edit,
+  FileCog,
+  AlertCircle,
+  Mail,
+  Clock,
+  AlertTriangle,
+  Activity,
+  Flag,
+  ClipboardCheck,
+  Lock,
+  MessageCircle,
+} from "lucide-react";
 import { getAllAlumnosDetalles } from "../services/user.service.js";
-import { showErrorAlert, showSuccessAlert, showInfoAlert, showSelectAlert, showConfirmAlert } from "../helpers/sweetAlert.js";
+import {
+  showErrorAlert,
+  showSuccessAlert,
+  showInfoAlert,
+  showSelectAlert,
+  showConfirmAlert,
+} from "../helpers/sweetAlert.js";
 import DocumentsModal from "./DocumentsModal";
-import { updateEstadoPractica, cerrarPractica } from "../services/practica.service.js";
+import {
+  updateEstadoPractica,
+  cerrarPractica,
+} from "../services/practica.service.js";
 import GestionRecursosModal from "./GestionRecursosModal";
 import DetallesCompletosAlumno from "./DetallesCompletosAlumno.jsx";
 import BandejaMensajes from "./BandejaMensajes.jsx";
 import { getNoLeidos } from "../services/mensaje.service.js";
 
-// --- COMPONENTE AUXILIAR: BADGE DE ESTADO ---
+// BADGE DE ESTADO
 const EstadoBadge = ({ practica }) => {
-  const estado = practica ? practica.estado : 'pendiente';
+  const estado = practica ? practica.estado : "pendiente";
 
   const icons = {
     pendiente: AlertCircle,
@@ -24,13 +49,14 @@ const EstadoBadge = ({ practica }) => {
     en_curso: Activity,
     finalizada: Flag,
     evaluada: ClipboardCheck,
-    cerrada: Lock
+    cerrada: Lock,
   };
 
   const statusColors = {
     pendiente: "bg-gray-100 text-gray-600 border border-gray-200",
     enviada_a_empresa: "bg-blue-50 text-blue-700 border border-blue-200",
-    pendiente_validacion: "bg-yellow-50 text-yellow-800 border border-yellow-200 font-bold",
+    pendiente_validacion:
+      "bg-yellow-50 text-yellow-800 border border-yellow-200 font-bold",
     rechazada: "bg-red-50 text-red-700 border border-red-200",
     en_curso: "bg-green-50 text-green-700 border border-green-200",
     finalizada: "bg-orange-50 text-orange-800 border border-orange-200",
@@ -46,7 +72,7 @@ const EstadoBadge = ({ practica }) => {
     en_curso: "En Curso",
     finalizada: "Finalizada",
     evaluada: "Evaluada",
-    cerrada: "Cerrada"
+    cerrada: "Cerrada",
   };
 
   const IconComponent = icons[estado] || AlertCircle;
@@ -54,11 +80,13 @@ const EstadoBadge = ({ practica }) => {
   const texto = statusLabels[estado] || estado;
 
   return (
-    <span className={`
+    <span
+      className={`
       inline-flex items-center gap-1.5 
       px-2.5 py-1 rounded-md border text-xs font-medium 
       ${colorClass}
-    `}>
+    `}
+    >
       <IconComponent size={14} className="shrink-0" />
       <span>{texto}</span>
     </span>
@@ -72,7 +100,7 @@ const DashboardCoordinador = ({ user }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showTable, setShowTable] = useState(false);
-  const [filter, setFilter] = useState('todas');
+  const [filter, setFilter] = useState("todas");
   const [selectedStudentForDocs, setSelectedStudentForDocs] = useState(null);
   const [alumnoDocs, setAlumnoDocs] = useState(null);
   const [showBandeja, setShowBandeja] = useState(false);
@@ -94,13 +122,12 @@ const DashboardCoordinador = ({ user }) => {
     const interval = setInterval(cargarNoLeidos, 30000);
     return () => clearInterval(interval);
   }, []);
-  
-  // ✅ CORRECCIÓN: Usar getAllAlumnosDetalles() sin parámetros
+  // Función para refrescar la lista de alumnos
   const refreshAlumnos = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const alumnosArray = await getAllAlumnosDetalles(); // ← SIN ID
+      const alumnosArray = await getAllAlumnosDetalles(); // SIN ID
       console.log(alumnosArray[0]); // Verifica la estructura de los datos
       setAlumnos(alumnosArray);
     } catch (err) {
@@ -121,11 +148,11 @@ const DashboardCoordinador = ({ user }) => {
     }
   };
 
-  const alumnosFiltrados = alumnos.filter(alumno => {
-    if (filter === 'todas') return true;
+  const alumnosFiltrados = alumnos.filter((alumno) => {
+    if (filter === "todas") return true;
     const tipo = alumno.tipo_practica;
-    if (filter === 'p1' && tipo === 'Profesional I') return true;
-    if (filter === 'p2' && tipo === 'Profesional II') return true;
+    if (filter === "p1" && tipo === "Profesional I") return true;
+    if (filter === "p2" && tipo === "Profesional II") return true;
     return false;
   });
 
@@ -133,13 +160,13 @@ const DashboardCoordinador = ({ user }) => {
     { label: "Nombre Alumno", key: "name" },
     { label: "Correo Institucional", key: "email" },
     { label: "Tipo Práctica", key: "tipo_practica" },
-    { label: "Estado Práctica", key: "estado" }
+    { label: "Estado Práctica", key: "estado" },
   ];
 
   const dataParaExportar = useMemo(() => {
-    return alumnosFiltrados.map(alumno => {
+    return alumnosFiltrados.map((alumno) => {
       const practica = alumno.practicasComoAlumno?.[0];
-      const estadoRaw = practica ? practica.estado : 'pendiente';
+      const estadoRaw = practica ? practica.estado : "pendiente";
 
       const labelMap = {
         pendiente: "Sin Inscribir Empresa",
@@ -149,18 +176,19 @@ const DashboardCoordinador = ({ user }) => {
         en_curso: "En Curso",
         finalizada: "Finalizada",
         evaluada: "Evaluada (Lista para Nota)",
-        cerrada: "Cerrada"
+        cerrada: "Cerrada",
       };
 
       return {
         name: alumno.name,
         email: alumno.email,
-        tipo_practica: alumno.tipo_practica || 'N/A',
-        estado: labelMap[estadoRaw] || estadoRaw
+        tipo_practica: alumno.tipo_practica || "N/A",
+        estado: labelMap[estadoRaw] || estadoRaw,
       };
     });
   }, [alumnosFiltrados]);
 
+  // Funciones de manejo de acciones
   const handleVerPractica = (alumno) => {
     const practica = alumno.practicasComoAlumno?.[0];
 
@@ -171,7 +199,7 @@ const DashboardCoordinador = ({ user }) => {
 
     setAlumnoDocs(alumno);
   };
-
+  // Función para editar estado de práctica
   const handleEditarEstado = async (alumno) => {
     const practica = alumno.practicasComoAlumno?.[0];
 
@@ -181,16 +209,16 @@ const DashboardCoordinador = ({ user }) => {
     }
 
     const { value: nuevoEstado } = await showSelectAlert(
-      'Modificar Estado Manualmente',
+      "Modificar Estado Manualmente",
       `Estado actual: ${practica.estado}`,
       {
-        pendiente: 'Pendiente (Reinicio)',
-        enviada_a_empresa: 'Enviada a Empresa',
-        pendiente_validacion: 'Pendiente Validación',
-        en_curso: 'En Curso',
-        finalizada: 'Finalizada',
-        rechazada: 'Rechazada',
-        cerrada: 'Cerrada'
+        pendiente: "Pendiente (Reinicio)",
+        enviada_a_empresa: "Enviada a Empresa",
+        pendiente_validacion: "Pendiente Validación",
+        en_curso: "En Curso",
+        finalizada: "Finalizada",
+        rechazada: "Rechazada",
+        cerrada: "Cerrada",
       }
     );
 
@@ -201,18 +229,26 @@ const DashboardCoordinador = ({ user }) => {
         refreshAlumnos();
       } catch (error) {
         console.error(error);
-        showErrorAlert("Error", "No se pudo actualizar el estado en el servidor.");
+        showErrorAlert(
+          "Error",
+          "No se pudo actualizar el estado en el servidor."
+        );
       }
     }
   };
 
   const handleCerrarPractica = async (alumno) => {
     const practica = alumno.practicasComoAlumno?.[0];
-    if (!practica) return showErrorAlert("Error", "No hay práctica para cerrar.");
-    if (practica.estado !== 'evaluada') return showErrorAlert("No permitido", "Solo puedes cerrar prácticas ya evaluadas.");
+    if (!practica)
+      return showErrorAlert("Error", "No hay práctica para cerrar.");
+    if (practica.estado !== "evaluada")
+      return showErrorAlert(
+        "No permitido",
+        "Solo puedes cerrar prácticas ya evaluadas."
+      );
     const result = await showConfirmAlert(
-      '¿Cerrar práctica?',
-      '¿Cerrar definitivamente esta práctica? Esta acción no se puede deshacer.'
+      "¿Cerrar práctica?",
+      "¿Cerrar definitivamente esta práctica? Esta acción no se puede deshacer."
     );
     if (!result.isConfirmed) return;
     try {
@@ -220,7 +256,10 @@ const DashboardCoordinador = ({ user }) => {
       showSuccessAlert("Práctica cerrada", "Se ha cerrado correctamente.");
       refreshAlumnos();
     } catch (e) {
-      const msg = e?.response?.data?.message || e?.message || "No se pudo cerrar la práctica.";
+      const msg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "No se pudo cerrar la práctica.";
       showErrorAlert("Error", msg);
     }
   };
@@ -228,7 +267,6 @@ const DashboardCoordinador = ({ user }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
-
         <h2 className="text-4xl font-extrabold text-blue-700 mb-2">
           Panel del Coordinador
         </h2>
@@ -236,7 +274,7 @@ const DashboardCoordinador = ({ user }) => {
           Bienvenido, <span className="font-semibold">{user.name}</span>.
         </p>
 
-        <button 
+        <button
           onClick={() => setShowBandeja(true)}
           className="fixed bottom-8 right-8 bg-indigo-600 text-white p-4 rounded-full shadow-2xl hover:bg-indigo-700 transition-all flex items-center gap-2 z-40"
         >
@@ -244,20 +282,22 @@ const DashboardCoordinador = ({ user }) => {
             <MessageCircle size={24} />
             {mensajesNoLeidos > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[20px] h-5 rounded-full flex items-center justify-center font-bold px-1">
-                {mensajesNoLeidos > 99 ? '99+' : mensajesNoLeidos}
+                {mensajesNoLeidos > 99 ? "99+" : mensajesNoLeidos}
               </span>
             )}
           </div>
           <span className="font-bold">Mensajes</span>
         </button>
         {showBandeja && (
-          <BandejaMensajes 
-            user={user} 
+          <BandejaMensajes
+            user={user}
             onClose={() => {
               setShowBandeja(false);
               // Recargar contador al cerrar
-              getNoLeidos().then(res => setMensajesNoLeidos(res.data?.noLeidos || 0));
-            }} 
+              getNoLeidos().then((res) =>
+                setMensajesNoLeidos(res.data?.noLeidos || 0)
+              );
+            }}
           />
         )}
 
@@ -265,22 +305,27 @@ const DashboardCoordinador = ({ user }) => {
           <div className="bg-blue-50 p-6 rounded-xl shadow-inner hover:shadow-md transition flex flex-col justify-between min-h-[200px]">
             <Users className="text-blue-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-blue-800">Ver Alumnos</h3>
-            <p className="text-gray-600 text-sm mt-1">Revisa alumnos inscritos</p>
+            <p className="text-gray-600 text-sm mt-1">
+              Revisa alumnos inscritos
+            </p>
             <button
               onClick={handleLoadAlumnos}
               className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg w-full"
             >
-              {showTable ? 'Ocultar Alumnos' : 'Gestionar Alumnos'}
+              {showTable ? "Ocultar Alumnos" : "Gestionar Alumnos"}
             </button>
           </div>
 
-          
           <div className="bg-purple-50 p-6 rounded-xl shadow-inner hover:shadow-md transition flex flex-col justify-between min-h-[200px]">
             <ClipboardList className="text-purple-600 mb-3" size={32} />
             <h3 className="text-lg font-bold text-purple-800">Documentos</h3>
-            <p className="text-gray-600 text-sm mt-1">Revisa tus formularios y sube documentos</p>
-            <button onClick={() => setIsRecursosModalOpen(true)}
-            className="mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg w-full">
+            <p className="text-gray-600 text-sm mt-1">
+              Revisa tus formularios y sube documentos
+            </p>
+            <button
+              onClick={() => setIsRecursosModalOpen(true)}
+              className="mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg w-full"
+            >
               Ver Biblioteca
             </button>
           </div>
@@ -299,8 +344,12 @@ const DashboardCoordinador = ({ user }) => {
 
           <div className="bg-red-50 p-6 rounded-xl shadow-inner hover:shadow-md transition flex flex-col justify-between min-h-[200px]">
             <FileText className="text-red-600 mb-3" size={32} />
-            <h3 className="text-lg font-bold text-red-800">Gestionar Prácticas</h3>
-            <p className="text-gray-600 text-sm mt-1">Revisa confirmaciones de empresas</p>
+            <h3 className="text-lg font-bold text-red-800">
+              Gestionar Prácticas
+            </h3>
+            <p className="text-gray-600 text-sm mt-1">
+              Revisa confirmaciones de empresas
+            </p>
             <button
               onClick={() => navigate("/coordinador/aprobar-practicas")}
               className="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg w-full"
@@ -314,22 +363,47 @@ const DashboardCoordinador = ({ user }) => {
           <p className="text-gray-600 text-center py-8">Cargando alumnos...</p>
         )}
         {error && (
-          <p className="text-red-600 bg-red-100 p-4 rounded-lg text-center mt-8">{error}</p>
+          <p className="text-red-600 bg-red-100 p-4 rounded-lg text-center mt-8">
+            {error}
+          </p>
         )}
 
         {showTable && !isLoading && !error && (
           <div className="mt-12">
-            <h3 className="text-2xl font-bold text-blue-800 mb-4">Gestión de Alumnos</h3>
+            <h3 className="text-2xl font-bold text-blue-800 mb-4">
+              Gestión de Alumnos
+            </h3>
 
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => setFilter('todas')} className={`py-2 px-4 rounded-lg font-medium ${filter === 'todas' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                <button
+                  onClick={() => setFilter("todas")}
+                  className={`py-2 px-4 rounded-lg font-medium ${
+                    filter === "todas"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
                   Todos ({alumnosFiltrados.length})
                 </button>
-                <button onClick={() => setFilter('p1')} className={`py-2 px-4 rounded-lg font-medium ${filter === 'p1' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                <button
+                  onClick={() => setFilter("p1")}
+                  className={`py-2 px-4 rounded-lg font-medium ${
+                    filter === "p1"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
                   Profesional I
                 </button>
-                <button onClick={() => setFilter('p2')} className={`py-2 px-4 rounded-lg font-medium ${filter === 'p2' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                <button
+                  onClick={() => setFilter("p2")}
+                  className={`py-2 px-4 rounded-lg font-medium ${
+                    filter === "p2"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
                   Profesional II
                 </button>
               </div>
@@ -351,10 +425,16 @@ const DashboardCoordinador = ({ user }) => {
                   <tr>
                     <th className="p-4 font-semibold text-blue-800">Alumno</th>
                     <th className="p-4 font-semibold text-blue-800">Email</th>
-                    <th className="p-4 font-semibold text-blue-800">Tipo Práctica</th>
+                    <th className="p-4 font-semibold text-blue-800">
+                      Tipo Práctica
+                    </th>
                     <th className="p-4 font-semibold text-blue-800">Estado</th>
-                    <th className="p-4 font-semibold text-blue-800">Documentos</th>
-                    <th className="p-4 font-semibold text-blue-800">Acciones</th>
+                    <th className="p-4 font-semibold text-blue-800">
+                      Documentos
+                    </th>
+                    <th className="p-4 font-semibold text-blue-800">
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -362,18 +442,25 @@ const DashboardCoordinador = ({ user }) => {
                     <tr key={alumno.id} className="border-b hover:bg-blue-50">
                       <td className="p-4 text-gray-700">{alumno.name}</td>
                       <td className="p-4 text-gray-600">{alumno.email}</td>
-                      <td className="p-4 text-gray-600">{alumno.tipo_practica}</td>
+                      <td className="p-4 text-gray-600">
+                        {alumno.tipo_practica}
+                      </td>
                       <td className="p-4">
-                        <EstadoBadge practica={alumno.practicasComoAlumno?.[0]} />
+                        <EstadoBadge
+                          practica={alumno.practicasComoAlumno?.[0]}
+                        />
                       </td>
 
                       <td className="p-4">
                         {(() => {
-                          const docs = alumno.practicasComoAlumno?.[0]?.documentos;
+                          const docs =
+                            alumno.practicasComoAlumno?.[0]?.documentos;
                           if (docs && docs.length > 0) {
                             return (
                               <button
-                                onClick={() => setSelectedStudentForDocs(alumno)}
+                                onClick={() =>
+                                  setSelectedStudentForDocs(alumno)
+                                }
                                 className="flex items-center gap-2 text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition-colors font-medium text-xs"
                               >
                                 <ClipboardList size={14} />
@@ -381,20 +468,37 @@ const DashboardCoordinador = ({ user }) => {
                               </button>
                             );
                           }
-                          return <span className="text-gray-400 text-xs italic pl-2">Sin archivos</span>;
+                          return (
+                            <span className="text-gray-400 text-xs italic pl-2">
+                              Sin archivos
+                            </span>
+                          );
                         })()}
                       </td>
 
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <button onClick={() => handleVerPractica(alumno)} className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition" title="Ver Detalle">
+                          <button
+                            onClick={() => handleVerPractica(alumno)}
+                            className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
+                            title="Ver Detalle"
+                          >
                             <Eye size={18} />
                           </button>
-                          <button onClick={() => handleEditarEstado(alumno)} className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition" title="Aprobar/Editar">
+                          <button
+                            onClick={() => handleEditarEstado(alumno)}
+                            className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
+                            title="Aprobar/Editar"
+                          >
                             <Edit size={18} />
                           </button>
-                          {alumno.practicasComoAlumno?.[0]?.estado === 'evaluada' && (
-                            <button onClick={() => handleCerrarPractica(alumno)} className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition" title="Cerrar práctica">
+                          {alumno.practicasComoAlumno?.[0]?.estado ===
+                            "evaluada" && (
+                            <button
+                              onClick={() => handleCerrarPractica(alumno)}
+                              className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
+                              title="Cerrar práctica"
+                            >
                               <Lock size={18} />
                             </button>
                           )}
@@ -404,7 +508,9 @@ const DashboardCoordinador = ({ user }) => {
                   ))}
                   {alumnosFiltrados.length === 0 && (
                     <tr>
-                      <td colSpan="6" className="p-4 text-center text-gray-500">No se encontraron alumnos.</td>
+                      <td colSpan="6" className="p-4 text-center text-gray-500">
+                        No se encontraron alumnos.
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -418,19 +524,21 @@ const DashboardCoordinador = ({ user }) => {
         isOpen={!!selectedStudentForDocs}
         onClose={() => setSelectedStudentForDocs(null)}
         studentName={selectedStudentForDocs?.name}
-        documents={selectedStudentForDocs?.practicasComoAlumno?.[0]?.documentos || []}
+        documents={
+          selectedStudentForDocs?.practicasComoAlumno?.[0]?.documentos || []
+        }
       />
 
       {!!alumnoDocs && (
-        <DetallesCompletosAlumno 
+        <DetallesCompletosAlumno
           alumnoId={alumnoDocs.id}
           onClose={() => setAlumnoDocs(null)}
         />
       )}
-      
-      <GestionRecursosModal 
-        isOpen={isRecursosModalOpen} 
-        onClose={() => setIsRecursosModalOpen(false)} 
+
+      <GestionRecursosModal
+        isOpen={isRecursosModalOpen}
+        onClose={() => setIsRecursosModalOpen(false)}
       />
     </div>
   );
