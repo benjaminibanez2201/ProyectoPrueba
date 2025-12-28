@@ -18,19 +18,12 @@ app.use(
   })
 );
 
-// --- Configuración de Archivos Estáticos (RF6 / RF10) ---
-// Usamos process.cwd() para obtener la raíz del proyecto (donde corre el servidor)
-// y apuntamos a la carpeta 'uploads'.
 const uploadsPath = path.join(process.cwd(), "uploads");
 app.use("/uploads", express.static(uploadsPath));
 
 // Inicializa la conexión a la base de datos
 connectDB()
   .then(() => {
-    // 3. ¡AQUÍ ESTÁ EL ARREGLO!
-    // Borramos la llamada a 'routerApi(app)'
-    // Y usamos app.use() para montar TODAS nuestras rutas
-    // bajo el prefijo /api
     app.use("/api", router);
 
     // Levanta el servidor Express
