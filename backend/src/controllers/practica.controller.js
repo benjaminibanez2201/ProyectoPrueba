@@ -63,17 +63,7 @@ export class PracticaController {
       }
 
       handleSuccess(res, 200, "Práctica del alumno obtenida", practica);
-
-      if (!practica) {
-        return handleSuccess(
-          res,
-          200,
-          "El alumno aún no tiene una práctica inscrita",
-          null
-        );
-      }
-
-      handleSuccess(res, 200, "Práctica del alumno obtenida", practica);
+      return;
     } catch (error) {
       handleErrorServer(
         res,

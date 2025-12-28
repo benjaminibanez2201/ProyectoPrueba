@@ -10,6 +10,7 @@ import {
 } from "../Handlers/responseHandlers.js";
 import { AppDataSource } from "../config/configDb.js";
 import { Practica } from "../entities/practica.entity.js";
+import path from "path";
 
 /**
  * LISTADO SIMPLE DE ALUMNOS
