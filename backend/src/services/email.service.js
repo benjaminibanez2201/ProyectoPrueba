@@ -18,10 +18,11 @@ const transporter = nodemailer.createTransport({
 });
 
 // URL base del frontend (para enlaces en correos)
-// En producción, define FRONTEND_URL en el .env del backend, por ejemplo:
-// FRONTEND_URL=http://146.83.198.35:1360
-// En desarrollo, cae por defecto a localhost.
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+// Si FRONTEND_URL no está definida en el backend, por defecto
+// usará el servidor de la U.
+// Puedes sobreescribirlo en tu .env del backend si lo necesitas.
+const FRONTEND_URL =
+  process.env.FRONTEND_URL || "http://146.83.198.35:1360";
 
 /**
  * FUNCIÓN GENÉRICA DE ENVÍO
