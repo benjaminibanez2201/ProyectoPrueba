@@ -17,6 +17,12 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// URL base del frontend (para enlaces en correos)
+// En producción, define FRONTEND_URL en el .env del backend, por ejemplo:
+// FRONTEND_URL=http://146.83.198.35:1360
+// En desarrollo, cae por defecto a localhost.
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
 /**
  * FUNCIÓN GENÉRICA DE ENVÍO
  * Base para todas las notificaciones del sistema
@@ -50,7 +56,7 @@ export const sendTokenEmail = async (
   nombreAlumno
 ) => {
   //const linkAcceso = `http://localhost:5173/empresa/acceso/${token}`;
-  const linkAcceso = `${process.env.FRONTEND_URL}/empresa/acceso/${token}`;
+  const linkAcceso = `${FRONTEND_URL}/empresa/acceso/${token}`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: #0056b3; padding: 20px; text-align: center;">
@@ -138,12 +144,12 @@ export const enviarNotificacionEvaluacion = async (
       : null;
     const respuestaId = respuestaPostulacion?.id;
     const linkAlumno = respuestaId
-      ? `${process.env.FRONTEND_URL}/empresa/correccion/${respuestaId}`
+      ? `${FRONTEND_URL}/empresa/correccion/${respuestaId}`
       : null;
     // Link para empresa (token)
     const tokenEmpresa = practica?.empresaToken?.token;
     const linkEmpresa = tokenEmpresa
-      ? `${process.env.FRONTEND_URL}/empresa/acceso/${tokenEmpresa}`
+      ? `${FRONTEND_URL}/empresa/acceso/${tokenEmpresa}`
       : null;
 
     // Lógica de a quién culpar (quién recibe el correo)
@@ -276,7 +282,7 @@ export const sendSolicitudEvaluacionEmail = async (
   nombreAlumno,
   nivelTexto = "Profesional"
 ) => {
-  const linkAcceso = `${process.env.FRONTEND_URL}/empresa/acceso/${token}`;
+  const linkAcceso = `${FRONTEND_URL}/empresa/acceso/${token}`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: #6f42c1; padding: 20px; text-align: center;">
